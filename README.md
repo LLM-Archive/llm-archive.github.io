@@ -1,6 +1,6 @@
 # LLM-Archive
 
-A small, long-running measurement project: does a commercial AI model's decision change when the
+A long-running measurement project: does a commercial AI model's decision change when the
 same question is asked in different words — and how would we know if our own way of checking that
 had broken?
 
