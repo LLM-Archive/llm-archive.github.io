@@ -679,7 +679,7 @@ const FLAG_EXPLAIN={
  exploratory:()=>'Outside the protocol’s one pre-declared comparison — informative only, never on the main curve.'
 };
 
-function open(i){const d=ALL[i];
+function openDetail(i){const d=ALL[i];
  set('dk',panelName(d)+' · '+d.protocol_id);
  set('dt',d.run_date+' · '+d.stability_pct.toFixed(1)+'% stability');
  set('dm','The A↔B distance is '+d.gap_pct.toFixed(1)+' points. Null shift: '+d.gap_null_pct.toFixed(1)
@@ -737,14 +737,14 @@ function open(i){const d=ALL[i];
    : (d.flags.length ? (d.flags.length+' check'+(d.flags.length===1?'':'s')+' failed — published, flagged, and off the main curve.') : 'Published, but off the main curve (see above).'));
  dr.hidden=false;requestAnimationFrame(()=>{dr.classList.add('on');sc.classList.add('on')});
  document.getElementById('close').focus();}
-function shut(){dr.classList.remove('on');sc.classList.remove('on');setTimeout(()=>dr.hidden=true,220);}
+function shutDetail(){dr.classList.remove('on');sc.classList.remove('on');setTimeout(()=>dr.hidden=true,220);}
 ['rows','orows'].forEach(id=>{
  const t=document.getElementById(id);
- t.addEventListener('click',e=>{const r=e.target.closest('.row');if(r)open(+r.dataset.i);});
+ t.addEventListener('click',e=>{const r=e.target.closest('.row');if(r)openDetail(+r.dataset.i);});
  t.addEventListener('keydown',e=>{
   if(e.key!=='Enter'&&e.key!==' ')return;const r=e.target.closest('.row');
-  if(r){e.preventDefault();open(+r.dataset.i);}});});
-document.getElementById('close').addEventListener('click',shut);
-sc.addEventListener('click',shut);
-document.addEventListener('keydown',e=>{if(e.key==='Escape')shut();});
+  if(r){e.preventDefault();openDetail(+r.dataset.i);}});});
+document.getElementById('close').addEventListener('click',shutDetail);
+sc.addEventListener('click',shutDetail);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')shutDetail();});
 </script>
