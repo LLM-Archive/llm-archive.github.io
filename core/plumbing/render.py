@@ -497,7 +497,11 @@ def build_site_data(experiments_dir: Path, protocols_dir: Path, subject_models_p
         rows.append(build_site_row(m, protocols.get(pid), trend, delta, experiments_dir))
 
     admitted = [p for p in protocols.values() if p.get("status") == "admitted"]
-    measured_protocol_ids = {m.get("protocol_id") for m in measurements} & set(protocols)
+    # commercial only: the coverage bar names the active *commercial* model (load_active_commercial_model
+    # below), so what it counts must match -- an open_weights-only measurement (the daily reference-model
+    # self-check) must never inflate the count next to that model's name. spec.md's commercial/open_weights
+    # split is never supposed to mix into one number; this is that rule applied to the coverage bar itself.
+    measured_protocol_ids = {m.get("protocol_id") for m in measurements if m.get("series") == "commercial"} & set(protocols)
 
     return {
         "rows": [r for r in rows if r["series"] == "commercial"],
@@ -976,6 +980,29 @@ def _verify() -> list[str]:
             errors.append(
                 "build_site_html: primary download link is missing the download attribute -- "
                 "without it, clicking navigates the tab to the raw CSV instead of saving it"
+            )
+
+        # An open_weights-only measurement (the daily reference-model self-check) must never
+        # inflate "N of 12 panels measured" next to the *commercial* model's name in the coverage
+        # bar -- the two series are never supposed to mix into one number (subject_models.yaml's
+        # own comment on this). Add a second, open_weights measurement of a DIFFERENT protocol and
+        # confirm the commercial-only count doesn't move.
+        (proto_dir / "risky_choice_framing__anchoring__v0.json").write_text(
+            json.dumps(dict(protocol, protocol_id="risky_choice_framing__anchoring__v0")), encoding="utf-8"
+        )
+        ow_run_dir = exp_dir / "run1"
+        ow_run_dir.mkdir(parents=True)
+        ow_measurement = dict(
+            multi_flag_measurement, protocol_id="risky_choice_framing__anchoring__v0", lane="guard",
+            flags=[], on_curve=True, run_id="run1", series="open_weights", subject_model_id="qwen2.5-1.5b-instruct-q4_k_m",
+        )
+        (ow_run_dir / "measurement.json").write_text(json.dumps(ow_measurement), encoding="utf-8")
+        (ow_run_dir / "trials.jsonl").write_text("", encoding="utf-8")
+        data = build_site_data(exp_dir, proto_dir, tmp / "subject_models.yaml")
+        if data["measured_count"] != 1:
+            errors.append(
+                f"build_site_data: measured_count should count the commercial series only, "
+                f"got {data['measured_count']!r} with one commercial + one open_weights measurement present"
             )
 
     return errors

@@ -9,7 +9,12 @@
 # the first real, working run written into the real experiments/, which freezes core/measure/ for
 # good) happened the same day: risky_choice_framing__wording__v0, 120/120 real calls.
 #
-# open_weights.generations[0] stays null -- that decision hasn't been made yet.
+# open_weights.generations[0] was decided and set to status: active on 2026-09-21: the pinned
+# artifact named in core/plumbing/reference_client.py's docstring since Phase 0 (Qwen2.5-1.5B-
+# Instruct-GGUF, q4_k_m, sha256-verified) was never reflected here until llama-cpp-python was
+# actually installed and core/plumbing/runtime_fingerprint.py proven to run end to end, for real,
+# against the downloaded weights -- same "decide only after proving it works" discipline as the
+# commercial series above, not before.
 
 schema_version: 1
 
@@ -49,15 +54,22 @@ series:
                                    # somewhere checkable -- a similar-sounding name is not enough
 
   open_weights:
-    tier: null                    # which model size/family to use for the control series -- not decided yet
-    temperature: 1.0
+    tier: 1.5b                    # a small, cheap-to-run-daily size class -- the whole point of this
+                                   # series is a frozen, zero-cost daily/weekly self-check, not capability
+    # temperature: 0.0 in the real client (core/plumbing/reference_client.py) -- greedy decoding,
+    # top_k=1, top_p=1.0, seed=0, every knob pinned explicitly, same reasoning as spec.md §5's
+    # commercial-client rule. Kept off this file, same as the commercial series above, since the
+    # real client is the frozen source of truth for these knobs, not this config.
     effort: disabled
     auto_bridge: null             # cadence.yaml already says WHEN this series' checks run (whenever the
                                    # commercial model gets a new generation); what still isn't decided is
                                    # what "a new generation" even means for a downloadable model that
                                    # doesn't get silently swapped out the way a hosted API model can
     generations:
-      - model_id: null
-        model_family: null
-        status: pending
+      - model_id: qwen2.5-1.5b-instruct-q4_k_m  # matches ReferenceClient.subject_model_id exactly
+        model_family: qwen2.5
+        status: active             # where this model version is in its lifecycle:
+                                   #   pending -> not measured yet · active -> currently being measured
+                                   #   bridge_pending -> a hand-off between two versions is in progress
+                                   #   retired -> no longer measured
         declared_successor: null
