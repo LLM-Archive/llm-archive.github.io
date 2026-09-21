@@ -799,8 +799,8 @@ format: one `sc:Field` per column, its Croissant data type read off the same fie
 ### The private / public boundary
 
 **The default is public, not private.** The source code is not a secret — `core/measure/`,
-`core/schedule/`, `core/plumbing/`, `core/testdata/`, `cadence.yaml`, `subject_models.yaml`,
-`website/`, `logo.png`, `icons/` all ship to the public repo as-is, on top of the generated files
+`core/schedule/`, `core/plumbing/`, `core/testdata/`, `core/instrument/`, `cadence.yaml`,
+`subject_models.yaml`, `website/`, `logo.png`, `CITATION.cff` all ship to the public repo as-is, on top of the generated files
 listed above. Delivered as freshly generated content on every release, never as exported git
 history — the public repo shares no commits with the private one, and there is no code-hiding
 mechanism beyond just not copying a file over.
