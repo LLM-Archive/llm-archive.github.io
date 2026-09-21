@@ -48,6 +48,17 @@
   `python3 -m core.plumbing.render verify`. Doesn't yet build `coverage.csv`, describe
   `open-lane/` in `croissant.json` (needs a Croissant `fileSet`, not `fileObject`), or build the
   HTML pages — separate pieces.
+- `subject_fingerprint.py` — the daily check against the REAL commercial model (spec.md §7): 24
+  fixed, short yes/no fact checks (12 yes / 12 no, in same-topic pairs so an "always yes" strategy
+  scores only 50%), asked with the exact same frozen `DECISION: X` grammar every protocol prompt
+  uses (`core.measure.grammar`/`client.classify`) rather than a second, bespoke parser. Unlike
+  `runtime_fingerprint.py` against the pinned local reference model, the remote commercial API
+  exposes no logprobs to hash for exact-equality drift detection, so the observable here is
+  coarser: how many of the 24 came back valid-and-correct today. Writes to
+  `experiments/subject_fingerprint/<date>__<subject_model_id>.json`, append-only. `record_type:
+  "subject_fingerprint"` follows `core/instrument/instrument.py`'s `"instrument_alarm"` precedent
+  rather than touching `core/measure/schema.py`'s frozen `RECORD_TYPES`. Own build check:
+  `python3 -m core.plumbing.subject_fingerprint verify`.
 - `render_guide.py` — turns `guide/*.md` into `guide/*.html`, a small standalone docs site sitting
   next to (not inside) the closed 8-page site spec.md §11 describes, per `guide/README.md`'s own
   plan to eventually lift it "alongside the main website." A hand-rolled markdown→HTML converter,

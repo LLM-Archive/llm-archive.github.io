@@ -590,7 +590,7 @@ code preserves the record's exact identity.</small></p>
     </div>
   </div>
 
-  <h3>The four checks</h3>
+  <h3>The checks</h3>
   <table><tbody>
     <tr><td><span class="status-pill" id="pcgn"></span> Null shift <small>(A ↔ A′)</small> <span class="help-tip" title="Null Shift: the difference between the original question and a deliberately meaningless change; if it stays small, the model isn't reacting to formatting cues.">?</span></td><td class="num" id="cgn"></td></tr>
     <tr><td><span class="status-pill" id="pcgp"></span> Positive control <small>(A ↔ C)</small></td><td class="num" id="cgp"></td></tr>
@@ -738,7 +738,13 @@ function openDetail(i){const d=ALL[i];
  set('cb',d.drop_bound_pct_ab.toFixed(1)+' points'+(gAB.drop_bound_ok?' ✓':' ⚠'));
  set('verdict', d.on_curve
    ? 'All checks pass. This measurement is on the main curve.'
-   : (d.flags.length ? (d.flags.length+' check'+(d.flags.length===1?'':'s')+' failed — published, flagged, and off the main curve.') : 'Published, but off the main curve (see above).'));
+   // "flag(s)", not "check(s)": d.flags.length counts entries in the closed FLAGS list
+   // (core/measure/schema.py), which isn't the same thing as how many rows below show a
+   // non-passing pill -- two flags here (scenario_dominated, drop_confounded) have no row of
+   // their own in "The checks" table at all, only the full explanation in the "Off the main
+   // curve" callout above. Saying "N checks failed" here used to imply exactly N of the rows
+   // below would show FAILED/INVALID, which isn't always true.
+   : (d.flags.length ? (d.flags.length+' flag'+(d.flags.length===1?'':'s')+' set — see “Off the main curve” above for why. Published, off the main curve.') : 'Published, but off the main curve (see above).'));
  dr.hidden=false;requestAnimationFrame(()=>{dr.classList.add('on');sc.classList.add('on')});
  document.getElementById('close').focus();}
 function shutDetail(){dr.classList.remove('on');sc.classList.remove('on');setTimeout(()=>dr.hidden=true,220);}
