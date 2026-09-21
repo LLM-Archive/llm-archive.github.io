@@ -67,7 +67,8 @@ project-run measurement and never changes what's on the regular monthly rotation
 
 ## Submitting one
 
-Today (pre-launch), send the run's full data (matching every requirement above) to
-mkalognomos@gmail.com. Once the project is public, this is expected to move to a structured
-submission path against the public repository — check back here, since this page will be updated
-rather than left describing a process that no longer matches reality.
+Today, since the structured submission path isn't built yet, send the run's full data (matching
+every requirement above) to <mkalognomos@gmail.com>. This is expected to move to a submission path
+against the public repository (`github.com/LLM-Archive/llm-archive.github.io`) — check back here,
+since this page will be updated rather than left describing a process that no longer matches
+reality.
