@@ -1,10 +1,12 @@
 # This file follows the Citation File Format (https://citation-file-format.github.io/).
-# It describes how to cite LLM-Archive. The public repo and site went live 2026-09-21, so
-# repository-code/url below are now real, confirmed values, not placeholders. version/
-# date-released/the DOI stay TODO until a formal tagged release exists (cadence.yaml's
-# release_publish: Zenodo + DOI, automatic, 90d) — the same discipline this project uses for
-# "null until it's true" fields elsewhere (see subject_models.yaml). Filling those in early
-# would be citing a release that doesn't exist yet.
+# It describes how to cite LLM-Archive. version/date-released/the DOI were TODO until a formal
+# tagged release existed (cadence.yaml's release_publish: Zenodo + DOI, automatic, 90d) — the same
+# discipline this project uses for "null until it's true" fields elsewhere (see
+# subject_models.yaml). Filled in 2026-09-21 from v0.2, the first release the Zenodo-GitHub
+# webhook actually archived (tools/cut_release.py): confirmed live at
+# https://zenodo.org/records/22881128 before being copied here, not guessed. The `doi` below is
+# the *concept* DOI (10.5281/zenodo.22881127, always resolves to the latest version), not that
+# version-specific record DOI — see its own `description`.
 
 cff-version: 1.2.0
 message: >-
@@ -30,11 +32,11 @@ license:
   - CC-BY-SA-4.0   # published prose
 repository-code: "https://github.com/LLM-Archive/llm-archive.github.io"
 url: "https://llm-archive.github.io"
-version: "0.0.0-prelaunch"  # TODO: set to the first formally tagged/archived release (Zenodo)
-date-released: "TODO"       # TODO: set when that release is minted; do not backdate
+version: "v0.2"
+date-released: "2026-09-21"
 identifiers:
   - type: doi
-    value: "TODO"            # TODO: Zenodo concept DOI, minted at first public release
+    value: "10.5281/zenodo.22881127"
     description: "Zenodo concept DOI — always resolves to the latest version"
 keywords:
   - large language models

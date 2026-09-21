@@ -1,11 +1,6 @@
 # LLM-Archive
 
-<!-- TODO(release_publish): once a GitHub Release has been cut with tools/cut_release.py AND the
-Zenodo webhook is enabled for this repo, replace this comment with the real DOI badge Zenodo's
-repo page gives you, e.g.:
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.NNNNNNN.svg)](https://doi.org/10.5281/zenodo.NNNNNNN)
-Do not add a placeholder/fake badge before that DOI exists -- same "don't cite a release that
-doesn't exist yet" discipline as CITATION.cff's TODO fields. -->
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22881127.svg)](https://doi.org/10.5281/zenodo.22881127)
 
 A long-running measurement project: does a commercial AI model's decision change when the
 same question is asked in different words — and how would we know if our own way of checking that
