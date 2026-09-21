@@ -39,15 +39,16 @@
   a copy of it, so the two can't drift apart), `outcomes.csv` (the same `outcomes` field, unpacked
   to one row per `(run_id, version, outcome, count)`), `open-lane/<year>.jsonl` (every
   `trials.jsonl` record from a `lane: "open"` run, copied through unchanged and grouped by year —
-  `guard`/`sealed` trials never reach this file), and `croissant.json` (describes the two CSVs for
+  `guard`/`sealed` trials never reach this file), `croissant.json` (describes the two CSVs for
   the MLCommons Croissant format — doesn't read `experiments/` at all, since it only describes
   the CSVs' shape, not their contents; its per-column data type comes from the same field-type
-  labels the CSVs already use, not a fresh per-field decision). A field that isn't a plain scalar
+  labels the CSVs already use, not a fresh per-field decision), and `coverage.csv` (one row per
+  `core.schedule.coverage` observation — this module only formats that log, it doesn't decide
+  whether a job ran or why not; see that module's docstring). A field that isn't a plain scalar
   in `stability.csv` is written as one JSON cell — deciding how to split those into their own
   columns is left for later, not guessed here. Own build check:
-  `python3 -m core.plumbing.render verify`. Doesn't yet build `coverage.csv`, describe
-  `open-lane/` in `croissant.json` (needs a Croissant `fileSet`, not `fileObject`), or build the
-  HTML pages — separate pieces.
+  `python3 -m core.plumbing.render verify`. Doesn't yet describe `open-lane/` in `croissant.json`
+  (needs a Croissant `fileSet`, not `fileObject`), or build the HTML pages — separate pieces.
 - `subject_fingerprint.py` — the daily check against the REAL commercial model (spec.md §7): 24
   fixed, short yes/no fact checks (12 yes / 12 no, in same-topic pairs so an "always yes" strategy
   scores only 50%), asked with the exact same frozen `DECISION: X` grammar every protocol prompt

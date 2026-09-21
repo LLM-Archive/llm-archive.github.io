@@ -3,6 +3,9 @@
     python3 -m core.measure.pilot protocols/<protocol>.json --client fake
 
 Output goes to experiments/<run_id>/ and is never overwritten: data paths are append-only.
+Written to a staging directory first and renamed into place only once complete, so a run
+interrupted partway through (a real API run takes minutes) never leaves a half-written
+experiments/<run_id>/ blocking a real retry of the same run_id -- see run()'s own comment.
 """
 
 from __future__ import annotations
@@ -10,6 +13,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import tempfile
 from datetime import date, datetime, timezone
 from pathlib import Path
 
@@ -66,13 +70,26 @@ def run(protocol: dict, client: Client, run_date: str, replicate_index: int = 0,
         # Refusing to overwrite is what makes "the raw responses are logged" a real guarantee
         # rather than a promise that quietly breaks the one time a run is repeated by accident.
         raise FileExistsError(f"{out_dir} exists — runs are append-only, never overwritten")
-    out_dir.mkdir(parents=True)
+
+    # Written to a hidden staging dir first, renamed to out_dir only once every file below is
+    # down -- a real API run takes minutes, not milliseconds, so a process interrupted partway
+    # through (killed session, crashed machine, anything short of a graceful finish) must never
+    # leave out_dir half-written: with the old direct-write, that half-written state still
+    # satisfies the FileExistsError guard above, permanently blocking a real retry of this exact
+    # run_id without someone finding and deleting the wreckage by hand first. os.rename (what
+    # Path.rename wraps) is atomic on the same filesystem, which staging_dir and out_dir always
+    # share since both live under out_root -- so out_dir either doesn't exist yet, or exists
+    # complete; nothing in between is ever observable. A crash instead leaves an orphaned
+    # staging dir next to it, inert clutter (its name marks it, never mistaken for a real run),
+    # not cleaned up automatically -- deleting things nobody asked to delete is its own risk.
+    out_root.mkdir(parents=True, exist_ok=True)
+    staging_dir = Path(tempfile.mkdtemp(dir=out_root, prefix=f".{run_id}.partial-"))
 
     started = _now()
     trials, returned_ids = [], set()
     calls = schedule(protocol, run_date, client.subject_model_id)
     total = len(calls)
-    with open(out_dir / "trials.jsonl", "w", encoding="utf-8") as f:
+    with open(staging_dir / "trials.jsonl", "w", encoding="utf-8") as f:
         for index, call in enumerate(calls):
             response = client.complete(call["prompt"], meta={k: call[k] for k in ("version", "scenario_id", "rep")})
             result = classify(response, protocol["options"])
@@ -141,8 +158,9 @@ def run(protocol: dict, client: Client, run_date: str, replicate_index: int = 0,
         "analysis_code_sha": measurement.analysis_code_sha(),
         "n_trials": len(trials),
     }
-    (out_dir / "run.json").write_text(json.dumps(experiment_run, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    (out_dir / "measurement.json").write_text(json.dumps(record, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    (staging_dir / "run.json").write_text(json.dumps(experiment_run, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    (staging_dir / "measurement.json").write_text(json.dumps(record, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    staging_dir.rename(out_dir)
     return record
 
 

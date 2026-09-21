@@ -5,8 +5,9 @@
 | File | What it does |
 |---|---|
 | `schedule.py` | Reads `cadence.yaml`, compares against `state/last_run.json`, says what's due today. `due` jobs that are also a `core/budget/` category (`full_sweep`, `subject_fingerprint`) get a `budget.check()` decision attached. CLI: `python3 -m core.schedule.schedule due / mark-run`. |
-| `run_due.py` | The caller `schedule.py` never had: dispatches each due, known cadence job to the runner that already exists for it (`full_sweep` → `core.measure.pilot`, `subject_fingerprint` → `core.plumbing.subject_fingerprint`, `runtime_fingerprint`/`guard_margin_rotation` → `core.plumbing.reference_model_runner`, one call covers both), then calls `schedule.record_run()` for whatever actually ran. Cadence entries with no runner (`human_review`, `checkpoint_sign`, …) are reported, never dispatched. CLI: `python3 -m core.schedule.run_due [--client fake\|anthropic] [--dry-run]` — defaults to `--client fake` (spends nothing) unless told otherwise. |
-| `vectors.json` + `verify.py` | Hand-worked cases, including `run_due.plan()`'s pure routing logic. Run `python3 -m core.schedule.verify` after touching either file. |
+| `run_due.py` | The caller `schedule.py` never had: dispatches each due, known cadence job to the runner that already exists for it (`full_sweep` → `core.measure.pilot`, `subject_fingerprint` → `core.plumbing.subject_fingerprint`, `runtime_fingerprint`/`guard_margin_rotation` → `core.plumbing.reference_model_runner`, one call covers both), then calls `schedule.record_run()` and `coverage.record_observation()` for whatever actually ran (or didn't, with a named cause). Cadence entries with no runner (`human_review`, `checkpoint_sign`, …) are reported, never dispatched. CLI: `python3 -m core.schedule.run_due [--client fake\|anthropic] [--dry-run]` — defaults to `--client fake` (spends nothing) unless told otherwise. |
+| `coverage.py` | For the 4 jobs `run_due.py` knows how to run: whether a due one ran, and if not, why (one of `core.measure.schema.GAP_CAUSES`, never guessed). Appends to `state/coverage_log.jsonl` — the only source `core.plumbing.render`'s `build-coverage` ever builds the public `coverage.csv` from. See its own docstring for scope (which of cadence.yaml's ~20 jobs this covers) and which gap causes are currently reachable. |
+| `vectors.json` + `verify.py` | Hand-worked cases, including `run_due.plan()`'s pure routing logic and `coverage.py`'s `gap_cause_for`/`record_observation`. Run `python3 -m core.schedule.verify` after touching any of these files. |
 
 ## Why it needs to exist
 
@@ -26,5 +27,9 @@ not because of a hardcoded list of "real jobs".
   none of them have a human present at run time the way every real run so far has.
 - Doesn't know about `generation_bridge` (event-triggered by `bridge_trigger`, not a cadence
   field) — separate, later work.
-- `last_run.json` only keeps the most recent date per job, not history — unlike `spend.json`,
-  there's nothing here worth keeping an append-only log of.
+- `last_run.json` only keeps the most recent date per job, not history — that's exactly why
+  `coverage.py` keeps its own separate, append-only log (`state/coverage_log.jsonl`) instead of
+  trying to derive coverage history from `last_run.json`.
+- `coverage.py` only covers the 4 jobs above — the rest of `cadence.yaml`'s human/lifecycle
+  cadences (`human_review`, `release_publish`, `dormant_after`, …) aren't in `coverage.csv` yet;
+  see that module's docstring.

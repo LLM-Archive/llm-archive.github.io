@@ -61,6 +61,13 @@
       "@id": "outcomes.csv",
       "contentUrl": "outcomes.csv",
       "encodingFormat": "text/csv"
+    },
+    {
+      "@type": "cr:FileSet",
+      "@id": "open-lane",
+      "description": "Full trial-level records (prompt hash, raw response text, extracted decision) for every measurement in the open lane, one JSON object per line, one file per year.",
+      "encodingFormat": "application/jsonlines",
+      "includes": "open-lane/*.jsonl"
     }
   ],
   "recordSet": [
@@ -812,6 +819,194 @@
             },
             "extract": {
               "column": "count"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "@type": "cr:RecordSet",
+      "@id": "open-lane-trials",
+      "field": [
+        {
+          "@type": "cr:Field",
+          "@id": "open-lane-trials/record_type",
+          "dataType": "sc:Text",
+          "source": {
+            "fileSet": {
+              "@id": "open-lane"
+            },
+            "extract": {
+              "jsonPath": "$.record_type"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "open-lane-trials/run_id",
+          "dataType": "sc:Text",
+          "source": {
+            "fileSet": {
+              "@id": "open-lane"
+            },
+            "extract": {
+              "jsonPath": "$.run_id"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "open-lane-trials/index",
+          "dataType": "sc:Integer",
+          "source": {
+            "fileSet": {
+              "@id": "open-lane"
+            },
+            "extract": {
+              "jsonPath": "$.index"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "open-lane-trials/version",
+          "dataType": "sc:Text",
+          "source": {
+            "fileSet": {
+              "@id": "open-lane"
+            },
+            "extract": {
+              "jsonPath": "$.version"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "open-lane-trials/scenario_id",
+          "dataType": "sc:Text",
+          "source": {
+            "fileSet": {
+              "@id": "open-lane"
+            },
+            "extract": {
+              "jsonPath": "$.scenario_id"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "open-lane-trials/rep",
+          "dataType": "sc:Integer",
+          "source": {
+            "fileSet": {
+              "@id": "open-lane"
+            },
+            "extract": {
+              "jsonPath": "$.rep"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "open-lane-trials/prompt_sha256",
+          "dataType": "sc:Text",
+          "source": {
+            "fileSet": {
+              "@id": "open-lane"
+            },
+            "extract": {
+              "jsonPath": "$.prompt_sha256"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "open-lane-trials/response_text",
+          "dataType": "sc:Text",
+          "source": {
+            "fileSet": {
+              "@id": "open-lane"
+            },
+            "extract": {
+              "jsonPath": "$.response_text"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "open-lane-trials/stop_reason",
+          "dataType": "sc:Text",
+          "source": {
+            "fileSet": {
+              "@id": "open-lane"
+            },
+            "extract": {
+              "jsonPath": "$.stop_reason"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "open-lane-trials/returned_model_id",
+          "dataType": "sc:Text",
+          "source": {
+            "fileSet": {
+              "@id": "open-lane"
+            },
+            "extract": {
+              "jsonPath": "$.returned_model_id"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "open-lane-trials/error",
+          "dataType": "sc:Text",
+          "source": {
+            "fileSet": {
+              "@id": "open-lane"
+            },
+            "extract": {
+              "jsonPath": "$.error"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "open-lane-trials/outcome",
+          "dataType": "sc:Text",
+          "source": {
+            "fileSet": {
+              "@id": "open-lane"
+            },
+            "extract": {
+              "jsonPath": "$.outcome"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "open-lane-trials/token",
+          "dataType": "sc:Text",
+          "source": {
+            "fileSet": {
+              "@id": "open-lane"
+            },
+            "extract": {
+              "jsonPath": "$.token"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "open-lane-trials/reason",
+          "dataType": "sc:Text",
+          "source": {
+            "fileSet": {
+              "@id": "open-lane"
+            },
+            "extract": {
+              "jsonPath": "$.reason"
             }
           }
         }

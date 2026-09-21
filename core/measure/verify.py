@@ -18,12 +18,17 @@ never survive to spend real money.
 
 from __future__ import annotations
 
+import contextlib
+import io
 import json
 import sys
+import tempfile
 from fractions import Fraction
 from pathlib import Path
 
-from . import stats
+from core.plumbing.fake_client import FakeClient
+
+from . import pilot, stats
 from .grammar import extract
 from .invariants import check_protocol
 from .measurement import evaluate_gates
@@ -158,6 +163,62 @@ def check_twin_pairing() -> list[str]:
     return errors
 
 
+def check_crash_safety() -> list[str]:
+    """pilot.run() must never leave a half-written experiments/<run_id>/ behind after a real crash
+    partway through -- fixed 2026-09-21 after finding the old code wrote straight into out_dir,
+    so an interrupted run (killed session, crashed machine -- a real run takes minutes, not
+    milliseconds) left just enough on disk to satisfy the FileExistsError "already ran" guard
+    forever, blocking any real retry without someone deleting the wreckage by hand first. Proves
+    both halves: a client that raises partway through leaves out_dir absent (only an orphaned,
+    clearly-named staging dir), and a normal retry of that same run_id afterward succeeds -- not
+    just "doesn't crash the test", the same run_id, for real."""
+    errors = []
+    protocol = json.loads(next(_PROTOCOLS.glob("*.json")).read_text())
+
+    class _CrashingClient(FakeClient):
+        def __init__(self) -> None:
+            super().__init__()
+            self.calls = 0
+
+        def complete(self, prompt, *, meta):
+            self.calls += 1
+            if self.calls > 3:
+                raise RuntimeError("simulated crash mid-run")
+            return super().complete(prompt, meta=meta)
+
+    with tempfile.TemporaryDirectory() as tmp:
+        out_root = Path(tmp)
+        run_date = "2026-01-16"
+        run_id = f"{run_date}__{protocol['protocol_id']}__fake-subject-v1__r0"
+        out_dir = out_root / run_id
+
+        with contextlib.redirect_stdout(io.StringIO()):  # pilot.run()'s own progress marks
+            try:
+                pilot.run(protocol, _CrashingClient(), run_date, out_root=out_root)
+                errors.append("expected the crashing client to raise, but pilot.run() returned normally")
+            except RuntimeError:
+                pass
+
+        if out_dir.exists():
+            errors.append(f"a crashed run left a real out_dir behind: {out_dir}")
+        staging_leftovers = list(out_root.glob(f".{run_id}.partial-*"))
+        if len(staging_leftovers) != 1:
+            errors.append(f"expected exactly 1 orphaned staging dir after the crash, found {len(staging_leftovers)}")
+
+        try:
+            with contextlib.redirect_stdout(io.StringIO()):
+                record = pilot.run(protocol, FakeClient(), run_date, out_root=out_root)
+        except FileExistsError as e:
+            errors.append(f"retrying the same run_id after a crash should succeed, got FileExistsError: {e}")
+        else:
+            if record["run_id"] != run_id:
+                errors.append(f"retry run_id mismatch: got {record['run_id']!r}, want {run_id!r}")
+            if not out_dir.exists() or sorted(p.name for p in out_dir.iterdir()) != ["measurement.json", "run.json", "trials.jsonl"]:
+                errors.append(f"retry didn't produce a complete out_dir: {sorted(p.name for p in out_dir.iterdir()) if out_dir.exists() else 'missing'}")
+
+    return errors
+
+
 def check_pct_naming() -> list[str]:
     """spec.md §6: a published field is a 0-100 percentage if and only if its name contains
     '_pct'. Checked both directions, since either mismatch is the same specification error --
@@ -185,6 +246,7 @@ def main() -> int:
         ("protocols (gate 1)", check_protocols),
         ("twin pairing", check_twin_pairing),
         ("_pct field naming", check_pct_naming),
+        ("crash safety", check_crash_safety),
     )
 
     all_errors: list[str] = []

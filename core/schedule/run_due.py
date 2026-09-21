@@ -25,6 +25,11 @@ release_publish, strategy_review, self_revision, integrity_declaration, source_d
 deadman_alert, vacation_after, dormant_after, succession_offer, concluded_after) is a human or
 lifecycle cadence, not code -- `plan()` deliberately leaves these out of what it dispatches, and
 `main()` only reports them as due, exactly like `schedule.py due` already did.
+
+Also logs to `state/coverage_log.jsonl` (`core.schedule.coverage`) every time it actually resolves
+a due job's outcome -- "ran" or a gap with a named cause -- so `core.plumbing.render
+build-coverage` has real, contemporaneous data to build coverage.csv from. See that module's
+docstring for which gap causes it can currently name and which it deliberately can't yet.
 """
 
 from __future__ import annotations
@@ -39,7 +44,7 @@ from core.budget import budget
 from core.measure import pilot
 from core.plumbing import subject_fingerprint
 
-from . import schedule
+from . import coverage, schedule
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_PROTOCOLS_DIR = ROOT / "protocols"
@@ -110,8 +115,19 @@ def run_full_sweep(
     protocol, not once for the whole sweep -- same discipline core.measure.pilot's own CLI already
     uses at this call site, just looped instead of invoked 12 separate times by hand. A protocol
     that already ran today (FileExistsError) or that the ladder halts partway through is skipped,
-    not fatal -- the rest of the sweep, and the rest of due today's jobs, still get a chance."""
+    not fatal -- the rest of the sweep, and the rest of due today's jobs, still get a chance.
+
+    The ladder's rung is enforced here, not just read: `budget.check()`'s `allowed` is only False
+    at the very bottom rung (`max_sweep_protocols == 0`), so a naive "if not allowed: skip" leaves
+    the two rungs in between -- `reduced_sweep` (drop to `max_sweep_protocols`) and
+    `guard_only_sweep` (drop to `sweep_lane`) -- computed but never actually applied. Both are
+    enforced below, against how many of *this sweep's* protocols have already run and each
+    protocol's own `lane` -- the ledger itself doesn't move mid-sweep (real spend is only logged
+    after the fact, once the bill confirms it, never estimated), so re-checking the rung on every
+    iteration only tells us the rung as of the start of this sweep; the running count here is what
+    actually keeps a long sweep inside its own rung's cap."""
     results = []
+    protocols_run = 0
     for path in sorted(protocols_dir.glob("*.json")):
         protocol = json.loads(path.read_text(encoding="utf-8"))
         if protocol.get("status") != "admitted":
@@ -129,6 +145,20 @@ def run_full_sweep(
             if not decision["allowed"]:
                 results.append({"protocol_id": pid, "skipped": "budget_halted", "detail": decision["detail"]})
                 continue
+            if protocols_run >= decision["max_sweep_protocols"]:
+                results.append({
+                    "protocol_id": pid, "skipped": "budget_halted",
+                    "detail": f"{decision['level']} rung caps this sweep at {decision['max_sweep_protocols']} "
+                    f"protocol(s); {protocols_run} already run",
+                })
+                continue
+            if decision["sweep_lane"] is not None and protocol.get("lane") != decision["sweep_lane"]:
+                results.append({
+                    "protocol_id": pid, "skipped": "budget_halted",
+                    "detail": f"{decision['level']} rung restricts this sweep to lane {decision['sweep_lane']!r}; "
+                    f"{pid} is lane {protocol.get('lane')!r}",
+                })
+                continue
             from core.plumbing.anthropic_client import AnthropicClient
 
             mid, mfam = _active_model(subject_models_path, model_id, model_family)
@@ -140,6 +170,7 @@ def run_full_sweep(
             results.append({"protocol_id": pid, "skipped": "already_ran_today"})
             continue
 
+        protocols_run += 1
         results.append({"protocol_id": pid, "run_id": record["run_id"], "n_valid": record["n_valid"], "on_curve": record["on_curve"]})
         if client_kind == "anthropic":
             print(_SPEND_REMINDER.format(
@@ -243,12 +274,22 @@ def _ran_something(runner: str, outcome: dict | list[dict]) -> bool:
     return outcome.get("skipped") not in _STILL_DUE_SKIPS
 
 
+def _skip_reasons(runner: str, outcome: dict | list[dict]) -> set[str]:
+    """The distinct still-due skip reasons seen in one runner's outcome -- coverage.gap_cause_for()'s
+    input. Only meaningful when _ran_something() is False; called only in that case below."""
+    if runner == "full_sweep":
+        return {r.get("skipped") for r in outcome if r.get("skipped") in _STILL_DUE_SKIPS}
+    reason = outcome.get("skipped")
+    return {reason} if reason in _STILL_DUE_SKIPS else set()
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--client", choices=["fake", "anthropic"], default="fake", help="default is fake: this command spends nothing unless told to")
     ap.add_argument("--date", default=date.today().isoformat())
     ap.add_argument("--cadence", type=Path, default=schedule.DEFAULT_CADENCE)
     ap.add_argument("--last-run", type=Path, default=schedule.DEFAULT_LAST_RUN)
+    ap.add_argument("--coverage-log", type=Path, default=coverage.DEFAULT_LOG)
     ap.add_argument("--protocols-dir", type=Path, default=DEFAULT_PROTOCOLS_DIR)
     ap.add_argument("--experiments-out", type=Path, default=DEFAULT_EXPERIMENTS_OUT)
     ap.add_argument("--subject-fingerprint-out", type=Path, default=None, help="default: <experiments-out>/subject_fingerprint")
@@ -302,9 +343,19 @@ def main(argv: list[str] | None = None) -> int:
         if _ran_something(runner, outcome):
             for job in jobs:
                 schedule.record_run(args.last_run, job, args.date)
+                coverage.record_observation(job, args.date, ran=True, log_path=args.coverage_log)
         else:
             exit_code = 1
             print(f"{runner}: nothing actually ran -- {', '.join(jobs)} left due, not recorded.")
+            cause = coverage.gap_cause_for(runner, _skip_reasons(runner, outcome))
+            if cause is None:
+                print(
+                    f"{runner}: no schema.GAP_CAUSES match for this skip reason yet -- "
+                    "coverage.csv gap NOT logged (see core/schedule/coverage.py's docstring)."
+                )
+            else:
+                for job in jobs:
+                    coverage.record_observation(job, args.date, ran=False, cause=cause, log_path=args.coverage_log)
 
     return exit_code
 

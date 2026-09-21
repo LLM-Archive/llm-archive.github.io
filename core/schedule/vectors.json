@@ -85,5 +85,90 @@
       "run_date": "not-a-date",
       "expect_error": true
     }
+  ],
+  "gap_cause_for": [
+    {
+      "name": "full_sweep_budget_halted_has_an_honest_match",
+      "runner": "full_sweep",
+      "skip_reasons": ["budget_halted"],
+      "expected": "budget_halted"
+    },
+    {
+      "name": "reference_model_environment_unavailable_deliberately_unmapped",
+      "note": "no schema.GAP_CAUSES value honestly fits a local dev machine missing llama_cpp -- see coverage.py's docstring",
+      "runner": "reference_model",
+      "skip_reasons": ["environment_unavailable"],
+      "expected": null
+    },
+    {
+      "name": "subject_fingerprint_never_produces_a_still_due_skip_today",
+      "runner": "subject_fingerprint",
+      "skip_reasons": ["budget_halted"],
+      "expected": null
+    },
+    {
+      "name": "mixed_reasons_is_not_one_honest_cause",
+      "runner": "full_sweep",
+      "skip_reasons": ["budget_halted", "environment_unavailable"],
+      "expected": null
+    },
+    {
+      "name": "empty_reasons",
+      "runner": "full_sweep",
+      "skip_reasons": [],
+      "expected": null
+    }
+  ],
+  "record_observation": [
+    {
+      "name": "ran_true_roundtrips",
+      "job": "subject_fingerprint",
+      "date": "2026-09-22",
+      "ran": true,
+      "cause": null,
+      "expect_error": false
+    },
+    {
+      "name": "gap_with_valid_cause_roundtrips",
+      "job": "full_sweep",
+      "date": "2026-09-22",
+      "ran": false,
+      "cause": "budget_halted",
+      "expect_error": false
+    },
+    {
+      "name": "unknown_job_rejected",
+      "job": "release_publish",
+      "date": "2026-09-22",
+      "ran": false,
+      "cause": "budget_halted",
+      "expect_error": true
+    },
+    {
+      "name": "gap_with_invalid_cause_rejected",
+      "note": "must never write a coverage_gap cause outside schema.GAP_CAUSES's closed list",
+      "job": "full_sweep",
+      "date": "2026-09-22",
+      "ran": false,
+      "cause": "server_on_fire",
+      "expect_error": true
+    },
+    {
+      "name": "ran_true_with_a_cause_rejected",
+      "note": "a real run doesn't get a gap cause attached, even a valid-looking one",
+      "job": "full_sweep",
+      "date": "2026-09-22",
+      "ran": true,
+      "cause": "budget_halted",
+      "expect_error": true
+    },
+    {
+      "name": "bad_date_rejected_immediately",
+      "job": "full_sweep",
+      "date": "not-a-date",
+      "ran": true,
+      "cause": null,
+      "expect_error": true
+    }
   ]
 }

@@ -126,11 +126,11 @@ tr.row td:last-child{color:var(--link);font-size:13px;white-space:nowrap}
 .audit-panel{margin-top:12px;padding:10px;border:1px solid var(--line);border-radius:10px;
   background:linear-gradient(180deg, rgba(17,24,39,.035), rgba(17,24,39,.015));}
 .audit-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.audit-box{padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.22)}
+.audit-box{padding:10px 12px;border:1px solid #bfe0c8;border-radius:8px;background:#eaf6ee}
 .audit-box .label{display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;
-  color:var(--faint);margin-bottom:4px}
+  color:#5c9271;margin-bottom:4px}
 .audit-box .value{font:12px/1.4 ui-monospace,"SF Mono",Menlo,monospace;letter-spacing:.02em;
-  color:var(--ink);font-variant-numeric:tabular-nums}
+  color:#1f6b3f;font-variant-numeric:tabular-nums}
 @media(max-width:520px){.audit-grid{grid-template-columns:1fr}}
 
 #scrim{position:fixed;inset:0;background:rgba(20,20,24,.34);opacity:0;pointer-events:none;
@@ -199,7 +199,7 @@ footer{border-top:1px solid var(--line);margin-top:70px;padding-top:22px;font-si
 
 <section class="page active" id="out">
 
-<h1>We check whether an AI changes its mind when a question says the same thing in different words</h1>
+<h1>We check whether an AI changes its mind when a question says the same thing in different words and we publish the results</h1>
 
 @@COVERAGE_BAR@@
 
@@ -232,8 +232,9 @@ score or a guarantee that the model will behave the same way in your own product
 <h3>The current picture</h3>
 <p><small>Each test asks the AI the same question, worded differently, many times. Click a row to
 see more.</small></p>
+<p><span class="tag t-fl">model: <code>@@COMMERCIAL_MODEL_ID@@</code></span></p>
 <div class="scroll"><table>
-<thead><tr><th title="The scenario being tested, and which model answered it">Test</th><th title="What part of the question's wording was changed between versions">What changes</th><th title="Whether this test's questions and answers are public (open), or still kept private until the model retires">Lane</th><th title="How often it kept the same decision when we changed the question">Stability</th><th><abbr title="how many times it was asked">n</abbr></th><th title="Whether this result passed our quality checks, and if not, which one it failed">Checks</th><th title="Change vs. this test's previous run">vs. previous</th><th></th></tr></thead>
+<thead><tr><th title="The scenario being tested, and which model answered it">Test</th><th title="What part of the question's wording was changed between versions">What changes</th><th title="Whether this test's questions and answers are public (open), or still kept private until the model retires">Lane</th><th title="The day this measurement ran">Date</th><th title="How often it kept the same decision when we changed the question">Stability</th><th><abbr title="how many times it was asked">n</abbr></th><th title="Whether this result passed our quality checks, and if not, which one it failed">Checks</th><th title="Change vs. this test's previous run">vs. previous</th><th></th></tr></thead>
 <tbody id="rows"></tbody>
 </table></div>
 
@@ -257,8 +258,9 @@ system — not in the AI we're tracking — and we don't publish a result for th
 <h3>A second check — open model</h3>
 <p class="lede">We also run the same tests on a model that anyone can download and re-run, so that
 the method itself can be shown to actually work · <a href="#" onclick="go('what');return false">why two models</a></p>
+<p><span class="tag t-fl">model: <code>@@REFERENCE_MODEL_ID@@</code></span></p>
 <div class="scroll"><table>
-<thead><tr><th title="The scenario being tested, and which model answered it">Test</th><th title="What part of the question's wording was changed between versions">What changes</th><th title="Whether this test's questions and answers are public (open), or still kept private until the model retires">Lane</th><th title="How often it kept the same decision when we changed the question">Stability</th><th><abbr title="how many times it was asked">n</abbr></th><th title="Whether this result passed our quality checks, and if not, which one it failed">Checks</th><th title="Change vs. this test's previous run">vs. previous</th><th></th></tr></thead>
+<thead><tr><th title="The scenario being tested, and which model answered it">Test</th><th title="What part of the question's wording was changed between versions">What changes</th><th title="Whether this test's questions and answers are public (open), or still kept private until the model retires">Lane</th><th title="The day this measurement ran">Date</th><th title="How often it kept the same decision when we changed the question">Stability</th><th><abbr title="how many times it was asked">n</abbr></th><th title="Whether this result passed our quality checks, and if not, which one it failed">Checks</th><th title="Change vs. this test's previous run">vs. previous</th><th></th></tr></thead>
 <tbody id="orows"></tbody>
 </table></div>
 
@@ -283,11 +285,7 @@ in the <a href="guide/data-dictionary.html">data dictionary</a>, part of the sep
 <a href="guide/index.html">guide</a>.</small></p>
 
 <h3>How to cite it</h3>
-<pre>@dataset{llm-archive2030,
-  title  = {LLM-Archive: AI Decision Stability Archive},
-  year   = {2030},
-  doi    = {10.5281/zenodo.XXXXXXX}
-}</pre>
+@@CITATION_BIBTEX@@
 
 <h3>How to verify it hasn't been tampered with</h3>
 <p>Download the file, compute its own <code>sha256</code>, and compare it with the one we publish.
@@ -494,7 +492,7 @@ code preserves the record's exact identity.</small></p>
 <tr><td><abbr title="How different the answers are from one another">Entropy</abbr></td><td>Variety of answers</td><td>Very low entropy means the AI answers almost the same way every time, so a high score can be misleading.</td></tr>
 <tr><td><abbr title="The random difference we expect even when there's no real change">Noise floor</abbr></td><td>Random variation</td><td>A change below this threshold could just be chance, and isn't presented as a real improvement or weakness.</td></tr>
 <tr><td>Confidence interval / CI95%</td><td>Margin of uncertainty</td><td>The range around the score, e.g. 92%–96%. Shows how precise the estimate is from that particular sample.</td></tr>
-<tr><td>Sample size / <code>n</code></td><td>How many repeats were done</td><td>Here it's 150 repeats for each version. <code>n_items</code> is how many different scenarios a panel has.</td></tr>
+<tr><td>Sample size / <code>n</code></td><td>How many repeats were done</td><td>Here it's 30 repeats for each version (<code>n_per_scenario</code>=2 across 15 scenarios). <code>n_items</code> is how many different scenarios a panel has.</td></tr>
 </tbody></table></div>
 
 <h3>Run settings</h3>
@@ -502,7 +500,7 @@ code preserves the record's exact identity.</small></p>
 <thead><tr><th>Term</th><th>What it is</th><th>What applies here</th></tr></thead>
 <tbody>
 <tr><td>Greedy decoding</td><td>Always picking the most likely next word.</td><td>Reduces randomness, but doesn't mean the whole service is fully predictable.</td></tr>
-<tr><td>Temperature</td><td>A setting that affects randomness.</td><td>The mockup states <code>temperature = 1.0</code>, not a fully deterministic mode.</td></tr>
+<tr><td>Temperature</td><td>A setting that affects randomness.</td><td>Not exposed as a client-controllable parameter on this API at all. Repeated calls were found to return identical answers anyway, which is why <code>n_per_scenario</code> is 2, not a larger sampling count.</td></tr>
 <tr><td>System prompt</td><td>The initial instruction that sets role and rules.</td><td>In the base measurement there is none, so the setting stays explicit and comparable.</td></tr>
 <tr><td>SHA-256 hash</td><td>A digital fingerprint of a file.</td><td>Lets you check you downloaded the same file, not a modified copy.</td></tr>
 </tbody></table></div>
@@ -514,13 +512,13 @@ code preserves the record's exact identity.</small></p>
 <tr><td>Panel</td><td>A set of fixed scenarios and questions.</td><td>We keep the same test over time, so changes can be compared fairly.</td></tr>
 <tr><td>Heatmap</td><td>A table with colored cells.</td><td>Shows at a glance where the model is more stable and where it falls short.</td></tr>
 <tr><td>JSONL / Croissant-RAI</td><td>Data file formats.</td><td>JSONL has one record per line. Croissant-RAI describes the dataset and responsible-use information.</td></tr>
-<tr><td>Baseline / reference model</td><td>A reference point, or the frozen control model.</td><td>Here, the reference model checks whether our own measurement pipeline drifted; it's not a general model ranking.</td></tr>
+<tr><td>Baseline / reference model</td><td>A reference point, or the frozen control model.</td><td>Here, the reference model is <code>@@REFERENCE_MODEL_ID@@</code> — it checks whether our own measurement pipeline drifted; it's not a general model ranking.</td></tr>
 <tr><td>Silent update</td><td>A change behind the same API with no new visible name.</td><td>The fingerprint and the long-running series help reveal whether the product's behavior changed.</td></tr>
 </tbody></table></div>
 </section>
 
 
-<footer><div>LLM-Archive is free, and always will be · Open source · <a href="#data" onclick="document.querySelector('[data-p=data]').click();return false">download the data</a> · <a href="guide/index.html" target="_blank" rel="noopener">guide ↗</a> · <a href="https://github.com/LLM-Archive/llm-archive.github.io" target="_blank" rel="noopener">official repository ↗</a></div></footer>
+<footer><div>© @@COPYRIGHT_YEAR@@ LLM-Archive · Open source · <a href="#data" onclick="document.querySelector('[data-p=data]').click();return false">download the results</a> · <a href="guide/index.html" target="_blank" rel="noopener">guide</a> · <a href="https://github.com/LLM-Archive/llm-archive.github.io" target="_blank" rel="noopener">official repository</a></div></footer>
 </main>
 
 <div id="scrim"></div>
@@ -579,7 +577,7 @@ code preserves the record's exact identity.</small></p>
   <h3>Settings — frozen</h3>
   <div class="audit-panel">
     <div class="audit-grid">
-      <div class="audit-box"><span class="label">temperature</span><span class="value">1.0</span></div>
+      <div class="audit-box"><span class="label">temperature</span><span class="value">not client-controllable</span></div>
       <div class="audit-box"><span class="label">effort</span><span class="value">disabled</span></div>
       <div class="audit-box"><span class="label">system prompt</span><span class="value">none</span></div>
       <div class="audit-box"><span class="label">extractor_sha</span><span class="value" id="dxsha"></span></div>
@@ -593,6 +591,9 @@ code preserves the record's exact identity.</small></p>
     <tr><td><span class="status-pill" id="pcen"></span> <abbr title="How varied the answers were. Very low entropy means the model answered almost the same way every time">Entropy</abbr> A / B</td><td class="num" id="cen"></td></tr>
     <tr><td><span class="status-pill" id="pcu"></span> Losses A / A′ / B / C</td><td class="num" id="cu"></td></tr>
     <tr><td><span class="status-pill" id="pcb"></span> <abbr title="Loss Floor: the worst-case error that can result from lost or unreadable answers; measures how safe the measurement is when some data is dropped.">Loss floor</abbr> A↔B <span class="help-tip" title="Loss Floor: the worst-case error that can result from lost or unreadable answers; measures how safe the measurement is when some data is dropped.">?</span></td><td class="num" id="cb"></td></tr>
+    <tr><td><span class="status-pill" id="pcbaa"></span> <abbr title="Loss Floor: the worst-case error that can result from lost or unreadable answers; measures how safe the measurement is when some data is dropped.">Loss floor</abbr> A↔A′</td><td class="num" id="cbaa"></td></tr>
+    <tr><td><span class="status-pill" id="pcbac"></span> <abbr title="Loss Floor: the worst-case error that can result from lost or unreadable answers; measures how safe the measurement is when some data is dropped.">Loss floor</abbr> A↔C</td><td class="num" id="cbac"></td></tr>
+    <tr><td><span class="status-pill" id="pcsd"></span> <abbr title="Whether a couple of the fifteen scenarios account for most of the measured gap, rather than it being spread evenly across all of them.">Scenario concentration</abbr> <span class="help-tip" title="Whether a couple of the fifteen scenarios account for most of the measured gap, rather than it being spread evenly across all of them.">?</span></td><td class="num" id="csd"></td></tr>
   </tbody></table>
   <p><small id="verdict"></small></p>
 </aside>
@@ -650,6 +651,7 @@ function trendCell(d){
 function rowHtml(d){const i=ALL.indexOf(d);
  return `<tr class="row" tabindex="0" data-i="${i}"><td><b>${panelName(d)}</b><br><small><code>${d.protocol_id}</code></small></td><td>${TYPE_LABELS[d.rewording_type]||d.rewording_type}</td>`+
  `<td><span class="tag ${d.lane==='open'?'t-open':'t-guard'}">${d.lane}</span></td>`+
+ `<td class="num">${d.run_date||'—'}</td>`+
  `<td class="num"><b>${d.stability_pct.toFixed(1)}%</b> <span style="color:var(--faint)">±${((d.ci_high_pct-d.ci_low_pct)/2).toFixed(1)}</span></td>`+
  `<td class="num">${d.n}×4</td>`+
  `<td>${checksTag(d)}</td>`+
@@ -659,7 +661,7 @@ function rowHtml(d){const i=ALL.indexOf(d);
 function renderTable(id,rows){
  document.getElementById(id).innerHTML = rows.length
    ? rows.map(rowHtml).join('')
-   : '<tr><td colspan="8"><small>No measurements yet.</small></td></tr>';
+   : '<tr><td colspan="9"><small>No measurements yet.</small></td></tr>';
 }
 renderTable('rows',ROWS);
 renderTable('orows',OROWS);
@@ -698,9 +700,19 @@ function openDetail(i){const d=ALL[i];
  const sg=d.scenario_gaps_pct||[], mx=sg.length?Math.max.apply(null,sg):0;
  document.getElementById('sgw').innerHTML=sg.map((g,j)=>
    `<div class="sgb" title="scenario ${j+1}: ${g==null?'not computable — no valid responses to compare':g.toFixed(1)+' points'}"><i style="height:${g!=null&&mx>0?(100*g/mx).toFixed(0):0}%"></i><span>${j+1}</span></div>`).join('');
- const srt=sg.slice().sort((a,b)=>b-a), total=sg.reduce((a,b)=>a+b,0), top2=total>0?100*(srt[0]+srt[1])/total:0;
- set('sgnote','Height = how much the decision changed on that scenario. The two worst produce '
-   +top2.toFixed(0)+'% of the gap'+(top2>50?' — flagged scenario_dominated.':'.'));
+ const valid=sg.map((g,j)=>({g,j})).filter(x=>x.g!=null);
+ const worst=valid.slice().sort((a,b)=>b.g-a.g).slice(0,2);
+ const total=valid.reduce((a,x)=>a+x.g,0);
+ let note='Height = how much the decision changed on that scenario.';
+ if(worst.length===2 && total>0){
+   const top2pct=100*(worst[0].g+worst[1].g)/total;
+   // Reads d.flags directly rather than re-deriving the scenario_dominated threshold here --
+   // the real cutoff (protocol.scenario_dominated_share_pct) isn't published per measurement,
+   // and the flag is already the authoritative answer, computed once, backend-side.
+   note+=' Scenarios '+(worst[0].j+1)+' and '+(worst[1].j+1)+' produced '+top2pct.toFixed(0)
+     +'% of the gap between them'+(d.flags.includes('scenario_dominated')?' — flagged scenario_dominated.':'.');
+ }
+ set('sgnote',note);
  set('dnitems',String(d.n_items));
  set('dn',String(d.n));
  set('ds',d.stability_pct.toFixed(1)+'% (±'+((d.ci_high_pct-d.ci_low_pct)/2).toFixed(1)+')');
@@ -722,25 +734,39 @@ function openDetail(i){const d=ALL[i];
   else{el.textContent='['+warnWord+']';el.className='status-pill warn';}
  };
  const cgpUnset=gAC.reading===null||gAC.reading===undefined;
+ const scenDom=gates.scenario_dominated, scenDomUnset=scenDom===null||scenDom===undefined;
  setPill('pcgn',!!gAA.above_surface_noise,'PASSED','FAILED');
  setPill('pcgp',cgpUnset?'unset':!!gAC.reading,'VALID','INVALID');
  setPill('pcen',!d.flags.includes('degenerate_candidate'),'PASSED','FAILED');
  setPill('pcu',!d.flags.includes('asymmetric_missingness'),'VALID','INVALID');
  setPill('pcb',!!gAB.drop_bound_ok,'PASSED','FAILED');
+ setPill('pcbaa',!!gAA.drop_bound_ok,'PASSED','FAILED');
+ setPill('pcbac',!!gAC.drop_bound_ok,'PASSED','FAILED');
+ setPill('pcsd',scenDomUnset?'unset':!scenDom,'PASSED','FAILED');
  set('cgn',d.gap_null_pct.toFixed(1)+' points'+(gAA.above_surface_noise?' ✓':' ⚠'));
  set('cgp',cgpUnset?d.gap_positive_pct.toFixed(1)+' points (threshold not set)':d.gap_positive_pct.toFixed(1)+' points'+(gAC.reading?' ✓':' ⚠'));
  set('cen',d.entropy_a.toFixed(2)+' / '+d.entropy_b.toFixed(2)+(d.flags.includes('degenerate_candidate')?' ⚠':' ✓'));
  set('cu',(100*d.u_a).toFixed(1)+'% / '+(100*d.u_a_prime).toFixed(1)+'% / '+(100*d.u_b).toFixed(1)+'% / '+(100*d.u_c).toFixed(1)+'%'+(d.flags.includes('asymmetric_missingness')?' ⚠':' ✓'));
  set('cb',d.drop_bound_pct_ab.toFixed(1)+' points'+(gAB.drop_bound_ok?' ✓':' ⚠'));
+ set('cbaa',d.drop_bound_pct_aa.toFixed(1)+' points'+(gAA.drop_bound_ok?' ✓':' ⚠'));
+ set('cbac',d.drop_bound_pct_ac.toFixed(1)+' points'+(gAC.drop_bound_ok?' ✓':' ⚠'));
+ set('csd',scenDomUnset?'threshold not set':(d.scenario_concentration_pct==null?'not computable':d.scenario_concentration_pct.toFixed(1)+'% (top 2 scenarios)')+(scenDom?' ⚠':' ✓'));
+ // "Published" used to be said unconditionally here, regardless of lane -- true for an open-lane
+ // measurement (the full text and every answer really are in open-lane/*.jsonl), but misleading
+ // for guard, where only this row's aggregate numbers are public and the text stays sealed until
+ // this model generation retires (see the "locked" panel above, isOpen just above). Lane-aware now.
+ const availability=isOpen
+   ? 'Full text and answers are published even though it’s off the main curve.'
+   : 'The aggregate result is public; the underlying text and answers stay sealed until this model generation retires.';
  set('verdict', d.on_curve
    ? 'All checks pass. This measurement is on the main curve.'
    // "flag(s)", not "check(s)": d.flags.length counts entries in the closed FLAGS list
-   // (core/measure/schema.py), which isn't the same thing as how many rows below show a
-   // non-passing pill -- two flags here (scenario_dominated, drop_confounded) have no row of
-   // their own in "The checks" table at all, only the full explanation in the "Off the main
-   // curve" callout above. Saying "N checks failed" here used to imply exactly N of the rows
-   // below would show FAILED/INVALID, which isn't always true.
-   : (d.flags.length ? (d.flags.length+' flag'+(d.flags.length===1?'':'s')+' set — see “Off the main curve” above for why. Published, off the main curve.') : 'Published, but off the main curve (see above).'));
+   // (core/measure/schema.py). Every flag this project actually publishes now has a matching row
+   // above: "Scenario concentration" (scenario_dominated) and the 3 separate "Loss floor" rows
+   // (drop_confounded can fire from any one of A↔B/A↔A′/A↔C alone -- a single combined row used
+   // to hide which one) were both added after a real reader counted the rows, got a different
+   // number from "N flags set" below, and reasonably assumed a bug.
+   : (d.flags.length ? (d.flags.length+' flag'+(d.flags.length===1?'':'s')+' set — see “Off the main curve” above for why. '+availability) : availability+' Off the main curve (see above).'));
  dr.hidden=false;requestAnimationFrame(()=>{dr.classList.add('on');sc.classList.add('on')});
  document.getElementById('close').focus();}
 function shutDetail(){dr.classList.remove('on');sc.classList.remove('on');setTimeout(()=>dr.hidden=true,220);}
