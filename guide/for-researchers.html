@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>For researchers — LLM-Archive Guide</title>
+<style>
+:root{--ink:#15161a;--dim:#5a5c66;--faint:#8c8f99;--line:#e4e4e8;--bg:#fff;--raise:#fafafb;--link:#1a4fd6}
+@media(prefers-color-scheme:dark){
+  :root{--ink:#e8edf3;--dim:#aeb9c7;--faint:#7f8b99;--line:#34404d;--bg:#14181d;--raise:#1d242c;--link:#79aef2}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 system-ui,-apple-system,"Segoe UI",Inter,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:760px;margin:0 auto;padding:0 20px}
+header{border-bottom:1px solid var(--line);padding:16px 0;margin-bottom:8px}
+header .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px}
+.brand{font-size:14px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);text-decoration:none;margin-right:8px}
+.brand small{display:block;font-size:10px;font-weight:600;letter-spacing:.08em;color:var(--faint)}
+nav{display:flex;flex-wrap:wrap;gap:2px}
+nav a{font-size:13px;color:var(--dim);text-decoration:none;padding:5px 9px;border-radius:6px}
+nav a.on{color:var(--ink);font-weight:650;background:var(--raise)}
+main{padding:28px 0 80px}
+h1{font-size:clamp(22px,3.6vw,28px);line-height:1.3;font-weight:660;letter-spacing:-.02em;margin:0 0 16px}
+h2{font-size:clamp(19px,3.2vw,23px);line-height:1.3;letter-spacing:-.015em;margin:34px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+h3,h4{font-size:15px;font-weight:700;margin:22px 0 8px}
+h1:target,h2:target,h3:target,h4:target{scroll-margin-top:16px}
+p{margin:0 0 14px}
+ul,ol{margin:0 0 14px;padding-left:22px}
+li{margin-bottom:6px}
+a{color:var(--link)}
+code{font:13px ui-monospace,"SF Mono",Menlo,monospace;background:var(--raise);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+pre{background:var(--raise);border:1px solid var(--line);border-radius:8px;padding:14px 16px;overflow-x:auto;margin:0 0 16px}
+pre code{background:none;border:0;padding:0;font-size:13px;line-height:1.55}
+blockquote{margin:0 0 16px;padding:2px 16px;border-left:3px solid var(--line);color:var(--dim)}
+hr{border:0;border-top:1px solid var(--line);margin:28px 0}
+.twrap{overflow-x:auto;margin:0 0 18px}
+table{width:100%;border-collapse:collapse;font-size:14.5px}
+th{text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);padding:0 14px 8px 0;border-bottom:2px solid var(--line);white-space:nowrap}
+td{padding:10px 14px 10px 0;border-bottom:1px solid var(--line);vertical-align:top}
+footer{border-top:1px solid var(--line);padding:18px 0;font-size:12.5px;color:var(--faint)}
+footer a{color:var(--faint)}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+<a class="brand" href="index.html">LLM-Archive<small>Guide</small></a>
+<nav><a href="index.html">Guide home</a>
+<a class="on" href="for-researchers.html">For researchers</a>
+<a href="for-developers.html">For developers</a>
+<a href="reproducing.html">Reproducing</a>
+<a href="data-dictionary.html">Data dictionary</a>
+<a href="glossary.html">Glossary</a>
+<a href="faq.html">FAQ</a></nav>
+</div></header>
+<main class="wrap">
+<h1 id="for-researchers">For researchers</h1>
+<p>This page is about what LLM-Archive's numbers mean, what they don't mean, and how to use them responsibly in your own work. For column-level detail see <a href="data-dictionary.html"><code>data-dictionary.md</code></a>; for the full formal treatment, <a href="../docs/spec.md"><code>../docs/spec.md</code></a> §6 is the governing document — if anything here seems to disagree with it, the spec is right.</p>
+<h2 id="what-the-metric-is-precisely">What the metric is, precisely</h2>
+<p><code>stability_pct</code> answers one question: <em>on this frozen 15-scenario panel, did this model's decision distribution shift when the same question was reworded in a way that shouldn't have changed the answer?</em> It is a distance between two independent response distributions (total variation distance), not a per-question agreement rate — the two wordings of a question are never shown to the same conversation, so there is no way to say "in 9 out of 10 matched pairs it answered the same way," and no such claim is ever published.</p>
+<h2 id="what-it-does-not-claim">What it does not claim</h2>
+<ul>
+<li><strong>Not a measure of capability.</strong> A very capable model can be highly unstable, and vice versa.</li>
+<li><strong>Not a measure of correctness</strong>, for protocols with no ground truth (framing, preference-style decisions). Stability there is a measure of <em>consistency</em>, not of being right.</li>
+<li><strong>Not a claim that the wording change was psychologically inert.</strong> That the change "shouldn't" matter is the protocol's own design claim, argued in its Method &amp; Limits documentation — not something this statistic measures directly.</li>
+<li><strong>Not comparable across model families.</strong> The frozen code refuses to draw one line across <code>model_family</code> boundaries. A Sonnet-series curve and a hypothetical Opus-series curve are never merged, because doing so would present a trend that's really an artifact of which products happened to get measured when.</li>
+<li><strong>Not a human-likeness score.</strong> Any comparison to a published human result (<code>human_model_gap</code>) is secondary, reported only where a multi-lab or meta-analytic human finding exists for direct comparison, and is never aggregated or treated as a headline. Published research on this question has found that models can fail to reproduce human response biases at all — so a human-model gap and a model's self-stability are not guaranteed to be measuring the same underlying thing, and this project does not claim they are.</li>
+</ul>
+<h2 id="the-scope-every-published-number-carries">The scope every published number carries</h2>
+<p>Every measurement's claim is exactly: <em>"on this frozen panel, on this model, on that day."</em> Never "the model is X% stable under wording" as a general property — always "on panel <code>p-004</code>," naming the specific panel. This isn't a hedge added after the fact; it follows from a specific, disclosed design decision: the confidence interval is a bootstrap over responses, <strong>conditional on the panel</strong>, and no generalization interval is published (<code>docs/spec.md</code> §6). A 15-scenario cluster bootstrap would understate uncertainty, so rather than publish a falsely narrow interval, this project publishes the raw per-scenario heterogeneity instead (<code>scenario_gaps_pct</code>, <code>scenario_concentration_pct</code>) and lets you see directly whether a finding rides on the whole panel or on two scenarios.</p>
+<p>The nearest thing to a generalization signal is architectural, not statistical: <strong>each rewording type runs as three independent scenario-family panels</strong>, and if all three move together, that's much stronger evidence than any interval over 15 items could provide.</p>
+<h2 id="reading-the-checks-not-just-the-headline">Reading the checks, not just the headline</h2>
+<p>Before treating any <code>stability_pct</code> as meaningful, check three things the record publishes alongside it:</p>
+<ol>
+<li><strong>Did it beat the null-change control?</strong> (<code>flags</code> doesn't include <code>below_surface_noise</code>.) If a punctuation-only rewording moved the answer almost as much as the real one, the "real" gap isn't distinguishable from surface noise.</li>
+<li><strong>Was the model actually reading the question?</strong> (<code>flags</code> doesn't include <code>not_reading</code>.) The positive control (version C) is built so the correct answer flips — if the model didn't move there either, nothing else about that run means much.</li>
+<li><strong>Is <code>on_curve</code> true?</strong> If not, read <code>flags</code> for why — the measurement is still published in full, just not headlined.</li>
+</ol>
+<p>A model that answers randomly with a fixed probability, or that always gives the same answer regardless of the question, would otherwise score very well on <code>stability_pct</code> alone — the entropy series and the positive control exist specifically to catch each of those two failure modes.</p>
+<h2 id="citing-this-project">Citing this project</h2>
+<p>See <a href="../CITATION.cff"><code>../CITATION.cff</code></a>. Where possible, cite a specific <code>run_id</code> and <code>protocol_id</code>, not the project as a whole — a citation naming a specific, dated, hash-verified measurement is falsifiable in a way that "LLM-Archive found..." is not.</p>
+<h2 id="using-the-data">Using the data</h2>
+<pre><code class="language-python">import pandas as pd
+
+stability = pd.read_csv(&quot;stability.csv&quot;)
+# JSON-typed columns (outcomes, decisions, flags, scenario_gaps_pct, scenario_spread_pct, gates)
+# need one extra step:
+import json
+stability[&quot;flags&quot;] = stability[&quot;flags&quot;].apply(json.loads)
+
+# Only look at measurements that made the main curve:
+on_curve = stability[stability[&quot;on_curve&quot;]]
+
+# Never mix series or model families in one comparison — the project itself won&#x27;t:
+sonnet_wording = on_curve[
+    (on_curve[&quot;model_family&quot;] == &quot;claude-sonnet&quot;) &amp; (on_curve[&quot;rewording_type&quot;] == &quot;wording&quot;)
+]</code></pre>
+<p>Or read <code>croissant.json</code> with any <a href="https://mlcommons.org/croissant/">MLCommons Croissant</a>-aware tool for schema-driven loading, including automatic typing of every column.</p>
+<h2 id="reporting-a-factual-issue">Reporting a factual issue</h2>
+<p>If a human-comparison figure misquotes a study you're associated with, or you've found an actual defect in the frozen estimator, see <a href="../CONTRIBUTING.md"><code>../CONTRIBUTING.md</code></a> — there's a specific process for each, and a specific, honest statement of what's built and what's still manual today.</p>
+<h2 id="running-your-own-comparison">Running your own comparison</h2>
+<p>You can run the identical public panel against a model of your own and have the result published as a <code>comparison_point</code>, shown on its own line, on its own date, never merged into the main chart or read as a ranking. See <a href="reproducing.html"><code>reproducing.md</code></a> for exactly what's required.</p>
+</main>
+<footer class="wrap">
+Written for people using LLM-Archive, not building it — see <a href="../README.md">../README.md</a>
+and <a href="../docs/spec.md">docs/spec.md</a> for the project itself.
+</footer>
+</body>
+</html>

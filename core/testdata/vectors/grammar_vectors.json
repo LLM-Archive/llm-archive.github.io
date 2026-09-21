@@ -1,0 +1,187 @@
+{
+  "grammar_version": 1,
+  "cases": [
+    {
+      "name": "simple_valid",
+      "note": "a decision line after free-text reasoning is read; the reasoning itself is not",
+      "options": [
+        "A",
+        "B"
+      ],
+      "text": "Option A sounds tempting, but B has the better expected value.\nDECISION: B",
+      "expected": {
+        "outcome": "valid",
+        "token": "B",
+        "reason": null
+      }
+    },
+    {
+      "name": "reasoning_never_read",
+      "note": "no DECISION: line at all -> unparseable, even though the prose clearly picks B",
+      "options": [
+        "A",
+        "B"
+      ],
+      "text": "Option A is tempting, but in the end I go with B.",
+      "expected": {
+        "outcome": "unparseable",
+        "token": null,
+        "reason": "no_decision_line"
+      }
+    },
+    {
+      "name": "repeated_same_token_valid",
+      "note": "the SAME token restated on two lines is repetition, not ambiguity",
+      "options": [
+        "A",
+        "B"
+      ],
+      "text": "DECISION: A\nTo be clear, restating: DECISION: A",
+      "expected": {
+        "outcome": "valid",
+        "token": "A",
+        "reason": null
+      }
+    },
+    {
+      "name": "conflicting_tokens_unparseable",
+      "note": "two DIFFERENT tokens on separate lines is a real conflict, rejected outright",
+      "options": [
+        "A",
+        "B"
+      ],
+      "text": "DECISION: A\nDECISION: B",
+      "expected": {
+        "outcome": "unparseable",
+        "token": null,
+        "reason": "conflicting_decisions"
+      }
+    },
+    {
+      "name": "token_not_in_options",
+      "note": "a well-formed decision line naming an option that does not exist",
+      "options": [
+        "A",
+        "B"
+      ],
+      "text": "DECISION: C",
+      "expected": {
+        "outcome": "unparseable",
+        "token": null,
+        "reason": "token_not_in_options"
+      }
+    },
+    {
+      "name": "empty_string",
+      "note": "an empty response is its own outcome, distinct from unparseable",
+      "options": [
+        "A",
+        "B"
+      ],
+      "text": "",
+      "expected": {
+        "outcome": "empty",
+        "token": null,
+        "reason": "empty_response"
+      }
+    },
+    {
+      "name": "whitespace_only",
+      "note": "whitespace-only text counts as empty, not as a response with no decision line",
+      "options": [
+        "A",
+        "B"
+      ],
+      "text": "   \n\t  \n",
+      "expected": {
+        "outcome": "empty",
+        "token": null,
+        "reason": "empty_response"
+      }
+    },
+    {
+      "name": "none_text",
+      "note": "no text content at all (e.g. an empty completion) is empty, same as \"\"",
+      "options": [
+        "A",
+        "B"
+      ],
+      "text": null,
+      "expected": {
+        "outcome": "empty",
+        "token": null,
+        "reason": "empty_response"
+      }
+    },
+    {
+      "name": "markdown_emphasis_stripped",
+      "note": "**bold** markers around the decision line are stripped before matching",
+      "options": [
+        "A",
+        "B"
+      ],
+      "text": "**DECISION:** A",
+      "expected": {
+        "outcome": "valid",
+        "token": "A",
+        "reason": null
+      }
+    },
+    {
+      "name": "trailing_punctuation_stripped",
+      "note": "a trailing period after the token is stripped, not treated as part of the token",
+      "options": [
+        "A",
+        "B"
+      ],
+      "text": "DECISION: A.",
+      "expected": {
+        "outcome": "valid",
+        "token": "A",
+        "reason": null
+      }
+    },
+    {
+      "name": "fullwidth_colon_and_extra_spaces",
+      "note": "a fullwidth colon and collapsed internal whitespace both still match the grammar",
+      "options": [
+        "A",
+        "B"
+      ],
+      "text": "DECISION：   B",
+      "expected": {
+        "outcome": "valid",
+        "token": "B",
+        "reason": null
+      }
+    },
+    {
+      "name": "greek_letters_not_normalized",
+      "note": "no script normalization: Greek capital Alpha (U+0391) is a different token from Latin 'A', not a look-alike to fold",
+      "options": [
+        "A",
+        "B"
+      ],
+      "text": "Η λογική λέει Β, αλλά επιλέγω:\nDECISION: Α",
+      "expected": {
+        "outcome": "unparseable",
+        "token": null,
+        "reason": "token_not_in_options"
+      }
+    },
+    {
+      "name": "case_insensitive_keyword",
+      "note": "the keyword 'decision' and the token are matched case-insensitively (casefold)",
+      "options": [
+        "A",
+        "B"
+      ],
+      "text": "Decision: b",
+      "expected": {
+        "outcome": "valid",
+        "token": "B",
+        "reason": null
+      }
+    }
+  ]
+}

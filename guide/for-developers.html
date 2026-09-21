@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>For developers — LLM-Archive Guide</title>
+<style>
+:root{--ink:#15161a;--dim:#5a5c66;--faint:#8c8f99;--line:#e4e4e8;--bg:#fff;--raise:#fafafb;--link:#1a4fd6}
+@media(prefers-color-scheme:dark){
+  :root{--ink:#e8edf3;--dim:#aeb9c7;--faint:#7f8b99;--line:#34404d;--bg:#14181d;--raise:#1d242c;--link:#79aef2}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 system-ui,-apple-system,"Segoe UI",Inter,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:760px;margin:0 auto;padding:0 20px}
+header{border-bottom:1px solid var(--line);padding:16px 0;margin-bottom:8px}
+header .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px}
+.brand{font-size:14px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);text-decoration:none;margin-right:8px}
+.brand small{display:block;font-size:10px;font-weight:600;letter-spacing:.08em;color:var(--faint)}
+nav{display:flex;flex-wrap:wrap;gap:2px}
+nav a{font-size:13px;color:var(--dim);text-decoration:none;padding:5px 9px;border-radius:6px}
+nav a.on{color:var(--ink);font-weight:650;background:var(--raise)}
+main{padding:28px 0 80px}
+h1{font-size:clamp(22px,3.6vw,28px);line-height:1.3;font-weight:660;letter-spacing:-.02em;margin:0 0 16px}
+h2{font-size:clamp(19px,3.2vw,23px);line-height:1.3;letter-spacing:-.015em;margin:34px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+h3,h4{font-size:15px;font-weight:700;margin:22px 0 8px}
+h1:target,h2:target,h3:target,h4:target{scroll-margin-top:16px}
+p{margin:0 0 14px}
+ul,ol{margin:0 0 14px;padding-left:22px}
+li{margin-bottom:6px}
+a{color:var(--link)}
+code{font:13px ui-monospace,"SF Mono",Menlo,monospace;background:var(--raise);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+pre{background:var(--raise);border:1px solid var(--line);border-radius:8px;padding:14px 16px;overflow-x:auto;margin:0 0 16px}
+pre code{background:none;border:0;padding:0;font-size:13px;line-height:1.55}
+blockquote{margin:0 0 16px;padding:2px 16px;border-left:3px solid var(--line);color:var(--dim)}
+hr{border:0;border-top:1px solid var(--line);margin:28px 0}
+.twrap{overflow-x:auto;margin:0 0 18px}
+table{width:100%;border-collapse:collapse;font-size:14.5px}
+th{text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);padding:0 14px 8px 0;border-bottom:2px solid var(--line);white-space:nowrap}
+td{padding:10px 14px 10px 0;border-bottom:1px solid var(--line);vertical-align:top}
+footer{border-top:1px solid var(--line);padding:18px 0;font-size:12.5px;color:var(--faint)}
+footer a{color:var(--faint)}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+<a class="brand" href="index.html">LLM-Archive<small>Guide</small></a>
+<nav><a href="index.html">Guide home</a>
+<a href="for-researchers.html">For researchers</a>
+<a class="on" href="for-developers.html">For developers</a>
+<a href="reproducing.html">Reproducing</a>
+<a href="data-dictionary.html">Data dictionary</a>
+<a href="glossary.html">Glossary</a>
+<a href="faq.html">FAQ</a></nav>
+</div></header>
+<main class="wrap">
+<h1 id="for-developers">For developers</h1>
+<p>This page is for anyone reading or extending the codebase — auditing the estimator, building a new source adapter, or just checking that the published numbers really come from the code they claim to. For what each published field means, see <a href="data-dictionary.html"><code>data-dictionary.md</code></a>; for the authoritative behavior, <a href="../docs/spec.md"><code>../docs/spec.md</code></a> always wins over this page.</p>
+<h2 id="the-trust-boundary-in-code-terms">The trust boundary, in code terms</h2>
+<p>The single most important fact about this codebase: <strong><code>core/measure/</code> is frozen forever</strong>, as of commit #1. It contains the estimator, the two statistical checks (null-change and positive control), the noise floor, the entropy series, the bootstrap confidence interval, the deterministic decision-extraction grammar, the structural admission gate, and the hash chain. Every value in it is checked against hand-derived golden test vectors (<code>core/testdata/vectors/</code>) so it can be re-implemented from scratch, in any language, and checked bit-for-bit against this project's own numbers — that reproducibility is the entire point of freezing it.</p>
+<div class="twrap"><table><thead><tr><th>Folder</th><th>Can change</th><th>How</th></tr></thead><tbody><tr><td><code>core/measure/</code></td><td>Never (after commit #1)</td><td>A confirmed bug is fixed by declaring a <code>core_change</code> and a disclosed discontinuity — never a silent patch, because that would make earlier measurements incomparable without saying so.</td></tr><tr><td><code>core/plumbing/</code></td><td>Yes, reviewed</td><td>Renderer, source adapters (any client implementing <code>core/measure/client.py</code>'s contract), templates, formatting. Never a number or a key.</td></tr><tr><td><code>core/budget/</code>, <code>core/schedule/</code>, <code>core/instrument/</code></td><td>Yes, reviewed</td><td>Guardrails around the frozen core: spending ceiling, "is this due today," and the daily reference-model self-check. Each reads already-computed observations — none of them runs a model itself.</td></tr><tr><td><code>mutable/</code>, <code>protocols/</code></td><td>Owner only, never external</td><td>Scenario content and protocol generation. Kept private for a structural reason (contamination), not a preference — see <code>../CONTRIBUTING.md</code>.</td></tr></tbody></table></div>
+<h2 id="architecture-in-one-pass">Architecture in one pass</h2>
+<pre><code class="language-text">mutable/build_protocol_&lt;family&gt;__&lt;type&gt;.py
+    → writes protocols/&lt;family&gt;__&lt;type&gt;__v0.json   (frozen text + declared thresholds)
+
+core/measure/pilot.py
+    → runs a protocol end to end against a Client (fake or real)
+    → core/measure/grammar.py extracts a DECISION: token deterministically
+    → core/measure/measurement.py turns 120 trials into one measurement record:
+        - core/measure/stats.py computes gap_pct, the noise floor, entropy, drop bounds,
+          the three gates, and the bootstrap CI
+        - core/measure/invariants.py has already gate-1-checked the protocol at admission time
+    → writes experiments/&lt;run_id&gt;/{trials.jsonl, run.json, measurement.json}   (append-only)
+
+core/plumbing/render.py
+    → reads experiments/ → writes stability.csv, outcomes.csv, open-lane/&lt;year&gt;.jsonl,
+      croissant.json, and (build-site) website/index.html from website/template.html</code></pre>
+<p><code>core/budget/</code>, <code>core/schedule/</code>, and <code>core/instrument/</code> sit alongside this pipeline rather than inside it: <code>schedule.py</code> decides <em>what's due</em>, <code>budget.py</code> decides <em>whether it's allowed to spend</em>, and <code>instrument.py</code> decides <em>whether today's pipeline run can be trusted at all</em> — none of the three runs a model or touches <code>core/measure/</code>'s own logic.</p>
+<h2 id="the-client-contract">The <code>Client</code> contract</h2>
+<p>Every source of model responses — the synthetic <code>fake_client.py</code> used for tests, and the real subject-model / reference-model clients — implements the same interface defined in <code>core/measure/client.py</code>. This is what lets a protocol run identically against a zero-cost synthetic model during development and a real, billed API in production, with zero changes to <code>core/measure/</code> itself. If you're adding a new subject model, this is the one file whose contract you need to satisfy; everything downstream (grammar, statistics, rendering) is already generic over it.</p>
+<h2 id="build-checks">Build checks</h2>
+<p>Run the relevant one after any change in that area — each is independent and each must fully pass:</p>
+<pre><code class="language-bash">python3 -m core.measure.verify          # 11/11 — golden vectors, gate 1 on every protocol,
+                                         # twin-pairing well-formedness, the _pct naming rule
+python3 -m core.budget.verify           # 3/3  — only after touching core/budget/ or budget.json
+python3 -m core.schedule.verify         # 2/2  — only after touching core/schedule/
+python3 -m core.instrument.verify       # 3/3  — only after touching core/instrument/
+python3 -m core.plumbing.render verify  # renderer&#x27;s CSV/JSON/site-build output
+
+# End-to-end, zero cost, zero network:
+python3 -m core.measure.pilot protocols/&lt;file&gt;.json --client fake --out &lt;scratch dir&gt;
+
+# End-to-end against the real commercial model (spends real, billed API calls):
+python3 -m core.measure.pilot protocols/&lt;file&gt;.json --client anthropic --model-id &lt;id&gt; --model-family &lt;family&gt; --out &lt;scratch dir&gt;</code></pre>
+<p><code>core/measure/verify.py</code> does not exercise a real client and never spends money — it replays fixed vectors. The synthetic <code>FakeClient</code> exercises the full pipeline shape but picks answers by version and scenario number only, never by reading the actual scenario text, so it can confirm the plumbing works without ever telling you whether a panel's <em>design</em> actually works. Only a real model run — or a <code>comparison_point</code> submitted by someone else, see <a href="reproducing.html"><code>reproducing.md</code></a> — can answer that.</p>
+<h2 id="why-numpy-is-banned-in-core-measure">Why <code>numpy</code> is banned in <code>core/measure/</code></h2>
+<p>Enforced by a CI assertion, not just convention: <code>core/measure/</code> is pure standard library so the estimator can be re-read and re-implemented decades from now without depending on a numerical library whose own future version might not build. If you're extending statistics logic, this constraint doesn't relax just because a numpy one-liner would be shorter.</p>
+<h2 id="extending-the-schema">Extending the schema</h2>
+<p><code>core/measure/schema.py</code> holds every closed list this project uses (outcome types, flags, record types, lanes, gap causes, and every published field's name and type). These are closed on purpose: a coverage gap or a flag can only ever take a value from a pre-declared list, never something invented on the spot after the fact. Adding a value to any list here is a real, visible schema change — it changes <code>schema_sha256</code>, and per <code>../docs/spec.md</code> §13, additive evolution follows three rules: names are never reused, fields are never deleted (only dated as superseded), and a new required field ships with a declared default so old records remain valid.</p>
+<h2 id="reporting-a-bug">Reporting a bug</h2>
+<p>See <a href="../CONTRIBUTING.md"><code>../CONTRIBUTING.md</code></a> — the process differs depending on whether the bug is in frozen code (<code>core/measure/</code>) or reviewable code (<code>core/plumbing/</code> and the guardrail modules).</p>
+</main>
+<footer class="wrap">
+Written for people using LLM-Archive, not building it — see <a href="../README.md">../README.md</a>
+and <a href="../docs/spec.md">docs/spec.md</a> for the project itself.
+</footer>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FAQ — LLM-Archive Guide</title>
+<style>
+:root{--ink:#15161a;--dim:#5a5c66;--faint:#8c8f99;--line:#e4e4e8;--bg:#fff;--raise:#fafafb;--link:#1a4fd6}
+@media(prefers-color-scheme:dark){
+  :root{--ink:#e8edf3;--dim:#aeb9c7;--faint:#7f8b99;--line:#34404d;--bg:#14181d;--raise:#1d242c;--link:#79aef2}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 system-ui,-apple-system,"Segoe UI",Inter,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:760px;margin:0 auto;padding:0 20px}
+header{border-bottom:1px solid var(--line);padding:16px 0;margin-bottom:8px}
+header .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px}
+.brand{font-size:14px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);text-decoration:none;margin-right:8px}
+.brand small{display:block;font-size:10px;font-weight:600;letter-spacing:.08em;color:var(--faint)}
+nav{display:flex;flex-wrap:wrap;gap:2px}
+nav a{font-size:13px;color:var(--dim);text-decoration:none;padding:5px 9px;border-radius:6px}
+nav a.on{color:var(--ink);font-weight:650;background:var(--raise)}
+main{padding:28px 0 80px}
+h1{font-size:clamp(22px,3.6vw,28px);line-height:1.3;font-weight:660;letter-spacing:-.02em;margin:0 0 16px}
+h2{font-size:clamp(19px,3.2vw,23px);line-height:1.3;letter-spacing:-.015em;margin:34px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+h3,h4{font-size:15px;font-weight:700;margin:22px 0 8px}
+h1:target,h2:target,h3:target,h4:target{scroll-margin-top:16px}
+p{margin:0 0 14px}
+ul,ol{margin:0 0 14px;padding-left:22px}
+li{margin-bottom:6px}
+a{color:var(--link)}
+code{font:13px ui-monospace,"SF Mono",Menlo,monospace;background:var(--raise);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+pre{background:var(--raise);border:1px solid var(--line);border-radius:8px;padding:14px 16px;overflow-x:auto;margin:0 0 16px}
+pre code{background:none;border:0;padding:0;font-size:13px;line-height:1.55}
+blockquote{margin:0 0 16px;padding:2px 16px;border-left:3px solid var(--line);color:var(--dim)}
+hr{border:0;border-top:1px solid var(--line);margin:28px 0}
+.twrap{overflow-x:auto;margin:0 0 18px}
+table{width:100%;border-collapse:collapse;font-size:14.5px}
+th{text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);padding:0 14px 8px 0;border-bottom:2px solid var(--line);white-space:nowrap}
+td{padding:10px 14px 10px 0;border-bottom:1px solid var(--line);vertical-align:top}
+footer{border-top:1px solid var(--line);padding:18px 0;font-size:12.5px;color:var(--faint)}
+footer a{color:var(--faint)}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+<a class="brand" href="index.html">LLM-Archive<small>Guide</small></a>
+<nav><a href="index.html">Guide home</a>
+<a href="for-researchers.html">For researchers</a>
+<a href="for-developers.html">For developers</a>
+<a href="reproducing.html">Reproducing</a>
+<a href="data-dictionary.html">Data dictionary</a>
+<a href="glossary.html">Glossary</a>
+<a class="on" href="faq.html">FAQ</a></nav>
+</div></header>
+<main class="wrap">
+<h1 id="faq">FAQ</h1>
+<p>Quick answers. For the full reasoning behind any of these, follow the link to <a href="../docs/spec.md"><code>../docs/spec.md</code></a>, which is the governing document if anything here is unclear or seems to conflict with it.</p>
+<p><strong>What does LLM-Archive actually measure?</strong> Whether a commercial AI model's decision changes when the same question is reworded in a way that shouldn't change the answer — measured as a distance between two response distributions, not a per-question "did it flip" count. See <a href="glossary.html"><code>glossary.md</code></a> for the exact terms and <a href="for-researchers.html"><code>for-researchers.md</code></a> for what the number does and doesn't prove.</p>
+<p><strong>Why isn't a perfectly consistent model reported as 100% stable?</strong> Because with a finite number of responses, two samples from the <em>identical</em> distribution still produce some measured gap by chance alone. This "noise floor" is published next to every measurement (<code>null_floor_pct</code>) so a reader can see how much of any gap is just sampling noise. At the project's chosen sample size (<code>n=30</code> per version), the ceiling is about 89.9% in the worst case (a binary decision at 50/50) — see <code>../docs/spec.md</code> §6 for why <code>n</code> is this small: real calls against the real API come back deterministic without a client-controllable sampling parameter, so this project no longer pays for repeat samples that would just repeat the same answer.</p>
+<p><strong>Is there an AI "judge" grading the model's answers?</strong> No. Extraction is entirely deterministic: a response must end with a <code>DECISION: &lt;token&gt;</code> line, with <code>token</code> from a fixed, closed list of options — checked by ordinary code, not by another model. Anything outside that exact line is never read, and a response without one, or with conflicting tokens, is scored <code>unparseable</code> rather than interpreted.</p>
+<p><strong>Why measure a second, frozen model every day?</strong> To catch the project's own pipeline breaking before mistaking that for a change in the model being studied. If a fixed, never-changing reference model suddenly answers differently, something in the project's own setup changed — not the subject model. This is disclosed as a real limit, not a complete guarantee: if the reference model stays flat, that rules out the project's own pipeline as a cause, but it does <strong>not</strong> rule out the commercial provider silently changing something upstream (a router, a hidden system instruction, quantization) — no local check can see behind a hosted API. See <code>../docs/spec.md</code> §7.</p>
+<p><strong>Why track a downloadable ("open-weights") model at all, separately from the commercial one?</strong> As a control experiment proving the method itself reproduces, run once per model generation rather than monthly, since a downloadable model can't be silently changed by a provider — it's re-run under the project's own control instead. The commercial series and the open-weights series are never drawn on the same chart or averaged together; they answer different questions.</p>
+<p><strong>Why not just compare the model to how humans answer the same question?</strong> Any such comparison (<code>human_model_gap</code>) is published, but only as a secondary, per-protocol note where a directly comparable multi-lab or meta-analytic human study exists — never as a headline, and never aggregated across protocols. The reason: proving a human number and a model number measure "the same underlying thing" is a much harder claim than measuring whether a model is consistent with <em>itself</em>, and the project's headline metric is built to avoid depending on that harder, contested claim.</p>
+<p><strong>What's the difference between <code>open</code>, <code>guard</code>, and <code>sealed</code> protocols?</strong> How much of a protocol's exact wording is published, and when:</p>
+<ul>
+<li><code>open</code> — full text, immediately.</li>
+<li><code>guard</code> — only outcome categories now; full text after four model generations.</li>
+<li><code>sealed</code> — not even that a specific scenario exists in detail; only that the protocol exists and how many trials it has. Never opens.</li>
+</ul>
+<p>Full explanation, including why this matters for detecting contamination: <a href="glossary.html"><code>glossary.md</code></a>.</p>
+<p><strong>Why keep most protocols hidden at all — isn't that against the spirit of an open project?</strong> Because a protocol whose exact wording is public will eventually be read by a model during training, and once that happens, "the model's answer moved" and "the model has now seen the test" become indistinguishable from the outside. Keeping most protocols private for a while, and pairing each public one with a hidden "twin" measuring the same underlying phenomenon, is what makes it possible to tell those two explanations apart later. Full text does eventually become public for <code>guard</code> protocols (after four generations) — <code>sealed</code> protocols are the deliberate exception, kept back permanently as an uncontaminated instrument for the very long term.</p>
+<p><strong>Can I run the same test against a different model and get it published?</strong> Yes — see <a href="reproducing.html"><code>reproducing.md</code></a> for exactly what's required for a submission to count as a valid <code>comparison_point</code>, and what such a point does and doesn't mean.</p>
+<p><strong>What happens if the project goes quiet — is the data lost?</strong> No. Two independent mechanisms exist for this specifically: the project publishes a disclosed degradation ladder rather than going silent (reduced scope before reduced rigor — <code>n</code> and the statistical checks are never quietly loosened to save money, <code>../docs/spec.md</code> §9), and every scheduled measurement that doesn't happen is logged with a specific cause rather than left unexplained (<code>../docs/spec.md</code> §10). A gap the project names itself is a disclosed limitation; a gap discovered by someone else later would be a much bigger problem — which is exactly why it's designed not to happen that way.</p>
+<p><strong>Does the metric say anything about model capability, alignment, or "how human" a model is?</strong> No, deliberately. See the "What it does not claim" section of the root <a href="../README.md"><code>README.md</code></a> and the fuller version in <a href="for-researchers.html"><code>for-researchers.md</code></a>.</p>
+<p><strong>I'm a researcher whose work is cited (or miscited) here — what do I do?</strong> See <a href="../CONTRIBUTING.md"><code>../CONTRIBUTING.md</code></a> for the correction process, including how an author response is verified before being treated as authoritative.</p>
+<p><strong>Is this live yet?</strong> Partly. As of this writing, one real measurement exists (<code>claude-sonnet-5</code>, one of the 12 v0 protocols, 2026-09-21) — but there is still no public repository or website. See the root <a href="../README.md"><code>README.md</code></a> and <a href="../CHANGELOG.md"><code>CHANGELOG.md</code></a> for the current build state.</p>
+</main>
+<footer class="wrap">
+Written for people using LLM-Archive, not building it — see <a href="../README.md">../README.md</a>
+and <a href="../docs/spec.md">docs/spec.md</a> for the project itself.
+</footer>
+</body>
+</html>

@@ -1,0 +1,821 @@
+{
+  "@context": {
+    "@language": "en",
+    "@vocab": "https://schema.org/",
+    "sc": "https://schema.org/",
+    "cr": "http://mlcommons.org/croissant/",
+    "rai": "http://mlcommons.org/croissant/RAI/",
+    "dct": "http://purl.org/dc/terms/",
+    "citeAs": "cr:citeAs",
+    "column": "cr:column",
+    "conformsTo": "dct:conformsTo",
+    "data": {
+      "@id": "cr:data",
+      "@type": "@json"
+    },
+    "dataType": {
+      "@id": "cr:dataType",
+      "@type": "@vocab"
+    },
+    "examples": {
+      "@id": "cr:examples",
+      "@type": "@json"
+    },
+    "extract": "cr:extract",
+    "field": "cr:field",
+    "fileProperty": "cr:fileProperty",
+    "fileObject": "cr:fileObject",
+    "fileSet": "cr:fileSet",
+    "format": "cr:format",
+    "includes": "cr:includes",
+    "isLiveDataset": "cr:isLiveDataset",
+    "jsonPath": "cr:jsonPath",
+    "key": "cr:key",
+    "md5": "cr:md5",
+    "parentField": "cr:parentField",
+    "path": "cr:path",
+    "recordSet": "cr:recordSet",
+    "references": "cr:references",
+    "regex": "cr:regex",
+    "repeated": "cr:repeated",
+    "replace": "cr:replace",
+    "separator": "cr:separator",
+    "source": "cr:source",
+    "subField": "cr:subField",
+    "transform": "cr:transform"
+  },
+  "@type": "sc:Dataset",
+  "name": "LLM-Archive",
+  "conformsTo": "http://mlcommons.org/croissant/1.0",
+  "description": "Whether a commercial language model's decision changes under an equivalent rewording of the same question -- measured on a fixed panel, published on every run.",
+  "license": "https://creativecommons.org/licenses/by/4.0/",
+  "distribution": [
+    {
+      "@type": "cr:FileObject",
+      "@id": "stability.csv",
+      "contentUrl": "stability.csv",
+      "encodingFormat": "text/csv"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "outcomes.csv",
+      "contentUrl": "outcomes.csv",
+      "encodingFormat": "text/csv"
+    }
+  ],
+  "recordSet": [
+    {
+      "@type": "cr:RecordSet",
+      "@id": "stability",
+      "field": [
+        {
+          "@type": "cr:Field",
+          "@id": "stability/record_type",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "record_type"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/schema_version",
+          "dataType": "sc:Integer",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "schema_version"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/run_id",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "run_id"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/run_date",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "run_date"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/protocol_id",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "protocol_id"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/rewording_type",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "rewording_type"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/subject_model_id",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "subject_model_id"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/stability_pct",
+          "dataType": "sc:Float",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "stability_pct"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/ci_low_pct",
+          "dataType": "sc:Float",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "ci_low_pct"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/ci_high_pct",
+          "dataType": "sc:Float",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "ci_high_pct"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/gap_pct",
+          "dataType": "sc:Float",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "gap_pct"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/gap_null_pct",
+          "dataType": "sc:Float",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "gap_null_pct"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/gap_positive_pct",
+          "dataType": "sc:Float",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "gap_positive_pct"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/null_floor_pct",
+          "dataType": "sc:Float",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "null_floor_pct"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/at_noise_floor",
+          "dataType": "sc:Boolean",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "at_noise_floor"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/n",
+          "dataType": "sc:Integer",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "n"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/n_valid",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "n_valid"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/n_items",
+          "dataType": "sc:Integer",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "n_items"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/k",
+          "dataType": "sc:Integer",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "k"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/entropy_a",
+          "dataType": "sc:Float",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "entropy_a"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/entropy_b",
+          "dataType": "sc:Float",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "entropy_b"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/u_a",
+          "dataType": "sc:Float",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "u_a"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/u_a_prime",
+          "dataType": "sc:Float",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "u_a_prime"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/u_b",
+          "dataType": "sc:Float",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "u_b"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/u_c",
+          "dataType": "sc:Float",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "u_c"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/drop_bound_pct_ab",
+          "dataType": "sc:Float",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "drop_bound_pct_ab"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/drop_bound_pct_aa",
+          "dataType": "sc:Float",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "drop_bound_pct_aa"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/drop_bound_pct_ac",
+          "dataType": "sc:Float",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "drop_bound_pct_ac"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/drop_asymmetry_pct_ab",
+          "dataType": "sc:Float",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "drop_asymmetry_pct_ab"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/drop_asymmetry_pct_aa",
+          "dataType": "sc:Float",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "drop_asymmetry_pct_aa"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/drop_asymmetry_pct_ac",
+          "dataType": "sc:Float",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "drop_asymmetry_pct_ac"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/scenario_gaps_pct",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "scenario_gaps_pct"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/scenario_spread_pct",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "scenario_spread_pct"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/scenario_concentration_pct",
+          "dataType": "sc:Float",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "scenario_concentration_pct"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/outcomes",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "outcomes"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/decisions",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "decisions"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/flags",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "flags"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/gates",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "gates"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/on_curve",
+          "dataType": "sc:Boolean",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "on_curve"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/panel_sha256",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "panel_sha256"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/protocol_sha256",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "protocol_sha256"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/extractor_sha",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "extractor_sha"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/analysis_code_sha",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "analysis_code_sha"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/schema_sha256",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "schema_sha256"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/grammar_version",
+          "dataType": "sc:Integer",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "grammar_version"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/series",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "series"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/lane",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "lane"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/twin_id",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "twin_id"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/model_family",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "model_family"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/returned_model_id",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "returned_model_id"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/api_surface_sha",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "api_surface_sha"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/condition_profile",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "condition_profile"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "stability/replicate_index",
+          "dataType": "sc:Integer",
+          "source": {
+            "fileObject": {
+              "@id": "stability.csv"
+            },
+            "extract": {
+              "column": "replicate_index"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "@type": "cr:RecordSet",
+      "@id": "outcomes",
+      "field": [
+        {
+          "@type": "cr:Field",
+          "@id": "outcomes/run_id",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "outcomes.csv"
+            },
+            "extract": {
+              "column": "run_id"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "outcomes/version",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "outcomes.csv"
+            },
+            "extract": {
+              "column": "version"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "outcomes/outcome",
+          "dataType": "sc:Text",
+          "source": {
+            "fileObject": {
+              "@id": "outcomes.csv"
+            },
+            "extract": {
+              "column": "outcome"
+            }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "outcomes/count",
+          "dataType": "sc:Integer",
+          "source": {
+            "fileObject": {
+              "@id": "outcomes.csv"
+            },
+            "extract": {
+              "column": "count"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

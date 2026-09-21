@@ -1,0 +1,47 @@
+# What this file is, in plain words: a schedule. It says how OFTEN each recurring job should run
+# (once a day, once a month, only when a new model version shows up, ...). Nothing in here runs
+# code by itself -- it's just the timing table that the scheduler will read.
+#
+
+# The subject
+subject_fingerprint:      1d      # 24 items, temp 0, public series
+full_sweep:                30d     # 12 protocols × 4 versions × n=30
+open_weights_series:  on_new_generation   # NOT on the rotation — CPU, €0
+sealed_scan:          on_new_generation   # the 2 sealed ones, only at generation boundaries
+
+# The instrument
+runtime_fingerprint:      1d
+guard_margin_rotation:    1d       # ONE guard-lane protocol/day, rotating through all 10 on a
+                                    # 10-day cycle (not all 10 daily) -- CI cost/throughput test
+                                    # measured ~9.6s/call on the reference model; all 10 daily
+                                    # would run ~5,820 min/month, 2.9x the free CI tier (spec.md §7)
+revalidation_daily:        10      # historical records, local, zero cost
+
+# Generations
+generation_bridge_protocols: 4     # one per type · n_per_scenario=1, not the frozen 2 · old AND
+                                    # new, same week · 480 calls ≈ $2.64, spec.md §4.3
+                                    # preempts that month's sweep (cause: generation_bridge)
+bridge_trigger:      any_new_model_id_in_family   # BRIDGE: automatic, immediate
+active_switch:       provider_declared_successor  # ACTIVE-MODEL SWITCH: only with an explicit
+                                    # declaration, otherwise needs_review — one click in the monthly batch
+bridge_reserve_monthly: 2.80       # $ — never spent on anything else; drawn on its own, never
+                                    # subtracted from the general monthly pool (core/budget/budget.py)
+retirement_threshold:       4      # generations AND equivalence
+declassify_after:           4      # generations
+
+# Human
+human_review:            30d       # the monthly batch, ~10 minutes
+checkpoint_sign:         30d
+coverage_publish:        30d
+release_publish:         90d       # Zenodo + DOI, automatic
+strategy_review:         90d
+self_revision:          180d       # core/plumbing/ only
+integrity_declaration:  365d
+
+# Lease on life
+source_degraded_after:    7d
+deadman_alert:           36h
+vacation_after:          75d
+dormant_after:          180d
+succession_offer:       365d
+concluded_after:        730d

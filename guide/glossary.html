@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Glossary — LLM-Archive Guide</title>
+<style>
+:root{--ink:#15161a;--dim:#5a5c66;--faint:#8c8f99;--line:#e4e4e8;--bg:#fff;--raise:#fafafb;--link:#1a4fd6}
+@media(prefers-color-scheme:dark){
+  :root{--ink:#e8edf3;--dim:#aeb9c7;--faint:#7f8b99;--line:#34404d;--bg:#14181d;--raise:#1d242c;--link:#79aef2}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 system-ui,-apple-system,"Segoe UI",Inter,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:760px;margin:0 auto;padding:0 20px}
+header{border-bottom:1px solid var(--line);padding:16px 0;margin-bottom:8px}
+header .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px}
+.brand{font-size:14px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);text-decoration:none;margin-right:8px}
+.brand small{display:block;font-size:10px;font-weight:600;letter-spacing:.08em;color:var(--faint)}
+nav{display:flex;flex-wrap:wrap;gap:2px}
+nav a{font-size:13px;color:var(--dim);text-decoration:none;padding:5px 9px;border-radius:6px}
+nav a.on{color:var(--ink);font-weight:650;background:var(--raise)}
+main{padding:28px 0 80px}
+h1{font-size:clamp(22px,3.6vw,28px);line-height:1.3;font-weight:660;letter-spacing:-.02em;margin:0 0 16px}
+h2{font-size:clamp(19px,3.2vw,23px);line-height:1.3;letter-spacing:-.015em;margin:34px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+h3,h4{font-size:15px;font-weight:700;margin:22px 0 8px}
+h1:target,h2:target,h3:target,h4:target{scroll-margin-top:16px}
+p{margin:0 0 14px}
+ul,ol{margin:0 0 14px;padding-left:22px}
+li{margin-bottom:6px}
+a{color:var(--link)}
+code{font:13px ui-monospace,"SF Mono",Menlo,monospace;background:var(--raise);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+pre{background:var(--raise);border:1px solid var(--line);border-radius:8px;padding:14px 16px;overflow-x:auto;margin:0 0 16px}
+pre code{background:none;border:0;padding:0;font-size:13px;line-height:1.55}
+blockquote{margin:0 0 16px;padding:2px 16px;border-left:3px solid var(--line);color:var(--dim)}
+hr{border:0;border-top:1px solid var(--line);margin:28px 0}
+.twrap{overflow-x:auto;margin:0 0 18px}
+table{width:100%;border-collapse:collapse;font-size:14.5px}
+th{text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);padding:0 14px 8px 0;border-bottom:2px solid var(--line);white-space:nowrap}
+td{padding:10px 14px 10px 0;border-bottom:1px solid var(--line);vertical-align:top}
+footer{border-top:1px solid var(--line);padding:18px 0;font-size:12.5px;color:var(--faint)}
+footer a{color:var(--faint)}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+<a class="brand" href="index.html">LLM-Archive<small>Guide</small></a>
+<nav><a href="index.html">Guide home</a>
+<a href="for-researchers.html">For researchers</a>
+<a href="for-developers.html">For developers</a>
+<a href="reproducing.html">Reproducing</a>
+<a href="data-dictionary.html">Data dictionary</a>
+<a class="on" href="glossary.html">Glossary</a>
+<a href="faq.html">FAQ</a></nav>
+</div></header>
+<main class="wrap">
+<h1 id="glossary">Glossary</h1>
+<p>Plain-language definitions of every term and code used in LLM-Archive's data and site. Frozen technical definitions are in <a href="../docs/spec.md"><code>../docs/spec.md</code></a>; this file exists to explain them to a reader seeing them for the first time. Terms are grouped by topic, not alphabetically, because most of them only make sense next to the ones around them.</p>
+<h2 id="the-core-idea">The core idea</h2>
+<p><strong>Decision</strong> — the one categorical answer a model gives to a protocol's question, extracted from a required <code>DECISION: &lt;token&gt;</code> line at the end of its response. There is no partial credit and no free-text scoring in v0 — a response either contains exactly one valid decision line, or it doesn't count (see <code>unparseable</code>, below).</p>
+<p><strong>Version (A / A′ / B / C)</strong> — the four differently-worded copies of the same question that make up one measurement:</p>
+<ul>
+<li><strong>A</strong> — the base wording.</li>
+<li><strong>A′</strong> ("A prime") — A with only whitespace and punctuation changed. Nothing that could plausibly matter to the decision is different. This is the <em>null-change control</em> — the honest zero the real comparison is measured against.</li>
+<li><strong>B</strong> — the <em>equivalent rewording</em> being tested (different wording, same facts, same normatively correct answer as A).</li>
+<li><strong>C</strong> — A with one number changed enough that the normatively correct answer flips. This is the <em>positive control</em> — proof the model is actually reading the question.</li>
+</ul>
+<p><strong>Panel</strong> — the fixed set of 15 scenarios that make up one protocol. It is not a random sample of a larger population of possible scenarios; it is the instrument itself, frozen the same way a physical measuring device is. It is never resampled, and results never generalize beyond it — see <code>gap_pct</code> below for what "on this panel" means in practice.</p>
+<p><strong>Protocol</strong> — one family of 15 scenarios paired with one rewording type (<code>wording</code>, <code>anchoring</code>, <code>order</code>, or <code>default</code>). A protocol is a fixed <em>question</em>, never a result — the same protocol is run again every month, against whatever model is current, and produces a new measurement each time.</p>
+<p><strong>Rewording type</strong> — which of the four kinds of change the protocol's B version makes:</p>
+<ul>
+<li><strong><code>wording</code></strong> — the same outcome described as a gain or a loss (or, for <code>base_rate_neglect</code>, as a percentage or a natural frequency). The only type with no caveats attached.</li>
+<li><strong><code>anchoring</code></strong> — B mentions an extra, explicitly irrelevant, non-diagnostic reference number (e.g., a low vs. high registry ID) before the question. An <em>informative</em> number (like a real market size) would not qualify — it would leak information, not just anchor attention.</li>
+<li><strong><code>order</code></strong> — the same two options, printed in reversed order. Labeled <strong>mechanical</strong>, not cognitive, because the classic explanation for order effects is a preference for the letter "A" itself — a labeling artifact, not a judgment bias — so this line is excluded from any index described as measuring reasoning.</li>
+<li><strong><code>default</code></strong> — which option is stated to apply automatically if no decision is recorded. Labeled <strong>no human comparison</strong>, because the human "default effect" literature does not survive correction for publication bias in multi-lab replication. This is measured as a consistency check with no normative claim attached.</li>
+</ul>
+<h2 id="the-published-numbers">The published numbers</h2>
+<p><strong><code>gap_pct</code></strong> — how far apart two versions' answer distributions are, from 0 (identical) to 100 (no overlap at all). Computed as total variation distance × 100. For a yes/no decision, this is exactly the classic framing-effect size used in published human research — chosen on purpose so the number is directly comparable to that literature.</p>
+<p><strong><code>stability_pct</code></strong> — <code>100 − gap_pct</code>. The headline number. High = the model didn't change its answer when the wording changed. This is a simple, reversible relabeling of <code>gap_pct</code> chosen so that a bigger published number always means better news — <code>gap_pct</code> itself reads backwards for a reader just scanning a chart.</p>
+<p><strong><code>gap_null_pct</code></strong> — the gap between A and A′ (the null-change control). This is the honest zero: a perfectly consistent model still won't score exactly 0 here, purely from sampling noise. See <code>null_floor_pct</code>.</p>
+<p><strong><code>gap_positive_pct</code></strong> — the gap between A and C (the positive control). A model that's actually reading the question should show a <em>large</em> gap here, since C is built so the correct answer flips.</p>
+<p><strong><code>null_floor_pct</code></strong> — how much gap two samples from the <em>identical</em> distribution would show, on average, purely from having a finite number of responses (computed by permutation, specific to the panel's <code>n</code> and number of options). A model scoring at or above <code>100 − null_floor_pct</code> is <code>at_noise_floor</code>: indistinguishable from perfect invariance, not provably "more stable than" a model that scored slightly lower.</p>
+<p><strong><code>entropy_a</code> / <code>entropy_b</code></strong> — how spread out a version's answers were across the available options, from 0 (always the same answer) to 1 (fully spread out). Published because <code>stability_pct</code> alone can't tell "the model got more consistent" apart from "the model collapsed onto giving the same answer regardless of the question" — a model that always answers "A" scores 100% stability and 0 entropy. <strong>Stability is never shown without entropy next to it.</strong></p>
+<p><strong><code>u_a</code>, <code>u_a_prime</code>, <code>u_b</code>, <code>u_c</code></strong> — the fraction of responses in each version that didn't count as a valid decision (refused, unparseable, truncated, etc.), from 0 to 1.</p>
+<p><strong><code>drop_bound_pct</code></strong> (per pair: <code>_ab</code>, <code>_aa</code>, <code>_ac</code>) — the worst-case amount the published gap could be wrong by, purely because of the lost/invalid responses counted in <code>u</code>. This is not a confidence interval and not a statistical estimate — it's a hard mathematical bound (total variation distance can move by at most <code>u_X + u_Y</code> when up to that fraction of responses on each side are unknown), computed with <strong>no assumption at all</strong> about what those missing responses would have said.</p>
+<p><strong><code>drop_asymmetry_pct</code></strong> (per pair) — how differently the two versions being compared lost responses. A wording change that makes one version's answers much harder to parse than the other's is a warning sign in its own right, independent of the overall drop bound.</p>
+<p><strong><code>ci_low_pct</code> / <code>ci_high_pct</code></strong> — a 95% bootstrap confidence interval on <code>stability_pct</code>, computed by resampling individual responses 10,000 times. It is explicitly <strong>conditional on this panel</strong> — it describes uncertainty in "what would this same 15-scenario panel show on a slightly different sample of responses," not uncertainty about the broader category of "wording effects" in general. No such broader interval is published in v0; see <code>scenario_gaps_pct</code> below for what replaces it.</p>
+<p><strong><code>scenario_gaps_pct</code></strong> — the individual gap value for each of the panel's 15 scenarios, published separately rather than only as an average. <strong><code>scenario_spread_pct</code></strong> summarizes their range (min/max/median/IQR). <strong><code>scenario_concentration_pct</code></strong> is the share of the total gap produced by just the two worst-behaved scenarios — if this is high, a reader can see directly that the finding rides on a couple of items, without having to trust a single summary number.</p>
+<h2 id="statuses-flags-and-what-comes-off-the-curve">Statuses, flags, and what comes off the curve</h2>
+<p><strong><code>on_curve</code></strong> — whether a measurement is trustworthy enough to appear in the main published time series. A measurement is <strong>never deleted</strong> for failing a check — it's still published, in full, just excluded from the headline chart and visibly marked with the reason.</p>
+<p><strong>Flags</strong> (a measurement can carry more than one):</p>
+<div class="twrap"><table><thead><tr><th>Flag</th><th>Plain meaning</th></tr></thead><tbody><tr><td><code>below_surface_noise</code></td><td>The real wording change didn't move the answer more than a meaningless punctuation-only change did — there's no signal to report.</td></tr><tr><td><code>not_reading</code></td><td>The positive control (which should always move the answer) didn't. The model doesn't appear to be reading the question.</td></tr><tr><td><code>degenerate_candidate</code></td><td>Near-zero entropy with high stability — it always gives the same answer, which isn't the same thing as being stable.</td></tr><tr><td><code>drop_confounded</code></td><td>Too many responses were lost in at least one of the three comparisons to trust the result.</td></tr><tr><td><code>asymmetric_missingness</code></td><td>One version lost noticeably more responses than the other it's being compared against.</td></tr><tr><td><code>below_drop_bound</code></td><td>The measured gap is smaller than the worst-case error from lost responses — it could be entirely an artifact of missing data.</td></tr><tr><td><code>scenario_dominated</code></td><td>Two of the panel's 15 scenarios account for an unusually large share of the total gap.</td></tr><tr><td><code>instrument_suspect</code></td><td>The daily reference-model self-check moved that day — the whole pipeline is suspect, not just this measurement.</td></tr><tr><td><code>exploratory</code></td><td>Outside the one pre-declared comparison for this protocol. Informative, but never charted.</td></tr></tbody></table></div>
+<p><strong><code>candidate</code> → <code>admitted</code></strong> — a protocol's lifecycle. Every protocol is born <code>candidate</code> (passed the automatic structural checks, but no human has read it yet) and cannot produce a measurement that counts until a human explicitly promotes it to <code>admitted</code> with a lane assigned. Neither status nor lane changes the protocol's own content or its hash (<code>protocol_sha256</code>) — promotion changes whether it's <em>allowed to count</em>, not what it <em>asks</em>.</p>
+<h2 id="trust-and-provenance">Trust and provenance</h2>
+<p><strong><code>lane</code></strong> — how open a protocol's content is:</p>
+<div class="twrap"><table><thead><tr><th>Lane</th><th>What's published</th><th>When</th></tr></thead><tbody><tr><td><code>open</code></td><td>The complete, word-for-word text of every trial</td><td>Immediately, in <code>open-lane/&lt;year&gt;.jsonl</code></td></tr><tr><td><code>guard</code></td><td>Only outcome categories (valid/refused/etc.) — never the wording itself</td><td>Full text only after 4 model generations</td></tr><tr><td><code>sealed</code></td><td>That the protocol exists and how many trials it has — nothing else</td><td>Never</td></tr></tbody></table></div>
+<p><strong><code>twin_id</code></strong> — links an <code>open</code> protocol to a <code>guard</code> protocol measuring the same underlying phenomenon (same scenario family, different rewording type) whose text stays private. The reason: an <code>open</code> protocol's public text will eventually be read by a model during training. If only the <code>open</code> number moves later, that's contamination. If <strong>both</strong> the <code>open</code> number and its hidden <code>guard</code> twin move together, the model actually changed. Without the twin, the two explanations are indistinguishable from the outside.</p>
+<p><strong><code>panel_sha256</code> / <code>protocol_sha256</code></strong> — cryptographic fingerprints of a protocol's scenario content and its full definition, proving a protocol wasn't quietly edited after it started being measured.</p>
+<p><strong><code>comparison_point</code></strong> — a measurement of the same public panel run by someone other than this project, against a model of their own choosing. Accepted only with an exactly matching panel, grammar version, <code>n</code>, and full outcome data. Shown in its own table, on its own day, never merged into the main chart or treated as a ranking — see <a href="reproducing.html"><code>reproducing.md</code></a>.</p>
+<p><strong><code>series</code> (<code>commercial</code> / <code>open_weights</code>)</strong> — two entirely separate tracks that are never drawn on the same chart. <code>commercial</code> is the actual archive — the hosted product being studied, which can disappear or change silently at any time. <code>open_weights</code> is the control experiment — a downloadable model this project runs itself, used only to prove the method reproduces, never treated as "the archive."</p>
+<p><strong>Instrument</strong> — the daily self-check that catches the project's own pipeline breaking, using a fixed local open-weights reference model that is never studied for its own sake and never changes. Two parts: <code>runtime_fingerprint</code> (12 fixed prompts, expected to reproduce byte-for-byte every day) and a rotating daily replay of one of the 10 <code>guard</code> protocols against that same frozen model (expected to stay flat within normal statistical noise). If either moves, publication for that day pauses — the measurement is still recorded, flagged <code>instrument_suspect</code>, off every curve.</p>
+<p><strong><code>generation_bridge</code></strong> — a special, immediate measurement run comparing an outgoing model version against its explicitly declared successor, in the same week, on all 4 protocol types (one scenario repeat per item rather than the frozen panel's usual 2 — a bridge only needs to catch a gross discontinuity, not a fine-grained measurement), funded from its own dedicated reserve (<code>bridge_reserve_eur</code> in <code>budget.json</code>) rather than the regular monthly sweep budget. Exists because a retired commercial model can never be measured again at any price — the handoff between two generations is the one moment that can't wait for the normal monthly schedule.</p>
+<p><strong>Gap causes</strong> — the closed list of reasons a scheduled measurement didn't happen, always disclosed rather than left as a silent hole in the record: <code>before_archive_start</code>, <code>budget_halted</code>, <code>dormant</code>, <code>provider_outage</code>, <code>protocol_confounded</code>, <code>human_absent</code>, <code>generation_retired_early</code>, <code>generation_bridge</code>.</p>
+</main>
+<footer class="wrap">
+Written for people using LLM-Archive, not building it — see <a href="../README.md">../README.md</a>
+and <a href="../docs/spec.md">docs/spec.md</a> for the project itself.
+</footer>
+</body>
+</html>

@@ -1,0 +1,58 @@
+{
+  "parse_cadence": [
+    {
+      "name": "mixed_fields",
+      "text": "subject_fingerprint: 1d   # daily\nfull_sweep: 30d\ndeadman_alert: 36h\nrevalidation_daily: 10\nbridge_reserve_monthly: 0.40\nactive_switch: provider_declared_successor\nopen_weights_series: on_new_generation\n",
+      "expected": {
+        "subject_fingerprint": 1,
+        "full_sweep": 30,
+        "deadman_alert": 1.5
+      }
+    }
+  ],
+  "due_jobs": [
+    {
+      "name": "never_run",
+      "intervals": {"subject_fingerprint": 1},
+      "last_run": {},
+      "today": "2026-09-20",
+      "expected": {"subject_fingerprint": {"due": true, "elapsed_days": null}}
+    },
+    {
+      "name": "ran_today_not_due",
+      "intervals": {"subject_fingerprint": 1},
+      "last_run": {"subject_fingerprint": "2026-09-20"},
+      "today": "2026-09-20",
+      "expected": {"subject_fingerprint": {"due": false, "elapsed_days": 0}}
+    },
+    {
+      "name": "exactly_at_interval_is_due",
+      "intervals": {"full_sweep": 30},
+      "last_run": {"full_sweep": "2026-08-21"},
+      "today": "2026-09-20",
+      "expected": {"full_sweep": {"due": true, "elapsed_days": 30}}
+    },
+    {
+      "name": "one_day_short_not_due",
+      "intervals": {"full_sweep": 30},
+      "last_run": {"full_sweep": "2026-08-22"},
+      "today": "2026-09-20",
+      "expected": {"full_sweep": {"due": false, "elapsed_days": 29}}
+    }
+  ],
+  "record_run": [
+    {
+      "name": "valid_date_roundtrips",
+      "job": "subject_fingerprint",
+      "run_date": "2026-09-20",
+      "expect_error": false
+    },
+    {
+      "name": "bad_date_rejected_immediately",
+      "note": "must fail inside record_run itself, not silently write and blow up later in due_jobs",
+      "job": "subject_fingerprint",
+      "run_date": "not-a-date",
+      "expect_error": true
+    }
+  ]
+}

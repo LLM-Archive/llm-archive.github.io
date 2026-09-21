@@ -1,0 +1,63 @@
+# What this file is, in plain words: a name tag for "which AI model are we measuring right now."
+# Everything else in this project (protocols, measurements) refers back to whatever is written
+# here (spec.md §4.3; the frozen field list is in §13.4: tier, effort, model_family, auto_bridge).
+#
+# commercial.generations[0] was decided and set to status: active on 2026-09-21, after (not
+# before) core/plumbing/anthropic_client.py was proven to actually round-trip against the real API
+# (120 real calls, 0 invalid, positive control 96.7%) -- committing to a subject before the
+# pipeline had proven it works at all would have been too early. "commit #1" itself (spec.md §13:
+# the first real, working run written into the real experiments/, which freezes core/measure/ for
+# good) happened the same day: risky_choice_framing__wording__v0, 120/120 real calls.
+#
+# open_weights.generations[0] stays null -- that decision hasn't been made yet.
+
+schema_version: 1
+
+series:
+  # spec.md §4.1: this project follows exactly two separate "tracks":
+  #   commercial   -- the actual product people use (v0 picks the Claude Sonnet line)
+  #   open_weights -- a downloadable, frozen model used only to double-check the method itself
+  # These two are NEVER drawn on the same chart/line -- mixing them would be comparing apples
+  # to oranges and hiding that fact.
+  commercial:
+    tier: sonnet-class                        # which size class of model this project measures.
+                                               # spec.md §5: the bigger "Opus" class would allow
+                                               # too few measurements per month to be useful here
+    # temperature: dropped (spec.md §5) -- the commercial API no longer accepts a client-set
+    # sampling parameter at all; confirmed live that repeated identical calls come back
+    # deterministic without it, so this project no longer relies on a temperature knob for
+    # response variance.
+    effort: disabled                          # "extra thinking time" for the model, turned off.
+                                               # spec.md §5: turning it on costs ~38x more per call
+    auto_bridge: any_new_model_id_in_family   # the rule for "when a new model version appears, measure
+                                               # it right away, automatically, before the old one is
+                                               # gone for good." spec.md §4.3: just seeing a similar
+                                               # NAME is not enough on its own to make this the new
+                                               # official model to track going forward -- that needs a
+                                               # human, or the provider, to say so explicitly
+    generations:
+      # One entry per model version this series has ever measured. Today there is only this one
+      # empty placeholder, waiting for the first real model.
+      - model_id: claude-sonnet-5  # the model's exact id, as sent to the Messages API
+        model_family: claude-sonnet  # the wider product line this model belongs to
+        status: active             # where this model version is in its lifecycle:
+                                   #   pending -> not measured yet · active -> currently being measured
+                                   #   bridge_pending -> a hand-off between two versions is in progress
+                                   #   retired -> no longer measured
+        declared_successor: null  # the id of the model that officially replaces this one, once that is
+                                   # announced. spec.md §4.3: only counts if the provider says so
+                                   # somewhere checkable -- a similar-sounding name is not enough
+
+  open_weights:
+    tier: null                    # which model size/family to use for the control series -- not decided yet
+    temperature: 1.0
+    effort: disabled
+    auto_bridge: null             # cadence.yaml already says WHEN this series' checks run (whenever the
+                                   # commercial model gets a new generation); what still isn't decided is
+                                   # what "a new generation" even means for a downloadable model that
+                                   # doesn't get silently swapped out the way a hosted API model can
+    generations:
+      - model_id: null
+        model_family: null
+        status: pending
+        declared_successor: null

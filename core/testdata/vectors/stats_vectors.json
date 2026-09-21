@@ -1,0 +1,649 @@
+{
+  "tvd": [
+    {
+      "name": "identical_shares_different_n",
+      "note": "3/6 vs 6/12 are the same 50/50 split at different sample sizes -> distance 0",
+      "cx": [
+        3,
+        3
+      ],
+      "cy": [
+        6,
+        6
+      ],
+      "expected": "0"
+    },
+    {
+      "name": "fully_disjoint",
+      "note": "everything picked under X was never picked under Y -> maximum distance 1",
+      "cx": [
+        5,
+        0
+      ],
+      "cy": [
+        0,
+        5
+      ],
+      "expected": "1"
+    },
+    {
+      "name": "zero_valid_on_one_side",
+      "note": "no valid responses on one side -> no distribution to compare, so None (not 0 or 1)",
+      "cx": [
+        0,
+        0
+      ],
+      "cy": [
+        3,
+        2
+      ],
+      "expected": null
+    },
+    {
+      "name": "partial_overlap",
+      "note": "3:1 vs 1:3 out of 4 each -> exact fraction 1/2, not a rounded float",
+      "cx": [
+        3,
+        1
+      ],
+      "cy": [
+        1,
+        3
+      ],
+      "expected": "1/2"
+    }
+  ],
+  "drop_bound_pct": [
+    {
+      "name": "typical",
+      "note": "10% loss on one side plus 5% on the other -> a 15-point worst-case ceiling",
+      "u_x": "1/10",
+      "u_y": "1/20",
+      "expected": "15"
+    },
+    {
+      "name": "no_loss",
+      "note": "nothing lost on either side -> the ceiling is exactly 0, not just small",
+      "u_x": "0",
+      "u_y": "0",
+      "expected": "0"
+    }
+  ],
+  "entropy_norm": [
+    {
+      "name": "uniform_two_options",
+      "note": "an even 5/5 split over 2 options is maximally spread -> 1.0",
+      "c": [
+        5,
+        5
+      ],
+      "expected": 1.0
+    },
+    {
+      "name": "always_same_answer",
+      "note": "every response picked the same option -> 0.0, not just low",
+      "c": [
+        10,
+        0
+      ],
+      "expected": 0.0
+    },
+    {
+      "name": "no_valid_responses",
+      "note": "n=0 -> nothing to compute entropy over -> None",
+      "c": [
+        0,
+        0
+      ],
+      "expected": null
+    },
+    {
+      "name": "single_option_undefined",
+      "note": "k<2: with only one possible option, entropy is undefined, not trivially 0",
+      "c": [
+        7
+      ],
+      "expected": null
+    },
+    {
+      "name": "skewed_two_options",
+      "note": "a 3:1 split, checked against the exact closed-form value",
+      "c": [
+        3,
+        1
+      ],
+      "expected": 0.811278124459
+    },
+    {
+      "name": "three_options",
+      "note": "entropy generalizes past two options, normalized by log(k)=log(3)",
+      "c": [
+        2,
+        3,
+        5
+      ],
+      "expected": 0.937230563216
+    }
+  ],
+  "null_floor": [
+    {
+      "name": "seed_42_default_iterations",
+      "note": "same seed must reproduce bit-for-bit; iterations = the frozen production B_ITERATIONS",
+      "cx": [
+        5,
+        3
+      ],
+      "cy": [
+        2,
+        6
+      ],
+      "seed": 42,
+      "iterations": 10000,
+      "expected": "8589/40000"
+    },
+    {
+      "name": "seed_7_reduced_iterations",
+      "note": "a different seed and a smaller iteration count exercise the loop's early-exit shape",
+      "cx": [
+        10,
+        0
+      ],
+      "cy": [
+        0,
+        10
+      ],
+      "seed": 7,
+      "iterations": 500,
+      "expected": "441/2500"
+    },
+    {
+      "name": "zero_valid_on_one_side",
+      "note": "same missing-distribution rule as tvd: nothing to pool -> None, seed is irrelevant",
+      "cx": [
+        0,
+        0
+      ],
+      "cy": [
+        3,
+        2
+      ],
+      "seed": 1,
+      "iterations": 10000,
+      "expected": null
+    }
+  ],
+  "gate_ab": [
+    {
+      "name": "clean_pass",
+      "note": "every check on every pair clears -> no flags at all",
+      "gap_pct": {
+        "ab": "3",
+        "aa": "0",
+        "ac": "50"
+      },
+      "bound": {
+        "ab": "1",
+        "aa": "1",
+        "ac": "1"
+      },
+      "asym": {
+        "ab": "0",
+        "aa": "0",
+        "ac": "0"
+      },
+      "theta": "10",
+      "expected": {
+        "gates": {
+          "A-B": {
+            "drop_bound_ok": true,
+            "asymmetry_ok": true,
+            "above_drop_bound": true
+          },
+          "A-A_prime": {
+            "drop_bound_ok": true,
+            "asymmetry_ok": true,
+            "above_surface_noise": true
+          },
+          "A-C": {
+            "drop_bound_ok": true,
+            "asymmetry_ok": true,
+            "reading": true
+          }
+        },
+        "flags": [],
+        "unset": []
+      }
+    },
+    {
+      "name": "drop_confounded",
+      "note": "bound_ab=3 exceeds the frozen 2.0-point ceiling -> drop_bound_ok False",
+      "gap_pct": {
+        "ab": "10",
+        "aa": "0",
+        "ac": "50"
+      },
+      "bound": {
+        "ab": "3",
+        "aa": "1",
+        "ac": "1"
+      },
+      "asym": {
+        "ab": "0",
+        "aa": "0",
+        "ac": "0"
+      },
+      "theta": "10",
+      "expected": {
+        "gates": {
+          "A-B": {
+            "drop_bound_ok": false,
+            "asymmetry_ok": true,
+            "above_drop_bound": true
+          },
+          "A-A_prime": {
+            "drop_bound_ok": true,
+            "asymmetry_ok": true,
+            "above_surface_noise": true
+          },
+          "A-C": {
+            "drop_bound_ok": true,
+            "asymmetry_ok": true,
+            "reading": true
+          }
+        },
+        "flags": [
+          "drop_confounded"
+        ],
+        "unset": []
+      }
+    },
+    {
+      "name": "asymmetric_missingness",
+      "note": "asym_ab=1.5 exceeds the frozen 1.0-point ceiling -> asymmetry_ok False",
+      "gap_pct": {
+        "ab": "10",
+        "aa": "0",
+        "ac": "50"
+      },
+      "bound": {
+        "ab": "1",
+        "aa": "1",
+        "ac": "1"
+      },
+      "asym": {
+        "ab": "3/2",
+        "aa": "0",
+        "ac": "0"
+      },
+      "theta": "10",
+      "expected": {
+        "gates": {
+          "A-B": {
+            "drop_bound_ok": true,
+            "asymmetry_ok": false,
+            "above_drop_bound": true
+          },
+          "A-A_prime": {
+            "drop_bound_ok": true,
+            "asymmetry_ok": true,
+            "above_surface_noise": true
+          },
+          "A-C": {
+            "drop_bound_ok": true,
+            "asymmetry_ok": true,
+            "reading": true
+          }
+        },
+        "flags": [
+          "asymmetric_missingness"
+        ],
+        "unset": []
+      }
+    },
+    {
+      "name": "below_drop_bound_implies_below_surface_noise",
+      "note": "bound_ab(2) >= gap_ab(1) so the finding can't clear its own worst-case error; this ALWAYS also fails the A-A' noise gate too, because gap_ab-bound_ab<=0<=gap_aa+bound_aa always holds -- not a coincidence of these numbers, a mathematical consequence of both bounds being non-negative",
+      "gap_pct": {
+        "ab": "1",
+        "aa": "0",
+        "ac": "50"
+      },
+      "bound": {
+        "ab": "2",
+        "aa": "1",
+        "ac": "1"
+      },
+      "asym": {
+        "ab": "0",
+        "aa": "0",
+        "ac": "0"
+      },
+      "theta": "10",
+      "expected": {
+        "gates": {
+          "A-B": {
+            "drop_bound_ok": true,
+            "asymmetry_ok": true,
+            "above_drop_bound": false
+          },
+          "A-A_prime": {
+            "drop_bound_ok": true,
+            "asymmetry_ok": true,
+            "above_surface_noise": false
+          },
+          "A-C": {
+            "drop_bound_ok": true,
+            "asymmetry_ok": true,
+            "reading": true
+          }
+        },
+        "flags": [
+          "below_drop_bound",
+          "below_surface_noise"
+        ],
+        "unset": []
+      }
+    }
+  ],
+  "gate_aa": [
+    {
+      "name": "clears_noise_floor",
+      "note": "the real gap beats the null-change gap with room to spare",
+      "gap_pct": {
+        "ab": "10",
+        "aa": "1",
+        "ac": "50"
+      },
+      "bound": {
+        "ab": "1",
+        "aa": "1",
+        "ac": "1"
+      },
+      "asym": {
+        "ab": "0",
+        "aa": "0",
+        "ac": "0"
+      },
+      "theta": "10",
+      "expected": {
+        "gates": {
+          "A-B": {
+            "drop_bound_ok": true,
+            "asymmetry_ok": true,
+            "above_drop_bound": true
+          },
+          "A-A_prime": {
+            "drop_bound_ok": true,
+            "asymmetry_ok": true,
+            "above_surface_noise": true
+          },
+          "A-C": {
+            "drop_bound_ok": true,
+            "asymmetry_ok": true,
+            "reading": true
+          }
+        },
+        "flags": [],
+        "unset": []
+      }
+    },
+    {
+      "name": "exact_tie_still_fails",
+      "note": "gap_ab-bound_ab (4) equals gap_aa+bound_aa (4) exactly -- the rule is a STRICT '>', so an exact tie must still fail, not pass",
+      "gap_pct": {
+        "ab": "5",
+        "aa": "3",
+        "ac": "50"
+      },
+      "bound": {
+        "ab": "1",
+        "aa": "1",
+        "ac": "1"
+      },
+      "asym": {
+        "ab": "0",
+        "aa": "0",
+        "ac": "0"
+      },
+      "theta": "10",
+      "expected": {
+        "gates": {
+          "A-B": {
+            "drop_bound_ok": true,
+            "asymmetry_ok": true,
+            "above_drop_bound": true
+          },
+          "A-A_prime": {
+            "drop_bound_ok": true,
+            "asymmetry_ok": true,
+            "above_surface_noise": false
+          },
+          "A-C": {
+            "drop_bound_ok": true,
+            "asymmetry_ok": true,
+            "reading": true
+          }
+        },
+        "flags": [
+          "below_surface_noise"
+        ],
+        "unset": []
+      }
+    },
+    {
+      "name": "null_change_bigger_than_real_gap",
+      "note": "the equivalent rewording moved MORE than the real change -- unambiguous below_surface_noise",
+      "gap_pct": {
+        "ab": "3",
+        "aa": "5",
+        "ac": "50"
+      },
+      "bound": {
+        "ab": "1",
+        "aa": "1",
+        "ac": "1"
+      },
+      "asym": {
+        "ab": "0",
+        "aa": "0",
+        "ac": "0"
+      },
+      "theta": "10",
+      "expected": {
+        "gates": {
+          "A-B": {
+            "drop_bound_ok": true,
+            "asymmetry_ok": true,
+            "above_drop_bound": true
+          },
+          "A-A_prime": {
+            "drop_bound_ok": true,
+            "asymmetry_ok": true,
+            "above_surface_noise": false
+          },
+          "A-C": {
+            "drop_bound_ok": true,
+            "asymmetry_ok": true,
+            "reading": true
+          }
+        },
+        "flags": [
+          "below_surface_noise"
+        ],
+        "unset": []
+      }
+    }
+  ],
+  "gate_ac": [
+    {
+      "name": "reads_the_content",
+      "note": "the substantive change moves the answer by more than its own worst-case error and theta",
+      "gap_pct": {
+        "ab": "3",
+        "aa": "0",
+        "ac": "50"
+      },
+      "bound": {
+        "ab": "1",
+        "aa": "1",
+        "ac": "1"
+      },
+      "asym": {
+        "ab": "0",
+        "aa": "0",
+        "ac": "0"
+      },
+      "theta": "10",
+      "expected": {
+        "gates": {
+          "A-B": {
+            "drop_bound_ok": true,
+            "asymmetry_ok": true,
+            "above_drop_bound": true
+          },
+          "A-A_prime": {
+            "drop_bound_ok": true,
+            "asymmetry_ok": true,
+            "above_surface_noise": true
+          },
+          "A-C": {
+            "drop_bound_ok": true,
+            "asymmetry_ok": true,
+            "reading": true
+          }
+        },
+        "flags": [],
+        "unset": []
+      }
+    },
+    {
+      "name": "not_reading",
+      "note": "gap_ac-bound_ac (4) does not clear theta (10) -- the model isn't engaging with content",
+      "gap_pct": {
+        "ab": "3",
+        "aa": "0",
+        "ac": "5"
+      },
+      "bound": {
+        "ab": "1",
+        "aa": "1",
+        "ac": "1"
+      },
+      "asym": {
+        "ab": "0",
+        "aa": "0",
+        "ac": "0"
+      },
+      "theta": "10",
+      "expected": {
+        "gates": {
+          "A-B": {
+            "drop_bound_ok": true,
+            "asymmetry_ok": true,
+            "above_drop_bound": true
+          },
+          "A-A_prime": {
+            "drop_bound_ok": true,
+            "asymmetry_ok": true,
+            "above_surface_noise": true
+          },
+          "A-C": {
+            "drop_bound_ok": true,
+            "asymmetry_ok": true,
+            "reading": false
+          }
+        },
+        "flags": [
+          "not_reading"
+        ],
+        "unset": []
+      }
+    },
+    {
+      "name": "theta_unset",
+      "note": "no pre-declared theta_positive_pct -- reading is None (undecided), not True or False, and the threshold name is reported as unset rather than silently skipped",
+      "gap_pct": {
+        "ab": "3",
+        "aa": "0",
+        "ac": "5"
+      },
+      "bound": {
+        "ab": "1",
+        "aa": "1",
+        "ac": "1"
+      },
+      "asym": {
+        "ab": "0",
+        "aa": "0",
+        "ac": "0"
+      },
+      "theta": null,
+      "expected": {
+        "gates": {
+          "A-B": {
+            "drop_bound_ok": true,
+            "asymmetry_ok": true,
+            "above_drop_bound": true
+          },
+          "A-A_prime": {
+            "drop_bound_ok": true,
+            "asymmetry_ok": true,
+            "above_surface_noise": true
+          },
+          "A-C": {
+            "drop_bound_ok": true,
+            "asymmetry_ok": true,
+            "reading": null
+          }
+        },
+        "flags": [],
+        "unset": [
+          "theta_positive_pct"
+        ]
+      }
+    },
+    {
+      "name": "no_valid_ac_responses",
+      "note": "gap_ac is None (condition C produced no valid decisions at all) -- treated as not_reading, never as a pass by default",
+      "gap_pct": {
+        "ab": "3",
+        "aa": "0",
+        "ac": null
+      },
+      "bound": {
+        "ab": "1",
+        "aa": "1",
+        "ac": "1"
+      },
+      "asym": {
+        "ab": "0",
+        "aa": "0",
+        "ac": "0"
+      },
+      "theta": "10",
+      "expected": {
+        "gates": {
+          "A-B": {
+            "drop_bound_ok": true,
+            "asymmetry_ok": true,
+            "above_drop_bound": true
+          },
+          "A-A_prime": {
+            "drop_bound_ok": true,
+            "asymmetry_ok": true,
+            "above_surface_noise": true
+          },
+          "A-C": {
+            "drop_bound_ok": true,
+            "asymmetry_ok": true,
+            "reading": false
+          }
+        },
+        "flags": [
+          "not_reading"
+        ],
+        "unset": []
+      }
+    }
+  ]
+}

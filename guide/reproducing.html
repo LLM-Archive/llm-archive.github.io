@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reproducing a result / submitting a comparison point — LLM-Archive Guide</title>
+<style>
+:root{--ink:#15161a;--dim:#5a5c66;--faint:#8c8f99;--line:#e4e4e8;--bg:#fff;--raise:#fafafb;--link:#1a4fd6}
+@media(prefers-color-scheme:dark){
+  :root{--ink:#e8edf3;--dim:#aeb9c7;--faint:#7f8b99;--line:#34404d;--bg:#14181d;--raise:#1d242c;--link:#79aef2}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 system-ui,-apple-system,"Segoe UI",Inter,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:760px;margin:0 auto;padding:0 20px}
+header{border-bottom:1px solid var(--line);padding:16px 0;margin-bottom:8px}
+header .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px}
+.brand{font-size:14px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);text-decoration:none;margin-right:8px}
+.brand small{display:block;font-size:10px;font-weight:600;letter-spacing:.08em;color:var(--faint)}
+nav{display:flex;flex-wrap:wrap;gap:2px}
+nav a{font-size:13px;color:var(--dim);text-decoration:none;padding:5px 9px;border-radius:6px}
+nav a.on{color:var(--ink);font-weight:650;background:var(--raise)}
+main{padding:28px 0 80px}
+h1{font-size:clamp(22px,3.6vw,28px);line-height:1.3;font-weight:660;letter-spacing:-.02em;margin:0 0 16px}
+h2{font-size:clamp(19px,3.2vw,23px);line-height:1.3;letter-spacing:-.015em;margin:34px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+h3,h4{font-size:15px;font-weight:700;margin:22px 0 8px}
+h1:target,h2:target,h3:target,h4:target{scroll-margin-top:16px}
+p{margin:0 0 14px}
+ul,ol{margin:0 0 14px;padding-left:22px}
+li{margin-bottom:6px}
+a{color:var(--link)}
+code{font:13px ui-monospace,"SF Mono",Menlo,monospace;background:var(--raise);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+pre{background:var(--raise);border:1px solid var(--line);border-radius:8px;padding:14px 16px;overflow-x:auto;margin:0 0 16px}
+pre code{background:none;border:0;padding:0;font-size:13px;line-height:1.55}
+blockquote{margin:0 0 16px;padding:2px 16px;border-left:3px solid var(--line);color:var(--dim)}
+hr{border:0;border-top:1px solid var(--line);margin:28px 0}
+.twrap{overflow-x:auto;margin:0 0 18px}
+table{width:100%;border-collapse:collapse;font-size:14.5px}
+th{text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);padding:0 14px 8px 0;border-bottom:2px solid var(--line);white-space:nowrap}
+td{padding:10px 14px 10px 0;border-bottom:1px solid var(--line);vertical-align:top}
+footer{border-top:1px solid var(--line);padding:18px 0;font-size:12.5px;color:var(--faint)}
+footer a{color:var(--faint)}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+<a class="brand" href="index.html">LLM-Archive<small>Guide</small></a>
+<nav><a href="index.html">Guide home</a>
+<a href="for-researchers.html">For researchers</a>
+<a href="for-developers.html">For developers</a>
+<a class="on" href="reproducing.html">Reproducing</a>
+<a href="data-dictionary.html">Data dictionary</a>
+<a href="glossary.html">Glossary</a>
+<a href="faq.html">FAQ</a></nav>
+</div></header>
+<main class="wrap">
+<h1 id="reproducing-a-result-submitting-a-comparison-point">Reproducing a result / submitting a comparison point</h1>
+<p>LLM-Archive's panel, decision grammar, and extraction rule are all public by design — the point of the project isn't "trust us," it's "here is exactly what would have to be true for this number to be wrong, go check." This page covers the two things an outside party can actually do with that: reproduce an <code>open</code>-lane result, and run the same panel against a different model.</p>
+<h2 id="reproducing-an-open-lane-result">Reproducing an <code>open</code>-lane result</h2>
+<p>Two of the twelve v0 protocols publish their complete, word-for-word trial text: <code>risky_choice_framing__wording__v0</code> and <code>base_rate_neglect__wording__v0</code> (see <a href="glossary.html"><code>glossary.md</code></a> for what <code>lane: open</code> means and why only these two).</p>
+<p><strong>Where the text actually lives:</strong> not as a standalone protocol file — <code>protocols/*.json</code> stays in the private repo even for <code>open</code> protocols (<code>../docs/spec.md</code> §10). The exact wording reaches the public only through <code>open-lane/&lt;year&gt;.jsonl</code>: every trial from an <code>open</code> run, copied through unchanged. To reconstruct the four versions (A / A′ / B / C) of a given scenario, filter that file by <code>protocol_id</code> and read the <code>version</code> and prompt-text fields directly off the trial records — see <a href="data-dictionary.html"><code>data-dictionary.md</code></a> for the exact fields.</p>
+<p>To check a specific published number:</p>
+<ol>
+<li>Pull every trial for the <code>run_id</code> you're checking from <code>open-lane/&lt;year&gt;.jsonl</code>.</li>
+<li>Re-run the same deterministic extraction rule described in <code>../docs/spec.md</code> §5 (<code>DECISION: &lt;token&gt;</code> on its own line, <code>token</code> from the protocol's closed option set) against each raw response.</li>
+<li>Recompute <code>gap_pct</code>, <code>null_floor_pct</code>, and the three gates using the formulas in <code>../docs/spec.md</code> §6 — pure standard-library arithmetic, no numerical library required.</li>
+<li>Compare against the published <code>stability_pct</code>, <code>gap_null_pct</code>, <code>gap_positive_pct</code>, and <code>flags</code> for that <code>run_id</code> in <code>stability.csv</code>.</li>
+</ol>
+<p>If your recomputation disagrees with the published record, that's exactly the kind of finding this project wants reported — see <a href="../CONTRIBUTING.md"><code>../CONTRIBUTING.md</code></a>.</p>
+<h2 id="running-the-panel-against-your-own-model-a-comparisonpoint">Running the panel against your own model — a <code>comparison_point</code></h2>
+<p>Because the panel, grammar, and extraction rule are public, anyone can run the <em>same</em> frozen 15-scenario panel against a model of their own choosing. If you do, the result can be published as a <code>comparison_point</code> — but only if it's a genuinely like-for-like run. To be accepted, a submission needs <strong>all</strong> of the following, matching exactly:</p>
+<ul>
+<li>The same <code>panel_sha256</code> as the protocol you're comparing against (i.e., you used the real scenario content, not a paraphrase of it — for a <code>guard</code>-lane protocol this means you cannot submit a comparison point at all, since its wording isn't public).</li>
+<li>The same <code>grammar_version</code> — the identical <code>DECISION: &lt;token&gt;</code> extraction rule, applied the same way.</li>
+<li>The same <code>n</code> per version (30 in v0).</li>
+<li><strong>All four versions</strong> (A, A′, B, C) — not just the headline A/B contrast. A submission missing the null-change or positive control can't be checked for the same validity issues every project measurement is checked for.</li>
+<li>The full outcome distribution per version (valid / unparseable / refused / etc.), not just a final score — so <code>u</code>, the drop bound, and the gates can be computed for your run exactly as they are for the project's own.</li>
+<li>The exact model id you ran, verifiably.</li>
+</ul>
+<h2 id="what-a-comparisonpoint-is-not">What a <code>comparison_point</code> is not</h2>
+<p>This is stated plainly because it's the most likely thing to be misused: a <code>comparison_point</code> is <strong>one model, on one frozen 15-scenario panel, on one day.</strong> It is never merged into the main chart, never averaged with anything, and never treated as a ranking. It appears in its own table, with its own date, next to — never blended with — the project's own multi-year series. <strong>No one is entitled to conclude "my model beat every AI"</strong> from a single comparison point, and any presentation of one that implies that is a misuse of the data, not something the project's own methodology supports.</p>
+<p>It is also strictly read-only from the project's perspective: submitting one never triggers a project-run measurement and never changes what's on the regular monthly rotation.</p>
+<h2 id="submitting-one">Submitting one</h2>
+<p>Today (pre-launch), send the run's full data (matching every requirement above) to mkalognomos@gmail.com. Once the project is public, this is expected to move to a structured submission path against the public repository — check back here, since this page will be updated rather than left describing a process that no longer matches reality.</p>
+</main>
+<footer class="wrap">
+Written for people using LLM-Archive, not building it — see <a href="../README.md">../README.md</a>
+and <a href="../docs/spec.md">docs/spec.md</a> for the project itself.
+</footer>
+</body>
+</html>

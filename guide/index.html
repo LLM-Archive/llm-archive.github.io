@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LLM-Archive guide</title>
+<style>
+:root{--ink:#15161a;--dim:#5a5c66;--faint:#8c8f99;--line:#e4e4e8;--bg:#fff;--raise:#fafafb;--link:#1a4fd6}
+@media(prefers-color-scheme:dark){
+  :root{--ink:#e8edf3;--dim:#aeb9c7;--faint:#7f8b99;--line:#34404d;--bg:#14181d;--raise:#1d242c;--link:#79aef2}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 system-ui,-apple-system,"Segoe UI",Inter,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:760px;margin:0 auto;padding:0 20px}
+header{border-bottom:1px solid var(--line);padding:16px 0;margin-bottom:8px}
+header .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px}
+.brand{font-size:14px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);text-decoration:none;margin-right:8px}
+.brand small{display:block;font-size:10px;font-weight:600;letter-spacing:.08em;color:var(--faint)}
+nav{display:flex;flex-wrap:wrap;gap:2px}
+nav a{font-size:13px;color:var(--dim);text-decoration:none;padding:5px 9px;border-radius:6px}
+nav a.on{color:var(--ink);font-weight:650;background:var(--raise)}
+main{padding:28px 0 80px}
+h1{font-size:clamp(22px,3.6vw,28px);line-height:1.3;font-weight:660;letter-spacing:-.02em;margin:0 0 16px}
+h2{font-size:clamp(19px,3.2vw,23px);line-height:1.3;letter-spacing:-.015em;margin:34px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+h3,h4{font-size:15px;font-weight:700;margin:22px 0 8px}
+h1:target,h2:target,h3:target,h4:target{scroll-margin-top:16px}
+p{margin:0 0 14px}
+ul,ol{margin:0 0 14px;padding-left:22px}
+li{margin-bottom:6px}
+a{color:var(--link)}
+code{font:13px ui-monospace,"SF Mono",Menlo,monospace;background:var(--raise);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+pre{background:var(--raise);border:1px solid var(--line);border-radius:8px;padding:14px 16px;overflow-x:auto;margin:0 0 16px}
+pre code{background:none;border:0;padding:0;font-size:13px;line-height:1.55}
+blockquote{margin:0 0 16px;padding:2px 16px;border-left:3px solid var(--line);color:var(--dim)}
+hr{border:0;border-top:1px solid var(--line);margin:28px 0}
+.twrap{overflow-x:auto;margin:0 0 18px}
+table{width:100%;border-collapse:collapse;font-size:14.5px}
+th{text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);padding:0 14px 8px 0;border-bottom:2px solid var(--line);white-space:nowrap}
+td{padding:10px 14px 10px 0;border-bottom:1px solid var(--line);vertical-align:top}
+footer{border-top:1px solid var(--line);padding:18px 0;font-size:12.5px;color:var(--faint)}
+footer a{color:var(--faint)}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+<a class="brand" href="index.html">LLM-Archive<small>Guide</small></a>
+<nav><a class="on" href="index.html">Guide home</a>
+<a href="for-researchers.html">For researchers</a>
+<a href="for-developers.html">For developers</a>
+<a href="reproducing.html">Reproducing</a>
+<a href="data-dictionary.html">Data dictionary</a>
+<a href="glossary.html">Glossary</a>
+<a href="faq.html">FAQ</a></nav>
+</div></header>
+<main class="wrap">
+<h1 id="llm-archive-guide">LLM-Archive guide</h1>
+<p>This folder is written for people <strong>using</strong> LLM-Archive — researchers, developers, journalists, students — rather than for people building it. Everything here is in English, kept in sync with the frozen specification at <a href="../docs/spec.md"><code>../docs/spec.md</code></a>. If the two ever disagree, <code>docs/spec.md</code> is correct and this guide is what needs fixing.</p>
+<p>These <code>.md</code> files are the source; <code>python3 -m core.plumbing.render_guide build</code> turns each into a matching <code>.html</code> page (<code>README.md</code> → <code>index.html</code>) with a shared nav bar, sitting next to its source the same way <code>website/index.html</code> sits next to <code>website/template.html</code> — a small, standalone docs site alongside the closed 8-page main site (spec.md §11), not inside it. The generated <code>.html</code> files aren't committed (see <code>.gitignore</code>); see <code>core/plumbing/render_guide.py</code>'s docstring for why that renderer is a hand-rolled markdown converter rather than a dependency.</p>
+<p><strong>Current status: one real measurement exists, nothing is public yet.</strong> The pipeline has run against the real commercial model once (<code>claude-sonnet-5</code>, 2026-09-21 — "commit #1" in the build log, which also froze <code>core/measure/</code> for good, spec.md §13); the other 11 v0 protocols haven't run against it yet. There is no public repository or website yet — the code lives in a private repo, and the public site repo hasn't been created. Everything below describes how the finished project is designed to work. Where something described here isn't built yet, it's marked as such — this project's own principle (<code>docs/spec.md</code> §9, §10) is to disclose gaps rather than imply a feature exists before it does, and this guide follows the same rule about itself.</p>
+<h2 id="where-to-start-depending-on-who-you-are">Where to start, depending on who you are</h2>
+<div class="twrap"><table><thead><tr><th>You are...</th><th>Start here</th></tr></thead><tbody><tr><td>A researcher who wants to cite a number, or understand what it does and doesn't prove</td><td><a href="for-researchers.html"><code>for-researchers.md</code></a></td></tr><tr><td>A developer who wants to load the data, or extend/audit the code</td><td><a href="for-developers.html"><code>for-developers.md</code></a></td></tr><tr><td>Someone who wants to run the same panel against a different model</td><td><a href="reproducing.html"><code>reproducing.md</code></a></td></tr><tr><td>Someone who wants to know what a specific column or term means</td><td><a href="data-dictionary.html"><code>data-dictionary.md</code></a> and <a href="glossary.html"><code>glossary.md</code></a></td></tr><tr><td>Someone with a quick question</td><td><a href="faq.html"><code>faq.md</code></a></td></tr><tr><td>A cited researcher who found an inaccurate quote or wants to respond</td><td><a href="../CONTRIBUTING.md"><code>../CONTRIBUTING.md</code></a></td></tr></tbody></table></div>
+<h2 id="the-one-thing-to-understand-before-reading-anything-else">The one thing to understand before reading anything else</h2>
+<p>LLM-Archive measures <strong>one number</strong>: how much a model's decision distribution shifts when the same question is reworded in a way that shouldn't change the answer. It publishes that number alongside everything needed to doubt it — a noise floor, an entropy series, a worst-case error bound from lost responses, and a daily check on whether the measurement pipeline itself is still working. It does not measure how "smart," "human-like," or "aligned" a model is, and it says so explicitly rather than letting a reader assume otherwise. See <a href="for-researchers.html"><code>for-researchers.md</code></a> for the full scope of the claim.</p>
+</main>
+<footer class="wrap">
+Written for people using LLM-Archive, not building it — see <a href="../README.md">../README.md</a>
+and <a href="../docs/spec.md">docs/spec.md</a> for the project itself.
+</footer>
+</body>
+</html>
