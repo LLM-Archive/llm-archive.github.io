@@ -1,0 +1,64 @@
+{
+  "check_runtime_fingerprint": [
+    {
+      "name": "exact_match",
+      "expected": {"p1": "alpha", "p2": "beta"},
+      "observed": {"p1": "alpha", "p2": "beta"},
+      "want": {"ok": true, "reason": null, "mismatched": []}
+    },
+    {
+      "name": "one_prompt_differs",
+      "expected": {"p1": "alpha", "p2": "beta"},
+      "observed": {"p1": "alpha", "p2": "beta-drifted"},
+      "want": {"ok": false, "reason": "mismatch", "mismatched": ["p2"]}
+    },
+    {
+      "name": "unavailable_counts_as_fail",
+      "note": "spec.md §7: a day without runtime_fingerprint publishes no measurements",
+      "expected": {"p1": "alpha"},
+      "observed": null,
+      "want": {"ok": false, "reason": "unavailable", "mismatched": []}
+    }
+  ],
+  "check_guard_margin": [
+    {
+      "name": "flat_within_margin",
+      "baseline": {"stability_pct": 95, "ci_low_pct": 93, "ci_high_pct": 97, "drop_bound_pct_ab": 1},
+      "today":    {"stability_pct": 95.5, "ci_low_pct": 93.5, "ci_high_pct": 97.5, "drop_bound_pct_ab": 1},
+      "want": {"ok": true, "result": "flat"}
+    },
+    {
+      "name": "regressed_beyond_margin",
+      "baseline": {"stability_pct": 95, "ci_low_pct": 94, "ci_high_pct": 96, "drop_bound_pct_ab": 0.5},
+      "today":    {"stability_pct": 80, "ci_low_pct": 79, "ci_high_pct": 81, "drop_bound_pct_ab": 0.5},
+      "want": {"ok": false, "result": "regressed"}
+    },
+    {
+      "name": "improved_is_still_an_alarm",
+      "note": "the reference model is supposed to never move at all, in either direction",
+      "baseline": {"stability_pct": 90, "ci_low_pct": 89.9, "ci_high_pct": 90.1, "drop_bound_pct_ab": 0.1},
+      "today":    {"stability_pct": 99, "ci_low_pct": 98.9, "ci_high_pct": 99.1, "drop_bound_pct_ab": 0.1},
+      "want": {"ok": false, "result": "improved"}
+    }
+  ],
+  "status": [
+    {
+      "name": "both_pass",
+      "runtime": {"ok": true, "reason": null, "mismatched": []},
+      "guard": {"ok": true, "result": "flat"},
+      "want": {"ok": true, "flag": null}
+    },
+    {
+      "name": "runtime_fails",
+      "runtime": {"ok": false, "reason": "unavailable", "mismatched": []},
+      "guard": {"ok": true, "result": "flat"},
+      "want": {"ok": false, "flag": "instrument_suspect"}
+    },
+    {
+      "name": "guard_fails",
+      "runtime": {"ok": true, "reason": null, "mismatched": []},
+      "guard": {"ok": false, "result": "regressed"},
+      "want": {"ok": false, "flag": "instrument_suspect"}
+    }
+  ]
+}

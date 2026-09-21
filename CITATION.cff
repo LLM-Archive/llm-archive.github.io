@@ -1,0 +1,45 @@
+# This file follows the Citation File Format (https://citation-file-format.github.io/).
+# It describes how to cite LLM-Archive. The public repo and site went live 2026-09-21, so
+# repository-code/url below are now real, confirmed values, not placeholders. version/
+# date-released/the DOI stay TODO until a formal tagged release exists (cadence.yaml's
+# release_publish: Zenodo + DOI, automatic, 90d) — the same discipline this project uses for
+# "null until it's true" fields elsewhere (see subject_models.yaml). Filling those in early
+# would be citing a release that doesn't exist yet.
+
+cff-version: 1.2.0
+message: >-
+  If you use LLM-Archive's data, code, or methodology, please cite it as below. Cite the specific
+  measurement(s) you used by their run_id and protocol_id where possible (see guide/for-researchers.md),
+  not just the project as a whole — the project is designed as a growing time series, and a citation
+  that names a specific run is falsifiable in a way that a citation of "the project" is not.
+type: software
+title: "LLM-Archive: a long-running stability archive for commercial language models"
+abstract: >-
+  A public, append-only measurement archive tracking whether a commercial language model's
+  decisions change under equivalent rewordings of the same question, checked monthly against a
+  frozen 15-scenario panel per protocol, with a daily self-check against an independent, frozen,
+  open-weights reference model. Publishes the noise floor, entropy series, and a worst-case loss
+  bound alongside every measurement.
+authors:
+  - family-names: Kalognomos
+    given-names: Michalis
+    email: mkalognomos@gmail.com
+license:
+  - AGPL-3.0-only  # published code
+  - CC-BY-4.0      # published data
+  - CC-BY-SA-4.0   # published prose
+repository-code: "https://github.com/LLM-Archive/llm-archive.github.io"
+url: "https://llm-archive.github.io"
+version: "0.0.0-prelaunch"  # TODO: set to the first formally tagged/archived release (Zenodo)
+date-released: "TODO"       # TODO: set when that release is minted; do not backdate
+identifiers:
+  - type: doi
+    value: "TODO"            # TODO: Zenodo concept DOI, minted at first public release
+    description: "Zenodo concept DOI — always resolves to the latest version"
+keywords:
+  - large language models
+  - reproducibility
+  - decision stability
+  - framing effects
+  - model evaluation
+  - AI transparency
