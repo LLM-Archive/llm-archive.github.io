@@ -11,7 +11,7 @@ import tempfile
 from datetime import date
 from pathlib import Path
 
-from . import schedule
+from . import run_due, schedule
 
 _VECTORS = Path(__file__).resolve().parent / "vectors.json"
 
@@ -36,6 +36,15 @@ def check_due_jobs(data: dict) -> list[str]:
     return errors
 
 
+def check_plan(data: dict) -> list[str]:
+    errors = []
+    for case in data["plan"]:
+        got = run_due.plan(case["due"])
+        if got != case["expected"]:
+            errors.append(f"{case['name']}: got {got}, want {case['expected']}")
+    return errors
+
+
 def check_record_run(data: dict) -> list[str]:
     errors = []
     with tempfile.TemporaryDirectory() as tmp:
@@ -57,6 +66,7 @@ def main() -> int:
     checks = (
         ("parse_cadence", lambda: check_parse_cadence(data)),
         ("due_jobs", lambda: check_due_jobs(data)),
+        ("plan", lambda: check_plan(data)),
         ("record_run", lambda: check_record_run(data)),
     )
 

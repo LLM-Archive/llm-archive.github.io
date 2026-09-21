@@ -800,10 +800,16 @@ format: one `sc:Field` per column, its Croissant data type read off the same fie
 
 **The default is public, not private.** The source code is not a secret — `core/measure/`,
 `core/schedule/`, `core/plumbing/`, `core/testdata/`, `core/instrument/`, `cadence.yaml`,
-`subject_models.yaml`, `website/`, `logo.png`, `CITATION.cff` all ship to the public repo as-is, on top of the generated files
-listed above. Delivered as freshly generated content on every release, never as exported git
-history — the public repo shares no commits with the private one, and there is no code-hiding
-mechanism beyond just not copying a file over.
+`subject_models.yaml`, `website/`, `logo.png`, `CITATION.cff`, `.zenodo.json` all ship to the
+public repo as-is, on top of the generated files listed above. Delivered as freshly generated
+content on every release, never as exported git history — the public repo shares no commits with
+the private one, and there is no code-hiding mechanism beyond just not copying a file over.
+
+`.zenodo.json` is what the GitHub–Zenodo webhook (§8's `release_publish`, once enabled on
+zenodo.org — an account-level toggle, not something any script here can do) reads to fill in the
+metadata of the deposit it mints automatically from a tagged GitHub Release on the public repo.
+`tools/cut_release.py` prepares that release; see its own docstring for the exact division between
+what it automates and what stays a human decision (which version, when).
 
 **Four things stay private, and only these:**
 

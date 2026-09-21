@@ -40,6 +40,37 @@
       "expected": {"full_sweep": {"due": false, "elapsed_days": 29}}
     }
   ],
+  "plan": [
+    {
+      "name": "nothing_due",
+      "due": {"subject_fingerprint": {"due": false}, "full_sweep": {"due": false}},
+      "expected": {}
+    },
+    {
+      "name": "known_jobs_grouped_by_runner",
+      "due": {
+        "subject_fingerprint": {"due": true},
+        "full_sweep": {"due": true},
+        "runtime_fingerprint": {"due": true},
+        "guard_margin_rotation": {"due": true}
+      },
+      "expected": {
+        "subject_fingerprint": ["subject_fingerprint"],
+        "full_sweep": ["full_sweep"],
+        "reference_model": ["runtime_fingerprint", "guard_margin_rotation"]
+      }
+    },
+    {
+      "name": "only_one_of_the_shared_pair_due",
+      "due": {"runtime_fingerprint": {"due": true}, "guard_margin_rotation": {"due": false}},
+      "expected": {"reference_model": ["runtime_fingerprint"]}
+    },
+    {
+      "name": "unknown_cadence_jobs_left_out",
+      "due": {"human_review": {"due": true}, "deadman_alert": {"due": true}},
+      "expected": {}
+    }
+  ],
   "record_run": [
     {
       "name": "valid_date_roundtrips",
