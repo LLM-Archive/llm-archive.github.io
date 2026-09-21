@@ -701,7 +701,7 @@ function open(i){const d=ALL[i];
  else set('lockyr','disclosed once this model generation is retired');
  const sg=d.scenario_gaps_pct||[], mx=sg.length?Math.max.apply(null,sg):0;
  document.getElementById('sgw').innerHTML=sg.map((g,j)=>
-   `<div class="sgb" title="scenario ${j+1}: ${g.toFixed(1)} points"><i style="height:${mx>0?(100*g/mx).toFixed(0):0}%"></i><span>${j+1}</span></div>`).join('');
+   `<div class="sgb" title="scenario ${j+1}: ${g==null?'not computable — no valid responses to compare':g.toFixed(1)+' points'}"><i style="height:${g!=null&&mx>0?(100*g/mx).toFixed(0):0}%"></i><span>${j+1}</span></div>`).join('');
  const srt=sg.slice().sort((a,b)=>b-a), total=sg.reduce((a,b)=>a+b,0), top2=total>0?100*(srt[0]+srt[1])/total:0;
  set('sgnote','Height = how much the decision changed on that scenario. The two worst produce '
    +top2.toFixed(0)+'% of the gap'+(top2>50?' — flagged scenario_dominated.':'.'));
