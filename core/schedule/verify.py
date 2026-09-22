@@ -12,6 +12,7 @@ import shutil
 import sys
 import tempfile
 from datetime import date
+from fractions import Fraction
 from pathlib import Path
 from unittest import mock
 
@@ -119,10 +120,20 @@ def check_run_full_sweep_ladder(data) -> list[str]:
     them off budget.check()'s decision -- a real gap found and fixed 2026-09-21: `allowed` is only
     False at the bottom rung (max_sweep_protocols == 0), so the two rungs in between
     (reduced_sweep's protocol cap, guard_only_sweep's lane restriction) were computed but never
-    applied. Uses the real protocols/ and the real budget.json (read-only, never modified) so the
-    rung math is the actual math, not a hand-copied fixture -- only the ledger (synthetic spend,
-    to land on a specific rung) and the client (a FakeClient stand-in, so this stays a zero-cost,
-    offline check) are fabricated."""
+    applied. Uses the real protocols/ (read-only) so the rung math is the actual math, not a
+    hand-copied fixture -- only the ledger (synthetic spend) and the client (a FakeClient
+    stand-in, zero-cost) are fabricated.
+
+    The count-cap scenario uses a synthetic, huge-ceiling config (not the real budget.json) so
+    that `run_due._EST_COST_PER_PROTOCOL_EUR`'s per-iteration projection (added 2026-09-22, see
+    run_due.run_full_sweep's own docstring) is negligible relative to the ceiling and the count
+    cap alone is what's under test -- against the *real*, small €10 ceiling, 6 protocols'
+    projected cost alone (~€4.74) is wider than the reduced_sweep rung's whole 60-80% band, so the
+    projection -- correctly -- would stop the sweep before the count cap ever bound, which is the
+    right real-world behavior but isolates nothing. The lane-restriction scenario is split into
+    two single-lane sweeps (rather than one mixed sweep) for the same reason: with a real, narrow
+    ceiling, checking a guard-lane protocol first shifts the projection enough to change *why* the
+    open-lane one gets skipped, which isn't what this scenario means to test."""
     del data  # no vectors.json cases for this one -- see docstring for why
     errors = []
     run_date = "2026-01-01"
@@ -131,13 +142,19 @@ def check_run_full_sweep_ladder(data) -> list[str]:
         tmp = Path(tmp)
 
         # reduced_sweep (60-80%): max_sweep_protocols=6, sweep_lane=None -- all 12 real protocols
-        # are lane-eligible, so this isolates the *count* cap.
+        # are lane-eligible, so this isolates the *count* cap. Huge synthetic ceiling (see
+        # docstring) so the per-iteration spend projection can't confound it.
         protocols_dir = tmp / "protocols_count"
         protocols_dir.mkdir()
         for f in sorted(_REAL_PROTOCOLS_DIR.glob("*.json")):
             shutil.copy(f, protocols_dir / f.name)
+        huge_ceiling_config = tmp / "budget_huge.json"
+        real_rungs = json.loads(budget.DEFAULT_CONFIG.read_text())["rungs"]
+        huge_ceiling_config.write_text(json.dumps({
+            "monthly_ceiling_eur": "100000.00", "bridge_reserve_eur": "1.00", "rungs": real_rungs,
+        }))
         ledger = tmp / "ledger_count.json"
-        _write_ledger(ledger, run_date, "6.50")  # 65% of the flat €10 general ceiling
+        _write_ledger(ledger, run_date, "65000.00")  # 65% of the huge synthetic ceiling
 
         with mock.patch("core.plumbing.anthropic_client.AnthropicClient", _StubClient), contextlib.redirect_stdout(io.StringIO()):
             # redirect_stdout: pilot.run()'s progress marks and run_due's own spend reminder
@@ -147,7 +164,7 @@ def check_run_full_sweep_ladder(data) -> list[str]:
                 client_kind="anthropic", run_date=run_date,
                 protocols_dir=protocols_dir, out_root=tmp / "experiments_count",
                 subject_models_path=_REAL_SUBJECT_MODELS,
-                budget_ledger=ledger, budget_config=budget.DEFAULT_CONFIG,
+                budget_ledger=ledger, budget_config=huge_ceiling_config,
             )
         ran = [r for r in results if "run_id" in r]
         capped = [r for r in results if r.get("skipped") == "budget_halted" and "caps this sweep" in r.get("detail", "")]
@@ -156,33 +173,126 @@ def check_run_full_sweep_ladder(data) -> list[str]:
         if len(capped) != len(results) - len(ran):
             errors.append(f"reduced_sweep: {len(capped)} capped of {len(results) - len(ran)} not-run, want all of them")
 
-        # guard_only_sweep (80-95%): max_sweep_protocols=4, sweep_lane="guard" -- one open-lane
-        # and two guard-lane real protocols, well under the count cap, isolates the *lane* check.
-        protocols_dir2 = tmp / "protocols_lane"
-        protocols_dir2.mkdir()
+        # guard_only_sweep (80-95%): max_sweep_protocols=4, sweep_lane="guard". Two separate,
+        # single-lane sweeps against the real, narrow €10 ceiling (see docstring for why not one
+        # mixed sweep): the open-lane one alone (protocols_run stays 0, no projection confound)
+        # must be lane-skipped; the two guard-lane ones alone must both run (well under the count
+        # cap, and 2 * _EST_COST_PER_PROTOCOL_EUR is small enough to stay inside the 80-95% band).
         open_lane = next(json.loads(f.read_text())["protocol_id"] for f in _REAL_PROTOCOLS_DIR.glob("*.json") if json.loads(f.read_text())["lane"] == "open")
         guard_lane = [json.loads(f.read_text())["protocol_id"] for f in _REAL_PROTOCOLS_DIR.glob("*.json") if json.loads(f.read_text())["lane"] == "guard"][:2]
-        for pid in [open_lane, *guard_lane]:
-            shutil.copy(_REAL_PROTOCOLS_DIR / f"{pid}.json", protocols_dir2 / f"{pid}.json")
-        ledger2 = tmp / "ledger_lane.json"
-        _write_ledger(ledger2, run_date, "8.50")  # 85% of the flat €10 general ceiling
+
+        protocols_dir_open = tmp / "protocols_lane_open"
+        protocols_dir_open.mkdir()
+        shutil.copy(_REAL_PROTOCOLS_DIR / f"{open_lane}.json", protocols_dir_open / f"{open_lane}.json")
+        ledger_open = tmp / "ledger_lane_open.json"
+        _write_ledger(ledger_open, run_date, "8.50")  # 85% of the real €10 general ceiling
 
         with mock.patch("core.plumbing.anthropic_client.AnthropicClient", _StubClient), contextlib.redirect_stdout(io.StringIO()):
-            results2 = run_due.run_full_sweep(
+            results_open = run_due.run_full_sweep(
                 client_kind="anthropic", run_date=run_date,
-                protocols_dir=protocols_dir2, out_root=tmp / "experiments_lane",
+                protocols_dir=protocols_dir_open, out_root=tmp / "experiments_lane_open",
                 subject_models_path=_REAL_SUBJECT_MODELS,
-                budget_ledger=ledger2, budget_config=budget.DEFAULT_CONFIG,
+                budget_ledger=ledger_open, budget_config=budget.DEFAULT_CONFIG,
             )
-        by_pid = {r["protocol_id"]: r for r in results2}
-        if "run_id" in by_pid.get(open_lane, {}):
+        open_result = next((r for r in results_open if r["protocol_id"] == open_lane), None)
+        if "run_id" in (open_result or {}):
             errors.append(f"guard_only_sweep: open-lane protocol {open_lane!r} ran, should have been lane-restricted")
-        elif "lane" not in by_pid.get(open_lane, {}).get("detail", ""):
-            errors.append(f"guard_only_sweep: open-lane protocol {open_lane!r} skipped for the wrong reason: {by_pid.get(open_lane)}")
-        for pid in guard_lane:
-            if "run_id" not in by_pid.get(pid, {}):
-                errors.append(f"guard_only_sweep: guard-lane protocol {pid!r} should have run (under the cap, right lane): {by_pid.get(pid)}")
+        elif "lane" not in (open_result or {}).get("detail", ""):
+            errors.append(f"guard_only_sweep: open-lane protocol {open_lane!r} skipped for the wrong reason: {open_result}")
 
+        protocols_dir_guard = tmp / "protocols_lane_guard"
+        protocols_dir_guard.mkdir()
+        for pid in guard_lane:
+            shutil.copy(_REAL_PROTOCOLS_DIR / f"{pid}.json", protocols_dir_guard / f"{pid}.json")
+        ledger_guard = tmp / "ledger_lane_guard.json"
+        _write_ledger(ledger_guard, run_date, "8.50")  # 85% of the real €10 general ceiling
+
+        with mock.patch("core.plumbing.anthropic_client.AnthropicClient", _StubClient), contextlib.redirect_stdout(io.StringIO()):
+            results_guard = run_due.run_full_sweep(
+                client_kind="anthropic", run_date=run_date,
+                protocols_dir=protocols_dir_guard, out_root=tmp / "experiments_lane_guard",
+                subject_models_path=_REAL_SUBJECT_MODELS,
+                budget_ledger=ledger_guard, budget_config=budget.DEFAULT_CONFIG,
+            )
+        by_pid_guard = {r["protocol_id"]: r for r in results_guard}
+        for pid in guard_lane:
+            if "run_id" not in by_pid_guard.get(pid, {}):
+                errors.append(f"guard_only_sweep: guard-lane protocol {pid!r} should have run (under the cap, right lane): {by_pid_guard.get(pid)}")
+
+    return errors
+
+
+def check_ladder_projection(data) -> list[str]:
+    """Real gap found and fixed 2026-09-22 (run_due.run_full_sweep's own docstring has the full
+    incident): the ladder used to be evaluated once per iteration only against the *ledger's*
+    confirmed spend, which never moves mid-sweep (real spend is only logged once a bill confirms
+    it). A sweep that started well inside a generous rung could keep running protocol after
+    protocol without ever re-evaluating against what it had itself already committed to spending
+    this run -- found by hand, on a real sweep, requiring a human to stop it and log spend
+    mid-run to keep it in check. Confirms the fix directly at the budget.check() layer (cheaper
+    and more precise than another run_full_sweep simulation): a ledger with 0 confirmed spend this
+    month, checked with a non-zero `additional_spent_eur` large enough to cross a rung boundary on
+    its own, must return that stricter rung -- not the generous one a ledger-only read would give."""
+    del data
+    errors = []
+    config = budget.load_config()
+    ledger: list[dict] = []  # empty -- 0% confirmed spend this month
+    no_projection = budget.check(ledger, "full_sweep", "2026-01", config=config)
+    if no_projection["level"] != "full":
+        errors.append(f"sanity: empty ledger should read 'full', got {no_projection['level']!r}")
+    with_projection = budget.check(ledger, "full_sweep", "2026-01", config=config, additional_spent_eur=Fraction("8.50"))
+    if with_projection["level"] != "guard_only_sweep":
+        errors.append(
+            f"a €8.50 in-flight projection on an otherwise-empty ledger should read 'guard_only_sweep' "
+            f"(85% of €10), got {with_projection['level']!r} ({with_projection['spent_pct']}%)"
+        )
+    if with_projection["allowed"] is not True:
+        errors.append(f"guard_only_sweep still allows spending (max_sweep_protocols=4 > 0), got allowed={with_projection['allowed']!r}")
+    return errors
+
+
+def check_already_run_this_month(data) -> list[str]:
+    """Real gap found and fixed 2026-09-22 (run_due.py's own docstring has the full story): the
+    old code only checked "already ran today" (pilot.run()'s FileExistsError), so a protocol
+    hand-measured earlier in the same month -- a different calendar day -- got silently
+    re-measured and re-billed. Confirms the fix: a pre-existing run dated earlier this month is
+    skipped as `already_run_this_month` before the (real-money) client is ever constructed, while
+    an uncovered protocol in the same sweep still runs normally."""
+    del data
+    errors = []
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = Path(tmp)
+        protocols_dir = tmp / "protocols"
+        protocols_dir.mkdir()
+        # two lane-open, unrelated-family protocols so both can run without lane/count capping
+        chosen = [json.loads(f.read_text()) for f in sorted(_REAL_PROTOCOLS_DIR.glob("*.json"))
+                  if json.loads(f.read_text())["lane"] == "open"][:2]
+        for p in chosen:
+            shutil.copy(_REAL_PROTOCOLS_DIR / f"{p['protocol_id']}.json", protocols_dir / f"{p['protocol_id']}.json")
+        already_pid = chosen[0]["protocol_id"]
+        new_pid = chosen[1]["protocol_id"]
+
+        out_root = tmp / "experiments"
+        out_root.mkdir()
+        # a fake earlier-this-month real run for `already_pid`, on a different day than run_date
+        (out_root / f"2026-06-03__{already_pid}__stub-model__r0").mkdir()
+
+        ledger = tmp / "ledger.json"
+        _write_ledger(ledger, "2026-06-01", "0")  # 0% spent -- isolates this check from the ladder
+
+        with mock.patch("core.plumbing.anthropic_client.AnthropicClient", _StubClient), contextlib.redirect_stdout(io.StringIO()):
+            results = run_due.run_full_sweep(
+                client_kind="anthropic", run_date="2026-06-15",
+                protocols_dir=protocols_dir, out_root=out_root,
+                subject_models_path=_REAL_SUBJECT_MODELS,
+                budget_ledger=ledger, budget_config=budget.DEFAULT_CONFIG,
+                model_id="stub-model", model_family="stub-family",
+            )
+        by_pid = {r["protocol_id"]: r for r in results}
+        if by_pid.get(already_pid, {}).get("skipped") != "already_run_this_month":
+            errors.append(f"{already_pid}: expected skipped=already_run_this_month, got {by_pid.get(already_pid)}")
+        if "run_id" not in by_pid.get(new_pid, {}):
+            errors.append(f"{new_pid}: should have run normally (no prior run this month), got {by_pid.get(new_pid)}")
     return errors
 
 
@@ -197,6 +307,8 @@ def main() -> int:
         ("gap_cause_for", lambda: check_gap_cause_for(data)),
         ("record_observation", lambda: check_record_observation(data)),
         ("run_full_sweep_ladder", lambda: check_run_full_sweep_ladder(data)),
+        ("ladder_projection", lambda: check_ladder_projection(data)),
+        ("already_run_this_month", lambda: check_already_run_this_month(data)),
     )
 
     all_errors: list[str] = []

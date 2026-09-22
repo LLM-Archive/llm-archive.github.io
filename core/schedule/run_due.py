@@ -38,6 +38,7 @@ import argparse
 import json
 import sys
 from datetime import date
+from fractions import Fraction
 from pathlib import Path
 
 from core.budget import budget
@@ -63,6 +64,14 @@ RUNNERS = {
 # Cheapest/free first: a real environment problem or exhausted budget in a later runner shouldn't
 # stop the free one from completing and being recorded. Also the valid --only vocabulary.
 RUNNER_ORDER = ["reference_model", "subject_fingerprint", "full_sweep"]
+
+# A deliberately pessimistic per-protocol ceiling, used only to project this sweep's own
+# not-yet-logged spend so run_full_sweep's rung check can't run stale for an entire long sweep
+# (see that function's docstring). Never written to state/spend.json -- real entries there range
+# €0.64-0.79 (2026-09-21/22, n=6); this is the top of that range, not the average, so the
+# projection errs toward stopping a little early rather than a little late. Revisit if real spend
+# ever lands above this on a normal (non-truncated, non-retried) run.
+_EST_COST_PER_PROTOCOL_EUR = Fraction("0.79")
 
 _SPEND_REMINDER = (
     "\nReal money was spent against the Anthropic API ({label}). Once the bill confirms the "
@@ -114,18 +123,38 @@ def run_full_sweep(
     description ("12 protocols x 4 versions x n=30"). Budget is re-checked before every single
     protocol, not once for the whole sweep -- same discipline core.measure.pilot's own CLI already
     uses at this call site, just looped instead of invoked 12 separate times by hand. A protocol
-    that already ran today (FileExistsError) or that the ladder halts partway through is skipped,
-    not fatal -- the rest of the sweep, and the rest of due today's jobs, still get a chance.
+    that already has a real run earlier this same month, that already ran today specifically
+    (FileExistsError -- kept as a fallback even though the month-level check above should always
+    catch it first), or that the ladder halts partway through, is skipped, not fatal -- the rest of
+    the sweep, and the rest of due today's jobs, still get a chance.
+
+    **Real gap found and fixed 2026-09-22**: this used to only check "already ran today" (via
+    pilot.run()'s own FileExistsError), not "already ran this month" -- full_sweep is monthly
+    (cadence.yaml), so a protocol hand-measured yesterday, or by an earlier, interrupted sweep
+    attempt earlier today, got silently re-measured and re-billed by the next invocation, purely
+    because the calendar day differed. Found by hand, real money already spent on the redundant
+    re-run before the gap was caught (base_rate_neglect__anchoring__v0, 2026-09-22 -- see
+    decisions.md). Fixed by scanning `out_root` for any existing `<protocol_id>__<model_id>` run
+    dated this month before spending anything, client_kind == "anthropic" only (the fake client is
+    for tests, never billed, re-running it is free and sometimes wanted).
 
     The ladder's rung is enforced here, not just read: `budget.check()`'s `allowed` is only False
     at the very bottom rung (`max_sweep_protocols == 0`), so a naive "if not allowed: skip" leaves
     the two rungs in between -- `reduced_sweep` (drop to `max_sweep_protocols`) and
     `guard_only_sweep` (drop to `sweep_lane`) -- computed but never actually applied. Both are
-    enforced below, against how many of *this sweep's* protocols have already run and each
-    protocol's own `lane` -- the ledger itself doesn't move mid-sweep (real spend is only logged
-    after the fact, once the bill confirms it, never estimated), so re-checking the rung on every
-    iteration only tells us the rung as of the start of this sweep; the running count here is what
-    actually keeps a long sweep inside its own rung's cap."""
+    enforced below, against each protocol's own `lane` and against `budget.check()`'s new
+    `additional_spent_eur` (added 2026-09-22): `protocols_run * _EST_COST_PER_PROTOCOL_EUR`, a
+    conservative in-memory projection of what this sweep has already committed to spending, added
+    on top of the ledger's confirmed total before picking the rung on every iteration. Never
+    written to the ledger -- `state/spend.json` still only ever gets a real, bill-confirmed number,
+    same discipline as always -- this only shifts which rung THIS decision reads as, so a sweep
+    that starts well inside `full` but would cross into `reduced_sweep`/`guard_only_sweep` partway
+    through (exactly what happened by hand on 2026-09-22, requiring a human to stop the sweep and
+    log spend mid-run to keep it in check -- see decisions.md) now degrades itself in real time
+    instead of running past its own rung on a stale reading, unattended. The per-protocol estimate
+    is a deliberately pessimistic ceiling (not the measured average), so it errs toward stopping
+    the sweep a little early rather than a little late: `state/spend.json`'s logged real amounts so
+    far range €0.64-0.79; the estimate used here is the top of that range."""
     results = []
     protocols_run = 0
     for path in sorted(protocols_dir.glob("*.json")):
@@ -139,9 +168,20 @@ def run_full_sweep(
 
             client = FakeClient()
         else:
+            mid, mfam = _active_model(subject_models_path, model_id, model_family)
+            already_this_month = sorted(out_root.glob(f"{run_date[:7]}-*__{pid}__{mid}__r*"))
+            if already_this_month:
+                results.append({
+                    "protocol_id": pid, "skipped": "already_run_this_month",
+                    "detail": f"real run already exists this month: {already_this_month[0].name} "
+                    "-- full_sweep is monthly (cadence.yaml), not daily, so a protocol already "
+                    "measured for real earlier this month is not re-spent on",
+                })
+                continue
             ledger = budget.load_ledger(budget_ledger)
             config = budget.load_config(budget_config)
-            decision = budget.check(ledger, "full_sweep", run_date[:7], config=config)
+            projected = protocols_run * _EST_COST_PER_PROTOCOL_EUR
+            decision = budget.check(ledger, "full_sweep", run_date[:7], config=config, additional_spent_eur=projected)
             if not decision["allowed"]:
                 results.append({"protocol_id": pid, "skipped": "budget_halted", "detail": decision["detail"]})
                 continue
@@ -161,7 +201,6 @@ def run_full_sweep(
                 continue
             from core.plumbing.anthropic_client import AnthropicClient
 
-            mid, mfam = _active_model(subject_models_path, model_id, model_family)
             client = AnthropicClient(mid, mfam)
 
         try:
