@@ -325,8 +325,8 @@ allowed to rewrite which series we are measuring. It survives **only** as a brid
 measurement — and repeats add no information without a client-controllable sampling parameter,
 §5) — four versions, **old and new**, same week.
 `4 × 60 × 2 = 480 calls ≈ $2.64` (measured rate, §9). Funded from `bridge_reserve_eur` in
-`budget.json` (currently €2.80, a small margin over this), never from the general monthly pool —
-see `core/budget/budget.py`'s `_general_ceiling`.
+`budget.json` (private — §10 — sized with a small margin over this), never from the general
+monthly pool — see `core/budget/budget.py`'s `_general_ceiling`.
 
 **Funding: the bridge preempts that month's sweep** — the sweep is skipped with cause
 `generation_bridge` in the coverage table. **A disclosed gap, not a hidden one.**
