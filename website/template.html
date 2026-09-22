@@ -452,6 +452,33 @@ to the specific question — that's why we always record which question produced
 wording." That's why we publish everything, so that anyone can judge for themselves.</td></tr>
 </tbody></table></div>
 
+<h3>The 12 protocols, one by one</h3>
+<p>3 dishes (<a href="#" onclick="go('does');return false">see "The Recipe"</a>) × 4 test types =
+12 protocols. Each row below is one protocol: the family it belongs to, and the one thing that
+particular test changes.</p>
+
+<div class="scroll"><table>
+<thead><tr><th>Protocol</th><th>What it does, in plain words</th></tr></thead>
+<tbody>
+<tr><td><code>risky_choice_framing__wording__v0</code></td><td><b>Risky-choice framing, reworded.</b> The AI picks between a sure outcome and a gamble with the exact same average result — one version describes it in terms of what's gained, the other in terms of what's lost. Same math, same outcome, different words: does the pick change anyway?</td></tr>
+<tr><td><code>risky_choice_framing__anchoring__v0</code></td><td><b>Risky-choice framing, anchored.</b> Same sure-outcome-vs-gamble choice, but an unrelated number is planted in the text first. Does that number pull the answer even though it has nothing to do with the decision?</td></tr>
+<tr><td><code>risky_choice_framing__order__v0</code></td><td><b>Risky-choice framing, reordered.</b> Same choice, just with the two options swapped in the order they're listed. Does the AI favor whichever one it reads first?</td></tr>
+<tr><td><code>risky_choice_framing__default__v0</code></td><td><b>Risky-choice framing, with a default.</b> Same choice, but one option is marked as the "default." Does the AI just go with it instead of actually weighing both?</td></tr>
+<tr><td><code>sunk_cost_fallacy__wording__v0</code></td><td><b>Sunk-cost fallacy, reworded.</b> The AI picks between cutting losses now (a sure amount back) and continuing a project for a gamble with the same average payoff — the money already spent is stated either way. Does that pick change with wording alone?</td></tr>
+<tr><td><code>sunk_cost_fallacy__anchoring__v0</code></td><td><b>Sunk-cost fallacy, anchored.</b> Same stop-or-continue choice, with an unrelated number planted in the text first.</td></tr>
+<tr><td><code>sunk_cost_fallacy__order__v0</code></td><td><b>Sunk-cost fallacy, reordered.</b> Same choice, with "stop" and "continue" swapped in the order they're listed.</td></tr>
+<tr><td><code>sunk_cost_fallacy__default__v0</code></td><td><b>Sunk-cost fallacy, with a default.</b> Same choice, but one option — stop, or continue — is marked as the "default."</td></tr>
+<tr><td><code>base_rate_neglect__wording__v0</code></td><td><b>Base-rate neglect, reworded.</b> A screening test comes back positive; the AI has to bet on whether that result is actually true, given how rare the condition is and how often the test is wrong. Does the bet change when the same numbers are given as percentages instead of as "X out of 1,000 people" — same math, easier to picture?</td></tr>
+<tr><td><code>base_rate_neglect__anchoring__v0</code></td><td><b>Base-rate neglect, anchored.</b> Same positive-test bet, with an unrelated number planted in the text first.</td></tr>
+<tr><td><code>base_rate_neglect__order__v0</code></td><td><b>Base-rate neglect, reordered.</b> Same bet, with the two options swapped in the order they're listed.</td></tr>
+<tr><td><code>base_rate_neglect__default__v0</code></td><td><b>Base-rate neglect, with a default.</b> Same bet, but one option is marked as the "default."</td></tr>
+</tbody></table></div>
+<p><small>What each protocol actually asks (the 15 scenarios themselves) stays hidden for
+guard-lane protocols while the model being measured is still active — see the callout above. Two
+protocols (the <code>wording</code> type of each of two families) are <b>open-lane</b>: their full
+text and every answer are already public in <code>open-lane/2026.jsonl</code>, so you can read the
+exact wording for yourself right now.</small></p>
+
 </section>
 
 <section class="page" id="value">
