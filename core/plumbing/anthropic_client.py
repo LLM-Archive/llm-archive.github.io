@@ -17,9 +17,19 @@ confirmed live to bring thinking_tokens to 0.
 `explicitly_set` records every request-shaping knob, including the ones deliberately left at the
 API's own default (`stop_sequences`/`tools`: `None`) -- spec.md §5's "every other parameter sent
 explicitly" is about disclosing what was and wasn't overridden, not that every knob must be pinned
-to a non-default value. `max_tokens` (1024) matches the value already used by `fake_client.py` and
-`reference_client.py`, generous enough for a scenario's reasoning plus one `DECISION:` line
-without truncating it away from the grammar (spec.md §5).
+to a non-default value. `max_tokens` was originally 1024, matching `fake_client.py` and
+`reference_client.py` -- raised to 4096 on 2026-09-22 after a real run
+(`base_rate_neglect__anchoring__v0`, 2026-09-21) truncated one response mid-calculation
+(`stop_reason=max_tokens`), which by itself produced `drop_confounded`/`asymmetric_missingness`
+and took the measurement off the curve. Response-length data from the 240 real Sonnet calls made
+so far (two full protocols): median ~310-390 estimated tokens, p99 ~440-570, one outlier that hit
+1024 -- 4096 covers that outlier's p99 many times over at negligible extra cost ($10/1M output
+tokens on Sonnet 5), and only calls that actually need the room pay for it: `max_tokens` is a
+ceiling the model is not billed for merely having available, never a floor. This does not
+guarantee no future call is ever truncated again -- reasoning length has no hard ceiling -- it
+lowers the odds. A future truncation is not a new bug: `outcome: truncated` is already caught and
+disclosed correctly by the pipeline either way (`my_help/decisions.md` §42 discusses a separate,
+unrelated extraction bug found during this same investigation).
 
 Unlike `reference_client.py`'s `ReferenceClient` (a permanently pinned model, spec.md §7),
 `model_id`/`model_family` are never hardcoded here: the commercial subject changes across
@@ -44,7 +54,7 @@ import os
 
 from core.measure.client import Response
 
-MAX_TOKENS = 1024
+MAX_TOKENS = 4096
 TIMEOUT_S = 120.0
 MAX_RETRIES = 3
 
