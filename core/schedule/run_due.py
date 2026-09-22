@@ -43,6 +43,7 @@ from pathlib import Path
 
 from core.budget import budget
 from core.measure import pilot
+from core.measure.schema import VERSIONS
 from core.plumbing import subject_fingerprint
 
 from . import coverage, schedule
@@ -65,13 +66,36 @@ RUNNERS = {
 # stop the free one from completing and being recorded. Also the valid --only vocabulary.
 RUNNER_ORDER = ["reference_model", "subject_fingerprint", "full_sweep"]
 
-# A deliberately pessimistic per-protocol ceiling, used only to project this sweep's own
+# A deliberately pessimistic per-CALL ceiling, used only to project this sweep's own
 # not-yet-logged spend so run_full_sweep's rung check can't run stale for an entire long sweep
-# (see that function's docstring). Never written to state/spend.json -- real entries there range
-# €0.64-0.79 (2026-09-21/22, n=6); this is the top of that range, not the average, so the
-# projection errs toward stopping a little early rather than a little late. Revisit if real spend
-# ever lands above this on a normal (non-truncated, non-retried) run.
-_EST_COST_PER_PROTOCOL_EUR = Fraction("0.79")
+# (see that function's docstring). Never written to state/spend.json.
+#
+# Per call, not per protocol: a protocol's real cost scales with how many calls it makes, and `n`
+# is a per-protocol field (spec.md §2), so protocols with different `n` cost different amounts in
+# the same sweep. This used to be a flat €0.79/protocol, which was silently exact only while every
+# protocol in rotation was n=30 -- against an n=120 protocol (4x the calls, ~€2.76 real) the
+# projection would have read 3.5x low and let an unattended sweep run well past its own rung,
+# which is the precise failure the projection exists to prevent (decisions.md §49).
+#
+# €0.0066/call is the top of the measured range, not the average: real logged runs are
+# €0.575-0.79 for 120 calls (€0.0048-0.0066/call, 2026-09-21/22, n=10 runs), so the projection
+# errs toward stopping a sweep a little early rather than a little late. At n=30 this gives
+# €0.79/protocol -- the same number as the flat constant it replaces, so nothing changes for a
+# rotation that is still all-n=30. Revisit if real per-call spend ever lands above this.
+_EST_COST_PER_CALL_EUR = Fraction("0.0066")
+
+
+def _est_protocol_cost_eur(protocol: dict) -> Fraction:
+    """What one run of this protocol is projected to cost: 4 versions × its own `n` calls."""
+    return _EST_COST_PER_CALL_EUR * len(VERSIONS) * protocol["n"]
+
+
+def _last_real_run(out_root: Path, protocol_id: str, model_id: str) -> str:
+    """The date of this protocol's most recent real run against this model, as "YYYY-MM-DD", or
+    "" if it has never been measured. Sorting on this puts never-measured protocols first and the
+    longest-unmeasured next, which is the order a budget-limited sweep should work through."""
+    runs = sorted(out_root.glob(f"*__{protocol_id}__{model_id}__r*"))
+    return runs[-1].name[:10] if runs else ""
 
 _SPEND_REMINDER = (
     "\nReal money was spent against the Anthropic API ({label}). Once the bill confirms the "
@@ -143,9 +167,11 @@ def run_full_sweep(
     the two rungs in between -- `reduced_sweep` (drop to `max_sweep_protocols`) and
     `guard_only_sweep` (drop to `sweep_lane`) -- computed but never actually applied. Both are
     enforced below, against each protocol's own `lane` and against `budget.check()`'s new
-    `additional_spent_eur` (added 2026-09-22): `protocols_run * _EST_COST_PER_PROTOCOL_EUR`, a
-    conservative in-memory projection of what this sweep has already committed to spending, added
-    on top of the ledger's confirmed total before picking the rung on every iteration. Never
+    `additional_spent_eur` (added 2026-09-22): the running sum of `_est_protocol_cost_eur()` over
+    the protocols this sweep has already run, a conservative in-memory projection of what it has
+    already committed to spending, added on top of the ledger's confirmed total before picking the
+    rung on every iteration. Summed per protocol rather than multiplied by a count because `n` is
+    per protocol, so two protocols in one sweep can cost different amounts (decisions.md §49). Never
     written to the ledger -- `state/spend.json` still only ever gets a real, bill-confirmed number,
     same discipline as always -- this only shifts which rung THIS decision reads as, so a sweep
     that starts well inside `full` but would cross into `reduced_sweep`/`guard_only_sweep` partway
@@ -157,10 +183,26 @@ def run_full_sweep(
     far range €0.64-0.79; the estimate used here is the top of that range."""
     results = []
     protocols_run = 0
+    projected_eur = Fraction(0)
+
+    admitted = []
     for path in sorted(protocols_dir.glob("*.json")):
         protocol = json.loads(path.read_text(encoding="utf-8"))
-        if protocol.get("status") != "admitted":
-            continue
+        if protocol.get("status") == "admitted":
+            admitted.append(protocol)
+
+    mid = mfam = None
+    if client_kind != "fake":
+        mid, mfam = _active_model(subject_models_path, model_id, model_family)
+        # Least-recently-measured first (never-measured first of all), protocol_id breaking ties
+        # so the order stays deterministic. Plain alphabetical order was silently fine only while
+        # the whole rotation fit inside one month's budget: once it doesn't -- which is exactly
+        # what a higher `n` buys with the same ceiling -- an alphabetical sweep re-measures the
+        # same first few protocols every month and never reaches the rest, because the
+        # already-run-this-month skip below resets with the calendar (decisions.md §49).
+        admitted.sort(key=lambda p: (_last_real_run(out_root, p["protocol_id"], mid), p["protocol_id"]))
+
+    for protocol in admitted:
         pid = protocol["protocol_id"]
 
         if client_kind == "fake":
@@ -168,7 +210,6 @@ def run_full_sweep(
 
             client = FakeClient()
         else:
-            mid, mfam = _active_model(subject_models_path, model_id, model_family)
             already_this_month = sorted(out_root.glob(f"{run_date[:7]}-*__{pid}__{mid}__r*"))
             if already_this_month:
                 results.append({
@@ -180,8 +221,7 @@ def run_full_sweep(
                 continue
             ledger = budget.load_ledger(budget_ledger)
             config = budget.load_config(budget_config)
-            projected = protocols_run * _EST_COST_PER_PROTOCOL_EUR
-            decision = budget.check(ledger, "full_sweep", run_date[:7], config=config, additional_spent_eur=projected)
+            decision = budget.check(ledger, "full_sweep", run_date[:7], config=config, additional_spent_eur=projected_eur)
             if not decision["allowed"]:
                 results.append({"protocol_id": pid, "skipped": "budget_halted", "detail": decision["detail"]})
                 continue
@@ -210,6 +250,7 @@ def run_full_sweep(
             continue
 
         protocols_run += 1
+        projected_eur += _est_protocol_cost_eur(protocol)
         results.append({"protocol_id": pid, "run_id": record["run_id"], "n_valid": record["n_valid"], "on_curve": record["on_curve"]})
         if client_kind == "anthropic":
             print(_SPEND_REMINDER.format(

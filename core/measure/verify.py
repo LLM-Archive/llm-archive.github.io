@@ -30,6 +30,7 @@ from core.plumbing.fake_client import FakeClient
 
 from . import pilot, stats
 from .grammar import extract
+from .grammar_v2 import extract as extract_v2
 from .invariants import check_protocol
 from .measurement import evaluate_gates
 from .rng import SplitMix64
@@ -47,6 +48,16 @@ def check_grammar(data: dict) -> list[str]:
     errors = []
     for case in data["cases"]:
         got = extract(case["text"], case["options"])
+        want = case["expected"]
+        if (got.outcome, got.token, got.reason) != (want["outcome"], want["token"], want["reason"]):
+            errors.append(f"{case['name']}: got {got}, want {want}")
+    return errors
+
+
+def check_grammar_v2(data: dict) -> list[str]:
+    errors = []
+    for case in data["cases"]:
+        got = extract_v2(case["text"], case["options"])
         want = case["expected"]
         if (got.outcome, got.token, got.reason) != (want["outcome"], want["token"], want["reason"]):
             errors.append(f"{case['name']}: got {got}, want {want}")
@@ -232,10 +243,12 @@ def check_pct_naming() -> list[str]:
 
 def main() -> int:
     grammar_data = json.loads((_VECTORS / "grammar_vectors.json").read_text())
+    grammar_v2_data = json.loads((_VECTORS / "grammar_v2_vectors.json").read_text())
     stats_data = json.loads((_VECTORS / "stats_vectors.json").read_text())
 
     checks = (
         ("grammar", lambda: check_grammar(grammar_data)),
+        ("grammar_v2", lambda: check_grammar_v2(grammar_v2_data)),
         ("tvd", lambda: check_tvd(stats_data)),
         ("drop_bound_pct", lambda: check_drop_bound_pct(stats_data)),
         ("entropy_norm", lambda: check_entropy_norm(stats_data)),

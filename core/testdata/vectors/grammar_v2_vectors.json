@@ -1,0 +1,125 @@
+{
+  "grammar_version": 2,
+  "note": "Same discipline as grammar_vectors.json (grammar_version 1), replayed against grammar_v2.extract. Cases 1-13 mirror that file's 13 cases in the same order; two (marked below) have a different `reason` than v1 for the same `outcome` -- see grammar_v2.py's own docstring for why. Cases 14-17 are the 4 real trials (decisions.md §42, §45, §46) that v1 rejected as unparseable and v2 reads correctly -- copied verbatim from experiments/, byte for byte.",
+  "cases": [
+    {
+      "name": "simple_valid",
+      "note": "unchanged from v1: a decision line after free-text reasoning is read; the reasoning itself is not",
+      "options": ["A", "B"],
+      "text": "Option A sounds tempting, but B has the better expected value.\nDECISION: B",
+      "expected": { "outcome": "valid", "token": "B", "reason": null }
+    },
+    {
+      "name": "reasoning_never_read",
+      "note": "unchanged from v1: no DECISION: line at all -> unparseable, even though the prose clearly picks B",
+      "options": ["A", "B"],
+      "text": "Option A is tempting, but in the end I go with B.",
+      "expected": { "outcome": "unparseable", "token": null, "reason": "no_decision_line" }
+    },
+    {
+      "name": "repeated_same_token_valid",
+      "note": "unchanged from v1: the SAME token restated on two lines is repetition, not ambiguity",
+      "options": ["A", "B"],
+      "text": "DECISION: A\nTo be clear, restating: DECISION: A",
+      "expected": { "outcome": "valid", "token": "A", "reason": null }
+    },
+    {
+      "name": "conflicting_tokens_unparseable",
+      "note": "unchanged from v1: two DIFFERENT tokens on separate lines is a real conflict, rejected outright",
+      "options": ["A", "B"],
+      "text": "DECISION: A\nDECISION: B",
+      "expected": { "outcome": "unparseable", "token": null, "reason": "conflicting_decisions" }
+    },
+    {
+      "name": "token_not_in_options",
+      "note": "DIFFERS FROM V1 (was reason=token_not_in_options): the only decision-line-shaped line names something that isn't an option, so v2's membership check drops it entirely -- outcome is still unparseable, just for the more basic reason that nothing usable was found",
+      "options": ["A", "B"],
+      "text": "DECISION: C",
+      "expected": { "outcome": "unparseable", "token": null, "reason": "no_decision_line" }
+    },
+    {
+      "name": "empty_string",
+      "note": "unchanged from v1: an empty response is its own outcome, distinct from unparseable",
+      "options": ["A", "B"],
+      "text": "",
+      "expected": { "outcome": "empty", "token": null, "reason": "empty_response" }
+    },
+    {
+      "name": "whitespace_only",
+      "note": "unchanged from v1: whitespace-only text counts as empty, not as a response with no decision line",
+      "options": ["A", "B"],
+      "text": "   \n\t  \n",
+      "expected": { "outcome": "empty", "token": null, "reason": "empty_response" }
+    },
+    {
+      "name": "none_text",
+      "note": "unchanged from v1: no text content at all (e.g. an empty completion) is empty, same as \"\"",
+      "options": ["A", "B"],
+      "text": null,
+      "expected": { "outcome": "empty", "token": null, "reason": "empty_response" }
+    },
+    {
+      "name": "markdown_emphasis_stripped",
+      "note": "unchanged from v1: **bold** markers around the decision line are stripped before matching",
+      "options": ["A", "B"],
+      "text": "**DECISION:** A",
+      "expected": { "outcome": "valid", "token": "A", "reason": null }
+    },
+    {
+      "name": "trailing_punctuation_stripped",
+      "note": "unchanged from v1: a trailing period after the token is stripped, not treated as part of the token",
+      "options": ["A", "B"],
+      "text": "DECISION: A.",
+      "expected": { "outcome": "valid", "token": "A", "reason": null }
+    },
+    {
+      "name": "fullwidth_colon_and_extra_spaces",
+      "note": "unchanged from v1: a fullwidth colon and collapsed internal whitespace both still match the grammar",
+      "options": ["A", "B"],
+      "text": "DECISION：   B",
+      "expected": { "outcome": "valid", "token": "B", "reason": null }
+    },
+    {
+      "name": "greek_letters_not_normalized",
+      "note": "DIFFERS FROM V1 (was reason=token_not_in_options): no script normalization, Greek capital Alpha (U+0391) is a different token from Latin 'A' -- v2's membership check drops the line entirely, same class of difference as token_not_in_options above",
+      "options": ["A", "B"],
+      "text": "Η λογική λέει Β, αλλά επιλέγω:\nDECISION: Α",
+      "expected": { "outcome": "unparseable", "token": null, "reason": "no_decision_line" }
+    },
+    {
+      "name": "case_insensitive_keyword",
+      "note": "unchanged from v1: the keyword 'decision' and the token are matched case-insensitively (casefold)",
+      "options": ["A", "B"],
+      "text": "Decision: b",
+      "expected": { "outcome": "valid", "token": "B", "reason": null }
+    },
+    {
+      "name": "real_bug_prose_sentence_risky_choice_s05",
+      "note": "the actual trial that motivated v2 (decisions.md §42): risky_choice_framing__wording__v0, C/s05/rep1, commit #1 data already on Zenodo. v1 read this as unparseable/token_not_in_options; the real, correctly-formatted DECISION: B line is right there.",
+      "options": ["A", "B"],
+      "text": "This is a classic framing problem from behavioral economics (Kahneman & Tversky's Asian disease problem), so let me work through the actual expected values rather than relying on intuitive framing effects.\n\n**Expected value calculation:**\n\nPlan A: 500 homes saved (certain) = 500 homes\n\nPlan B: (1/3 × 1500) + (2/3 × 750) = 500 + 500 = 500 homes\n\nThe expected values are **identical** — both plans save 500 homes on average.\n\n**So the choice comes down to risk preference, not expected value:**\n\n- Plan A is a certain outcome: exactly 500 homes saved, no variance.\n- Plan B is a gamble with the same average but higher variance: either a great outcome (1500 saved) or a worse-than-average one (750 saved)... \n\nWait, let me double check — actually 750 is *better* than 500, and 1500 is also better than 500. So Plan B actually dominates in outcomes: 2/3 chance of 750 (better than A) and 1/3 chance of 1500 (much better than A). There's no scenario where Plan B saves fewer homes than Plan A's guaranteed 500.\n\nThis is actually a case where the numbers I was given produce a **dominant strategy**: Plan B always saves at least 750 homes, which is strictly more than Plan A's 500, in every possible outcome.\n\n**Decision:** Given that Plan B guarantees a strictly better outcome than Plan A regardless of which scenario occurs, Plan B is the rational choice — it's not even a close call once you check the actual numbers rather than trusting the framing.\n\nDECISION: B",
+      "expected": { "outcome": "valid", "token": "B", "reason": null }
+    },
+    {
+      "name": "real_bug_prose_sentence_base_rate_anchoring_s08",
+      "note": "base_rate_neglect__anchoring__v0, 2026-09-22 rerun, B/s08/rep1 (decisions.md §46). Same pattern, different family: '**Decision:** Since EV(A) is marginally higher, Option A is the better bet.' before the real line.",
+      "options": ["A", "B"],
+      "text": "I need to calculate P(malicious | flagged) using Bayes' theorem.\n\n**Setup:**\n- P(malicious) = 0.02, P(not malicious) = 0.98\n- P(flagged | malicious) = 1.0 (never misses)\n- P(flagged | not malicious) = 0.10 (false positive rate)\n\n**Calculate P(flagged):**\nP(flagged) = P(flagged|malicious)×P(malicious) + P(flagged|not malicious)×P(not malicious)\nP(flagged) = (1.0 × 0.02) + (0.10 × 0.98)\nP(flagged) = 0.02 + 0.098 = 0.118\n\n**Calculate posterior probabilities:**\n\nP(malicious | flagged) = 0.02 / 0.118 ≈ 0.1695 (16.95%)\n\nP(not malicious | flagged) = 0.098 / 0.118 ≈ 0.8305 (83.05%)\n\n**Expected values:**\n\nOption A (bet malicious): 0.1695 × €980 ≈ €166.10\n\nOption B (bet not malicious): 0.8305 × €200 ≈ €166.10\n\nThese are very close — let me compute more precisely.\n\n- P(malicious|flagged) = 20/1180 = 1/59\n- P(not malicious|flagged) = 98/118 = 49/59\n\nEV(A) = (1/59) × 980 = 980/59 ≈ €16.61... \n\nWait, let me redo: 980/59 = 16.61 — that's wrong scale. Let me recompute: 980 × (20/1180) = 980 × 0.016949 ≈ €16.61? No: 20/1180 = 0.01695, times 980 = 16.61. That doesn't match earlier. Let me redo carefully.\n\n20/1180 = 0.016949... but this contradicts earlier P(malicious|flagged)=0.1695. Actual fraction: 0.02×1000=20, denominator 118, so 20/118 = 0.1695. Correct.\n\nEV(A) = 0.1695 × 980 ≈ €166.11\nEV(B) = 0.8305 × 200 ≈ €166.10\n\nThese are essentially equal, with Option A very slightly higher (€166.11 vs €166.10).\n\n**Decision:** Since EV(A) is marginally higher, Option A is the better bet.\n\nDECISION: A",
+      "expected": { "outcome": "valid", "token": "A", "reason": null }
+    },
+    {
+      "name": "real_bug_prose_sentence_base_rate_default_s14",
+      "note": "base_rate_neglect__default__v0, 2026-09-22, C/s14/rep1 (decisions.md §44). Same pattern.",
+      "options": ["A", "B"],
+      "text": "I need to find P(substandard | not flagged) and P(not substandard | not flagged).\n\n**Setting up base rates:**\n- P(substandard) = 0.25\n- P(not substandard) = 0.75\n- P(flagged | substandard) = 1.00 (never misses)\n- P(not flagged | substandard) = 0.00\n- P(flagged | not substandard) = 0.04\n- P(not flagged | not substandard) = 0.96\n\n**Calculating P(not flagged):**\nP(not flagged) = P(not flagged | substandard) × P(substandard) + P(not flagged | not substandard) × P(not substandard)\nP(not flagged) = (0.00 × 0.25) + (0.96 × 0.75)\nP(not flagged) = 0 + 0.72 = 0.72\n\n**Calculating posterior probabilities:**\n\nP(substandard | not flagged) = P(not flagged | substandard) × P(substandard) / P(not flagged)\n= (0.00 × 0.25) / 0.72 = 0\n\nP(not substandard | not flagged) = (0.96 × 0.75) / 0.72 = 0.72/0.72 = 1.00\n\n**Interpretation:** Since the test never misses a substandard batch (0% false negative rate), a \"not flagged\" result guarantees the batch is not substandard. There's no uncertainty here — this is a logical certainty given the test's perfect sensitivity.\n\n**Expected values:**\n- Option A: 0% chance of winning → €0 expected value\n- Option B: 100% chance of winning → €2,500 expected value\n\n**Decision:**\nOption B is clearly superior — betting on \"not substandard\" is a certain win given the test's flagging every substandard batch with 100% reliability.\n\nDECISION: B",
+      "expected": { "outcome": "valid", "token": "B", "reason": null }
+    },
+    {
+      "name": "real_bug_prose_sentence_base_rate_order_s15",
+      "note": "base_rate_neglect__order__v0, 2026-09-22, C/s15/rep1 (decisions.md §46). Same pattern.",
+      "options": ["A", "B"],
+      "text": "I need to find P(failing | not flagged) vs P(not failing | not flagged).\n\n**Setting up the numbers:**\n- P(failing) = 20%, P(not failing) = 80%\n- P(flagged | failing) = 100%, so P(not flagged | failing) = 0%\n- P(flagged | not failing) = 25%, so P(not flagged | not failing) = 75%\n\n**Using a sample of 1000 drives:**\n- Failing: 200 drives, all get flagged, 0 are not flagged\n- Not failing: 800 drives, 25% flagged = 200, 75% not flagged = 600\n\n**Among not flagged drives:** 0 + 600 = 600 total\n- Failing but not flagged: 0\n- Not failing and not flagged: 600\n\nSince the health check catches 100% of failing drives, a drive that is **not flagged cannot be failing** — it's a guaranteed indicator of health.\n\nP(not failing | not flagged) = 600/600 = 100%\n\n**Decision:** Betting on \"not failing\" wins with certainty given this evidence.\n\nDECISION: B",
+      "expected": { "outcome": "valid", "token": "B", "reason": null }
+    }
+  ]
+}

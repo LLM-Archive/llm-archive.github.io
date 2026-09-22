@@ -5,7 +5,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Protocol
 
-from .grammar import Extraction, extract
+from . import grammar, grammar_v2
+from .grammar import Extraction
+
+# Which extract() a given protocol's grammar_version dispatches to -- additive as new grammar
+# versions are introduced (invariants.py's KNOWN_GRAMMAR_VERSIONS is the admission-side half of
+# this same list). grammar_version 1 is the default so every existing caller that doesn't pass one
+# (subject_fingerprint.py's own fixed-format check) keeps its exact original behavior.
+_EXTRACTORS = {grammar.GRAMMAR_VERSION: grammar.extract, grammar_v2.GRAMMAR_VERSION: grammar_v2.extract}
 
 
 @dataclass(frozen=True)
@@ -27,7 +34,7 @@ class Client(Protocol):
         ...
 
 
-def classify(response: Response, options: list[str]) -> Extraction:
+def classify(response: Response, options: list[str], *, grammar_version: int = 1) -> Extraction:
     """Maps a raw response to one outcome of a fixed, closed set — never free text — because the
     fraction of calls that fail to produce a usable decision (the "loss rate") is itself measured
     and fed into the drop-bound check in stats.py. A response that's hard to classify has to land
@@ -48,4 +55,4 @@ def classify(response: Response, options: list[str]) -> Extraction:
         return Extraction("truncated", None, "stop_reason=max_tokens")
     if response.text is None:
         return Extraction("off_format", None, "no_text_content")
-    return extract(response.text, options)
+    return _EXTRACTORS[grammar_version](response.text, options)

@@ -637,18 +637,26 @@ def build_site_data(
         trend, delta = _trend_for(history[pid], m)
         rows.append(build_site_row(m, protocols.get(pid), trend, delta, experiments_dir))
 
-    admitted = [p for p in protocols.values() if p.get("status") == "admitted"]
+    admitted = {pid: p for pid, p in protocols.items() if p.get("status") == "admitted"}
     # commercial only: the coverage bar names the active *commercial* model (load_active_commercial_model
     # below), so what it counts must match -- an open_weights-only measurement (the daily reference-model
     # self-check) must never inflate the count next to that model's name. spec.md's commercial/open_weights
     # split is never supposed to mix into one number; this is that rule applied to the coverage bar itself.
-    measured_protocol_ids = {m.get("protocol_id") for m in measurements if m.get("series") == "commercial"} & set(protocols)
+    measured_protocol_ids = {m.get("protocol_id") for m in measurements if m.get("series") == "commercial"} & set(admitted)
 
     return {
         "rows": [r for r in rows if r["series"] == "commercial"],
         "orows": [r for r in rows if r["series"] == "open_weights"],
         "admitted_count": len(admitted),
-        "protocol_count": len(protocols),
+        # Admitted only, never every file in protocols/. This is the denominator of the public
+        # coverage bar ("N of TOTAL panels measured"), and a `candidate` protocol has by
+        # definition not been through gates 2 and 4 -- it is a draft that no scheduler will run
+        # (core/schedule/run_due.py skips any status != admitted) and that no measurement can
+        # cite. Counting drafts here would silently deflate the published coverage figure the
+        # moment a next-generation panel set is drafted alongside the one in rotation: with the
+        # 12 v1 candidates on disk and 9 v0 protocols measured, the bar would have read
+        # "9 of 24 panels measured" instead of "9 of 12" (decisions.md §49).
+        "protocol_count": len(admitted),
         "measured_count": len(measured_protocol_ids),
         "active_model": load_active_commercial_model(subject_models_path),
         "reference_model": load_active_open_weights_model(subject_models_path),

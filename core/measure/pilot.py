@@ -20,7 +20,6 @@ from pathlib import Path
 from . import measurement
 from .chain import sha256_hex
 from .client import Client, classify
-from .grammar import GRAMMAR_VERSION
 from .invariants import check_protocol
 from .rng import SplitMix64, seed_from
 from .schema import SCHEMA_VERSION, VERSIONS, schema_sha256
@@ -92,7 +91,7 @@ def run(protocol: dict, client: Client, run_date: str, replicate_index: int = 0,
     with open(staging_dir / "trials.jsonl", "w", encoding="utf-8") as f:
         for index, call in enumerate(calls):
             response = client.complete(call["prompt"], meta={k: call[k] for k in ("version", "scenario_id", "rep")})
-            result = classify(response, protocol["options"])
+            result = classify(response, protocol["options"], grammar_version=protocol["grammar_version"])
             if response.returned_model_id:
                 returned_ids.add(response.returned_model_id)
             trial = {
@@ -153,8 +152,8 @@ def run(protocol: dict, client: Client, run_date: str, replicate_index: int = 0,
         "subject_model_id": client.subject_model_id,
         "client": type(client).__name__,
         "explicitly_set": client.explicitly_set,
-        "grammar_version": GRAMMAR_VERSION,
-        "extractor_sha": measurement.extractor_sha(),
+        "grammar_version": protocol["grammar_version"],
+        "extractor_sha": measurement.extractor_sha(protocol["grammar_version"]),
         "analysis_code_sha": measurement.analysis_code_sha(),
         "n_trials": len(trials),
     }

@@ -296,6 +296,63 @@ def check_already_run_this_month(data) -> list[str]:
     return errors
 
 
+def check_sweep_rotation(data) -> list[str]:
+    """A sweep the budget can only run part of must work through the whole rotation over
+    successive months, not re-measure the same few protocols forever.
+
+    Real gap, found while sizing the n=120 protocol series (decisions.md §49): run_full_sweep
+    iterated protocols in plain alphabetical order, and its already-run-this-month skip resets
+    with the calendar. While the whole rotation fit inside one month's budget that was invisible;
+    once it doesn't, every month restarts at the top of the alphabet and the tail of the list is
+    never reached. Confirms the fix: the protocol that has never been measured is swept before
+    one that already has, whatever their names.
+
+    Both are given a prior run in a PREVIOUS month, so neither is skipped by the monthly check --
+    what is under test here is purely the order they come back in."""
+    del data
+    errors = []
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = Path(tmp)
+        protocols_dir = tmp / "protocols"
+        protocols_dir.mkdir()
+        chosen = [json.loads(f.read_text()) for f in sorted(_REAL_PROTOCOLS_DIR.glob("*.json"))
+                  if json.loads(f.read_text())["lane"] == "open"][:2]
+        for p in chosen:
+            shutil.copy(_REAL_PROTOCOLS_DIR / f"{p['protocol_id']}.json", protocols_dir / f"{p['protocol_id']}.json")
+        # `chosen` is alphabetical, so measuring the FIRST one is what the old code would have
+        # re-run first; the second, never-measured one must now come first instead.
+        measured_pid, never_pid = chosen[0]["protocol_id"], chosen[1]["protocol_id"]
+
+        out_root = tmp / "experiments"
+        out_root.mkdir()
+        (out_root / f"2026-05-04__{measured_pid}__stub-model__r0").mkdir()
+
+        ledger = tmp / "ledger.json"
+        _write_ledger(ledger, "2026-06-01", "0")
+
+        with mock.patch("core.plumbing.anthropic_client.AnthropicClient", _StubClient), contextlib.redirect_stdout(io.StringIO()):
+            results = run_due.run_full_sweep(
+                client_kind="anthropic", run_date="2026-06-15",
+                protocols_dir=protocols_dir, out_root=out_root,
+                subject_models_path=_REAL_SUBJECT_MODELS,
+                budget_ledger=ledger, budget_config=budget.DEFAULT_CONFIG,
+                model_id="stub-model", model_family="stub-family",
+            )
+        order = [r["protocol_id"] for r in results]
+        if order[:1] != [never_pid]:
+            errors.append(f"never-measured {never_pid} must be swept first, got order {order}")
+
+    # The projection must scale with each protocol's own n, or a rotation of mixed-n protocols
+    # under-projects its own spend and runs past its rung (the same decisions.md §49 finding).
+    small, large = {"n": 30}, {"n": 120}
+    est_small, est_large = run_due._est_protocol_cost_eur(small), run_due._est_protocol_cost_eur(large)
+    if est_large != 4 * est_small:
+        errors.append(f"cost estimate must scale with n: n=30 -> {est_small}, n=120 -> {est_large}")
+    if est_small != Fraction("0.792"):
+        errors.append(f"n=30 estimate drifted from the €0.79/protocol it replaced: {est_small}")
+    return errors
+
+
 def main() -> int:
     data = json.loads(_VECTORS.read_text(encoding="utf-8"))
 
@@ -309,6 +366,7 @@ def main() -> int:
         ("run_full_sweep_ladder", lambda: check_run_full_sweep_ladder(data)),
         ("ladder_projection", lambda: check_ladder_projection(data)),
         ("already_run_this_month", lambda: check_already_run_this_month(data)),
+        ("sweep_rotation", lambda: check_sweep_rotation(data)),
     )
 
     all_errors: list[str] = []

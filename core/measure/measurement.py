@@ -27,6 +27,7 @@ from pathlib import Path
 from . import stats
 from .chain import sha256_hex, sha256_of_files
 from .grammar import GRAMMAR_VERSION
+from .grammar_v2 import GRAMMAR_VERSION as GRAMMAR_VERSION_V2
 from .rng import SplitMix64, seed_from
 from .schema import OUTCOMES, SCHEMA_VERSION, VALID, VERSION_KEYS, VERSIONS, schema_sha256
 
@@ -44,9 +45,13 @@ PAIRS = {"ab": ("A", "B"), "aa": ("A", "A_prime"), "ac": ("A", "C")}
 
 _MEASURE_DIR = Path(__file__).resolve().parent
 
+# Which source file grammar_sha reports on, per grammar_version -- additive alongside
+# invariants.py's KNOWN_GRAMMAR_VERSIONS and client.py's _EXTRACTORS as new versions appear.
+_GRAMMAR_FILES = {GRAMMAR_VERSION: "grammar.py", GRAMMAR_VERSION_V2: "grammar_v2.py"}
 
-def extractor_sha() -> str:
-    return sha256_hex((_MEASURE_DIR / "grammar.py").read_bytes())
+
+def extractor_sha(grammar_version: int = GRAMMAR_VERSION) -> str:
+    return sha256_hex((_MEASURE_DIR / _GRAMMAR_FILES[grammar_version]).read_bytes())
 
 
 def analysis_code_sha() -> str:
@@ -159,12 +164,24 @@ def build(protocol: dict, trials: list[dict], context: dict) -> dict:
     entropy_a = stats.entropy_norm(decision_counts["A"])
     entropy_b = stats.entropy_norm(decision_counts["B"])
     stability_pct = None if gap_pct["ab"] is None else 100 - gap_pct["ab"]
-    if (
+    degenerate = (
         entropy_a is not None
         and entropy_b is not None
         and max(entropy_a, entropy_b) < DEGENERATE_ENTROPY_MAX
         and stability_pct > DEGENERATE_STABILITY_MIN_PCT
-    ):
+    )
+    # grammar_version doubles as this protocol's whole analysis-code series (spec.md §2: changing
+    # n or the decision grammar already mints a new series on its own, so a v1-series protocol
+    # bundles every analysis-code difference of that same series behind one field rather than a
+    # second version number for no added information). Real data (decisions.md §47, §48) showed
+    # this flag firing on measurements where the A-C gate had already, directly, proven the model
+    # engages with the content of the question — degenerate_candidate exists to catch "answers
+    # the same regardless of the question", and a passing positive control is direct evidence
+    # against exactly that, stronger than the entropy proxy this flag otherwise relies on. v1
+    # protocols are entirely unaffected: this only narrows the flag for grammar_version >= 2.
+    if degenerate and protocol["grammar_version"] >= GRAMMAR_VERSION_V2 and gates["A-C"]["reading"]:
+        degenerate = False
+    if degenerate:
         flags.append("degenerate_candidate")
 
     # The one random stream of this measurement: bootstrap first, then the null floor.
@@ -217,8 +234,8 @@ def build(protocol: dict, trials: list[dict], context: dict) -> dict:
         "twin_id": context["twin_id"],
         "condition_profile": context["condition_profile"],
         "replicate_index": context["replicate_index"],
-        "grammar_version": GRAMMAR_VERSION,
-        "extractor_sha": extractor_sha(),
+        "grammar_version": protocol["grammar_version"],
+        "extractor_sha": extractor_sha(protocol["grammar_version"]),
         "analysis_code_sha": analysis_code_sha(),
         "stability_pct": _pub(stability_pct),
         "ci_low_pct": _pub(ci_low_pct),

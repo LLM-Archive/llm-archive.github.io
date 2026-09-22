@@ -17,6 +17,12 @@ from fractions import Fraction
 
 from .chain import compute_panel_sha256, compute_protocol_sha256
 from .grammar import GRAMMAR_VERSION, normalized_options
+from .grammar_v2 import GRAMMAR_VERSION as GRAMMAR_VERSION_V2
+
+# Every decision-grammar version a protocol may declare, additive as each new one is introduced
+# (spec.md §2: changing the decision grammar mints a new protocol series, never a silent rewrite
+# of what an existing one means) -- grammar_version 1 stays exactly what it always was.
+KNOWN_GRAMMAR_VERSIONS = (GRAMMAR_VERSION, GRAMMAR_VERSION_V2)
 from .schema import LANES, PROTOCOL_STATUSES, REWORDING_TYPES, VERSIONS
 
 _NON_WORD = re.compile(r"[\W_]+")
@@ -139,8 +145,8 @@ def check_protocol(p: dict) -> list[str]:
     if p["status"] not in PROTOCOL_STATUSES:
         errors.append(f"unknown status {p['status']!r}")
     errors += _check_lane_and_twin(p)
-    if p["grammar_version"] != GRAMMAR_VERSION:
-        errors.append(f"grammar_version {p['grammar_version']} != {GRAMMAR_VERSION}")
+    if p["grammar_version"] not in KNOWN_GRAMMAR_VERSIONS:
+        errors.append(f"grammar_version {p['grammar_version']} not in {KNOWN_GRAMMAR_VERSIONS}")
     if p["effort"] != "disabled":
         errors.append("effort must be 'disabled' (spec.md §5)")
     if "{scenario}" not in p["prompt_template"]:
