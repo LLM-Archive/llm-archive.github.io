@@ -402,23 +402,32 @@ def load_protocols(protocols_dir: Path) -> dict[str, dict]:
     return protocols
 
 
-def _history_per_protocol(measurements: list[dict]) -> dict[str, list[dict]]:
-    """protocol_id -> its measurements, oldest first (by run_date, then run_id to break ties)."""
-    by_protocol: dict[str, list[dict]] = {}
+def _history_per_protocol(measurements: list[dict]) -> dict[tuple[str, str], list[dict]]:
+    """(protocol_id, series) -> its measurements, oldest first (by run_date, then run_id to break
+    ties). Keyed by series too, not just protocol_id: the commercial and open_weights series both
+    measure the same protocol_ids independently (spec.md's two-series design), so a protocol_id
+    that has been measured by both must keep both lines -- keying by protocol_id alone would let
+    whichever series has the later run_date silently evict the other's most recent measurement
+    from `latest_measurement_per_protocol` below (found 2026-09-22: a real, already-run
+    open_weights measurement of `risky_choice_framing__anchoring__v0` was missing from the public
+    site's open-weights table because a later commercial measurement of the same protocol_id had
+    taken its slot)."""
+    by_protocol: dict[tuple[str, str], list[dict]] = {}
     for m in measurements:
         pid = m.get("protocol_id")
-        if pid is None:
+        series = m.get("series")
+        if pid is None or series is None:
             continue
-        by_protocol.setdefault(pid, []).append(m)
+        by_protocol.setdefault((pid, series), []).append(m)
     for ms in by_protocol.values():
         ms.sort(key=lambda m: (m.get("run_date") or "", m.get("run_id") or ""))
     return by_protocol
 
 
-def latest_measurement_per_protocol(measurements: list[dict]) -> dict[str, dict]:
-    """protocol_id -> its most recent measurement -- the Results page's main table shows exactly
-    one row per protocol, not the mockup's hardcoded "the 2030 rows"."""
-    return {pid: ms[-1] for pid, ms in _history_per_protocol(measurements).items()}
+def latest_measurement_per_protocol(measurements: list[dict]) -> dict[tuple[str, str], dict]:
+    """(protocol_id, series) -> its most recent measurement -- the Results page's main table shows
+    exactly one row per protocol per series, not the mockup's hardcoded "the 2030 rows"."""
+    return {key: ms[-1] for key, ms in _history_per_protocol(measurements).items()}
 
 
 def _trend_for(history: list[dict], current: dict) -> tuple[str, float | None]:
@@ -633,8 +642,9 @@ def build_site_data(
     latest = latest_measurement_per_protocol(measurements)
 
     rows = []
-    for pid, m in sorted(latest.items()):
-        trend, delta = _trend_for(history[pid], m)
+    for key, m in sorted(latest.items()):
+        pid, _series = key
+        trend, delta = _trend_for(history[key], m)
         rows.append(build_site_row(m, protocols.get(pid), trend, delta, experiments_dir))
 
     admitted = {pid: p for pid, p in protocols.items() if p.get("status") == "admitted"}
@@ -754,7 +764,7 @@ def _family_series_history(data: dict) -> dict[tuple[str, str], list[dict]]:
     types, in run_date order -- the trend chart's real replacement for the mockup's hand-typed
     per-family lines. Never mixes two different families or two different series on one line."""
     grouped: dict[tuple[str, str], list[dict]] = {}
-    for pid, ms in data["history"].items():
+    for (pid, _series), ms in data["history"].items():
         if pid not in data["protocols"]:
             continue
         for m in ms:
@@ -1199,11 +1209,11 @@ def _verify() -> list[str]:
     if "claude-sonnet-5" not in coverage_bar_live:
         errors.append("render_coverage_bar: live state should name the active model")
 
-    sparse_data = {"history": {"p": [m_first]}, "protocols": {"p": {}}}
+    sparse_data = {"history": {("p", None): [m_first]}, "protocols": {"p": {}}}
     if "Not enough history" not in render_trend_section(sparse_data):
         errors.append("render_trend_section: a single-date protocol should render the placeholder, not a chart")
-    rich_data = {"history": {"fam__wording__v0": [dict(m_first, protocol_id="fam__wording__v0", series="commercial", rewording_type="wording"),
-                                                   dict(m_second, protocol_id="fam__wording__v0", series="commercial", rewording_type="wording")]},
+    rich_data = {"history": {("fam__wording__v0", "commercial"): [dict(m_first, protocol_id="fam__wording__v0", series="commercial", rewording_type="wording"),
+                                                                   dict(m_second, protocol_id="fam__wording__v0", series="commercial", rewording_type="wording")]},
                  "protocols": {"fam__wording__v0": {}}}
     if "<svg" not in render_trend_section(rich_data):
         errors.append("render_trend_section: two distinct dates should render an actual chart")
@@ -1279,6 +1289,36 @@ def _verify() -> list[str]:
             errors.append(
                 f"build_site_data: measured_count should count the commercial series only, "
                 f"got {data['measured_count']!r} with one commercial + one open_weights measurement present"
+            )
+
+        # The actual bug found 2026-09-22: the SAME protocol_id measured by both series, the
+        # open_weights one on a LATER run_date. Before the (protocol_id, series) grouping fix,
+        # `latest_measurement_per_protocol` kept only the single most recent measurement per
+        # protocol_id regardless of series, so the later open_weights row silently evicted the
+        # earlier commercial one (`run0`, added above) from `rows`/`orows` entirely -- neither the
+        # commercial nor the open_weights result should ever be able to evict the other's.
+        ow_same_pid_dir = exp_dir / "run2"
+        ow_same_pid_dir.mkdir(parents=True)
+        ow_same_pid_measurement = dict(
+            multi_flag_measurement, protocol_id="risky_choice_framing__wording__v0", lane="open",
+            flags=[], on_curve=True, run_id="run2", run_date="2026-01-02",
+            series="open_weights", subject_model_id="qwen2.5-1.5b-instruct-q4_k_m",
+        )
+        (ow_same_pid_dir / "measurement.json").write_text(json.dumps(ow_same_pid_measurement), encoding="utf-8")
+        (ow_same_pid_dir / "trials.jsonl").write_text("", encoding="utf-8")
+        data = build_site_data(exp_dir, proto_dir, tmp / "subject_models.yaml")
+        commercial_pids = {r["protocol_id"] for r in data["rows"]}
+        open_weights_pids = {r["protocol_id"] for r in data["orows"]}
+        if "risky_choice_framing__wording__v0" not in commercial_pids:
+            errors.append(
+                "build_site_data: a later open_weights measurement of the same protocol_id evicted "
+                "the earlier commercial measurement from 'rows' -- the two series must never evict "
+                "each other"
+            )
+        if "risky_choice_framing__wording__v0" not in open_weights_pids:
+            errors.append(
+                "build_site_data: the open_weights measurement of a protocol_id already measured "
+                "by the commercial series is missing from 'orows'"
             )
 
     return errors
