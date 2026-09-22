@@ -138,7 +138,7 @@ tr.row td:last-child{color:var(--link);font-size:13px;white-space:nowrap}
 #scrim.on{opacity:1;pointer-events:auto}
 .box pre{white-space:pre-wrap;font-size:12.5px;background:transparent;border:0;padding:0;margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
 #drawer .sgw{height:96px}
-#drawer{position:fixed;top:0;right:0;height:100%;width:min(460px,100%);background:var(--bg);
+#drawer{position:fixed;top:0;right:0;height:100%;width:min(560px,100%);background:var(--bg);
   border-left:1px solid var(--line);transform:translateX(100%);transition:transform .22s ease;
   z-index:100;overflow-y:auto;padding:22px var(--sp) 60px}
 #drawer.on{transform:none}
@@ -157,6 +157,8 @@ tr.row td:last-child{color:var(--link);font-size:13px;white-space:nowrap}
 .filedl{color:var(--link);text-decoration:none}
 .filedl:hover{opacity:.7}
 .hash{font:11.5px ui-monospace,Menlo,monospace;color:var(--faint);white-space:nowrap}
+.verdict-list{margin:0;padding:0;list-style:none;font-size:13px;color:var(--faint)}
+.verdict-list li{margin-bottom:6px}
 pre{background:var(--raise);border:1px solid var(--line);border-radius:8px;padding:14px 16px;
   overflow-x:auto;font:12.5px/1.6 ui-monospace,"SF Mono",Menlo,monospace;margin:0 0 18px}
 .steps{counter-reset:st;list-style:none;padding:0;margin:0 0 18px}
@@ -405,6 +407,14 @@ times (15 scenarios × 4 versions × 10 repeats) to produce one reliable measure
 
 <section class="page" id="how">
 <h2>Methodology</h2>
+<p>LLM-Archive is an independent, automated benchmark archive created by Michalis Kalognomos. Its
+goal is to measure the <b>stability</b> of LLM decisions — whether a model changes its answer when
+the same question is asked in different words, even though the meaning stays exactly the same. We
+compare four wordings of each question (see <a href="#" onclick="go('what');return false">Design</a>
+for the A/A′/B/C breakdown) across two kinds of models, commercial and open, and publish everything
+we measure as open data under CC-BY-4.0, with the measurement pipeline itself open-source under
+AGPL-3.0 (see <a href="#" onclick="go('data');return false">Data</a> for the full license
+breakdown).</p>
 <p class="lede">An automated process that runs every month, with no human intervention in the
 measurement itself.</p>
 
@@ -449,19 +459,80 @@ wording." That's why we publish everything, so that anyone can judge for themsel
 <p class="lede">The archive doesn't answer "how smart is an AI." It answers <b>"did something
 change, when, and for whom."</b></p>
 
-<h3>The same name doesn't mean the same behavior</h3>
-<p>Companies update their models <b>silently</b>, without always announcing it. Anyone using an AI
-can't easily tell whether it behaves today the way it did a year ago. An independent mechanism that
-tracks it over time turns that uncertainty into <b>a record you can check</b>.</p>
+<p>LLM-Archive is an independent, automated benchmark archive. Its goal is to measure the
+<b>stability</b> and consistency of large language model decisions — whether a model changes its
+mind when the exact same question is worded differently.</p>
 
-<h3>What it's useful for</h3>
-<div class="scroll"><table>
-<tbody>
-<tr><td><b>1</b></td><td>Seeing whether AIs have <b>actually become more stable</b>, or just changed style</td></tr>
-<tr><td><b>2</b></td><td>Spotting <b>when a new weakness appeared</b> in a new version</td></tr>
-<tr><td><b>3</b></td><td>Comparing a current model against <b>real, older models</b>, using the exact same method</td></tr>
-<tr><td><b>4</b></td><td>Checking company claims like <i>"the new model is more reliable"</i></td></tr>
-</tbody></table></div>
+<h3>What it actually does</h3>
+<ol class="steps">
+<li><b>Tests stability under framing.</b> The model is given the same dilemma phrased in
+equivalent ways.<br><i>Example — Version A: "Out of a group of 600 people, 200 will be saved."
+Version B: "Out of a group of 600 people, 400 will die."</i> The meaning is identical: if the
+model's answer differs between the two, the measurement records that its decision was swayed by
+wording alone.</li>
+<li><b>Uses four versions of every question.</b> <b>A</b>, the baseline wording. <b>A′</b>, a
+meaningless change (spacing, punctuation) that measures noise. <b>B</b>, an equivalent rewording —
+what's actually being measured. <b>C</b>, a real change in meaning, where the answer
+<i>should</i> change, confirming the model is actually reading the question.</li>
+<li><b>Tracks two different categories of model.</b> <b>Commercial</b> models (Claude, GPT-class)
+are tracked over time to record how their behavior shifts with each update. <b>Open</b> models
+(e.g. Qwen2.5) serve as a control group — anyone can download the same weights and verify the
+method themselves.</li>
+<li><b>Publishes fully open data.</b> Every measurement, the CSV files (<code>stability.csv</code>,
+<code>outcomes.csv</code>) and the JSONL logs are free to download — data under CC-BY-4.0, code
+under AGPL-3.0.</li>
+</ol>
+
+<h3>A few words about the system behind it</h3>
+<p><b>A scientific approach.</b> This isn't an attempt at a general "intelligence score," the way
+classic benchmarks like MMLU or GSM8K work. It focuses on one specific, critical property instead:
+cognitive bias and decision stability in LLMs.</p>
+<p><b>Transparency.</b> Failed runs and data gaps are published too, not hidden — alongside a full
+explanation of the methodology and the quality checks behind every number.</p>
+
+<p>You can use LLM-Archive according to your own role — researcher, developer, or someone simply
+evaluating AI solutions. Here are the main ways to put the site and its data to use.</p>
+
+<h3>1. As a benchmarking tool</h3>
+<p>Choosing which AI model to build into an application, product or company process?</p>
+<ul>
+<li><b>Check the stability score.</b> See which model is least affected by framing — how a
+question happens to be worded. Building something for legal, financial or medical use? You want a
+model that doesn't change its mind just because a user phrased the question differently.</li>
+<li><b>Watch for drift over time.</b> Track whether a model (say, a particular Claude or GPT
+version) became less stable after its maker shipped an update.</li>
+</ul>
+
+<h3>2. Data analysis and research</h3>
+<p>All of the project's data is open and downloadable directly from
+<a href="#" onclick="go('data');return false">Downloads</a>:</p>
+<ul>
+<li><code>stability.csv</code> — the aggregate results and stability score for every
+measurement.</li>
+<li><code>open-lane/2026.jsonl</code> — the full trial-by-trial raw data: the exact questions,
+wordings and answers each model gave.</li>
+</ul>
+<p>Download the CSV/JSONL files and load them into Python (pandas, Jupyter), R or Excel to run
+your own statistical analysis of LLM bias — framing effects, anchoring bias, and so on.</p>
+
+<h3>3. Replication and control experiments</h3>
+<p>Researcher or AI engineer who wants to run the same tests on your own models?</p>
+<ul>
+<li><b>Verify the files.</b> Download <code>verify.py</code> from the site and confirm the data's
+authenticity against its published SHA-256 checksums.</li>
+<li><b>Run the open model yourself.</b> Download the open model (e.g. Qwen2.5-1.5B) and use
+LLM-Archive's own methodology — 12 protocols, 4 versions (A/A′/B/C) — to reproduce the results on
+your own machine or server.</li>
+</ul>
+
+<h3>4. Academic citation</h3>
+<p>Writing a paper, article or study about LLM reliability and behavior? Cite LLM-Archive directly
+using the BibTeX citation on the <a href="#" onclick="go('data');return false">Downloads</a>
+page.</p>
+
+<p><small>In short: if you don't write code, use it as a <b>buying/selection guide</b> for a
+model. If you do, download the <b>CSV/JSONL</b> data and dig into where and why language models
+break.</small></p>
 
 </section>
 
@@ -530,7 +601,9 @@ code preserves the record's exact identity.</small></p>
 
   <div id="quar" hidden>
     <div class="callout" style="border-color:var(--bad)">
-    <p><b>Off the main curve.</b></p>
+    <p><b>Off the main curve.</b> <small>The number above is still what was measured — this only
+    means at least one automatic check below couldn't rule out an alternative explanation, so the
+    run isn't counted in the aggregate curve. It doesn't by itself mean the measurement is wrong.</small></p>
     <div id="qbody"></div></div>
   </div>
 
@@ -595,7 +668,7 @@ code preserves the record's exact identity.</small></p>
     <tr><td><span class="status-pill" id="pcbac"></span> <abbr title="Loss Floor: the worst-case error that can result from lost or unreadable answers; measures how safe the measurement is when some data is dropped.">Loss floor</abbr> A↔C</td><td class="num" id="cbac"></td></tr>
     <tr><td><span class="status-pill" id="pcsd"></span> <abbr title="Whether a couple of the fifteen scenarios account for most of the measured gap, rather than it being spread evenly across all of them.">Scenario concentration</abbr> <span class="help-tip" title="Whether a couple of the fifteen scenarios account for most of the measured gap, rather than it being spread evenly across all of them.">?</span></td><td class="num" id="csd"></td></tr>
   </tbody></table>
-  <p><small id="verdict"></small></p>
+  <div id="verdict"></div>
 </aside>
 
 <script>
@@ -670,12 +743,25 @@ const dr=document.getElementById('drawer'),sc=document.getElementById('scrim');
 const set=(id,t)=>{document.getElementById(id).textContent=t;};
 
 const FLAG_EXPLAIN={
- below_surface_noise:d=>'The equivalent rewording (A↔B) produced '+d.gap_pct.toFixed(1)+' points — not clearly more than the purely cosmetic change (A↔A′) alone, '+d.gap_null_pct.toFixed(1)+' points.',
+ below_surface_noise:d=>'The equivalent rewording (A↔B) produced '+d.gap_pct.toFixed(1)+' points — not clearly more than the purely cosmetic change (A↔A′) alone, '+d.gap_null_pct.toFixed(1)+' points. For a stability check this is usually the result you want (both near zero); the flag only means the framework can’t statistically prove the two are different at this sample size, not that the measurement failed.',
  not_reading:d=>'The change that should move the answer (A↔C) only produced '+d.gap_positive_pct.toFixed(1)+' points — the model may not be reading the scenario.',
- degenerate_candidate:d=>'Entropy stayed very low ('+d.entropy_a.toFixed(2)+' / '+d.entropy_b.toFixed(2)+') while stability was high — the model may just be giving the same answer regardless of the question.',
- drop_confounded:d=>'The worst-case error from lost answers (A↔B: '+d.drop_bound_pct_ab.toFixed(1)+' points) is too large to trust this result.',
- asymmetric_missingness:d=>'One version lost noticeably more answers than another: A '+(100*d.u_a).toFixed(1)+'%, A′ '+(100*d.u_a_prime).toFixed(1)+'%, B '+(100*d.u_b).toFixed(1)+'%, C '+(100*d.u_c).toFixed(1)+'%.',
- below_drop_bound:()=>'The measured gap is smaller than the worst-case error from lost responses alone — it cannot be told apart from that error.',
+ degenerate_candidate:d=>{
+  const gAC=(d.gates&&d.gates['A-C'])||{}, moved=!!gAC.reading;
+  return 'Entropy stayed very low ('+d.entropy_a.toFixed(2)+' / '+d.entropy_b.toFixed(2)+') while stability was high — on its own that could mean the model just gives the same answer regardless of the question. Check the positive control (A↔C) below: '
+   +(moved
+     ? 'it moved ('+d.gap_positive_pct.toFixed(1)+' points), which is evidence against that reading — the model does change its decision when the underlying problem actually changes.'
+     : 'it did not clearly move either ('+d.gap_positive_pct.toFixed(1)+' points), which is consistent with a genuinely degenerate answer.');
+ },
+ drop_confounded:d=>{
+  const g=d.gates||{}, bad=[];
+  if(g['A-B']&&g['A-B'].drop_bound_ok===false) bad.push('A↔B ('+d.drop_bound_pct_ab.toFixed(1)+' pts)');
+  if(g['A-A_prime']&&g['A-A_prime'].drop_bound_ok===false) bad.push('A↔A′ ('+d.drop_bound_pct_aa.toFixed(1)+' pts)');
+  if(g['A-C']&&g['A-C'].drop_bound_ok===false) bad.push('A↔C ('+d.drop_bound_pct_ac.toFixed(1)+' pts)');
+  return 'The worst-case error from lost answers is too large to trust on '+(bad.length?bad.join(', '):'at least one comparison')
+   +'. This doesn’t automatically taint every comparison — the main A↔B result stays reliable as long as it isn’t the one listed here.';
+ },
+ asymmetric_missingness:d=>'One version lost noticeably more answers than another: A '+(100*d.u_a).toFixed(1)+'%, A′ '+(100*d.u_a_prime).toFixed(1)+'%, B '+(100*d.u_b).toFixed(1)+'%, C '+(100*d.u_c).toFixed(1)+'%. Same underlying numbers as the loss-floor rows below — this just flags that the loss wasn’t spread evenly across versions.',
+ below_drop_bound:d=>'The measured gap ('+d.gap_pct.toFixed(1)+' points) is not larger than the worst-case error from lost responses alone ('+d.drop_bound_pct_ab.toFixed(1)+' points) — it cannot be told apart from that error. When both are 0 because nothing was lost on A or B, this is a mechanical consequence of a clean run, not a sign of unreliable data.',
  scenario_dominated:()=>'A couple of the fifteen scenarios account for most of the measured gap.',
  instrument_suspect:()=>'The daily reference-model self-check moved on this run’s date — the whole pipeline is suspect that day, not just this measurement.',
  exploratory:()=>'Outside the protocol’s one pre-declared comparison — informative only, never on the main curve.'
@@ -758,15 +844,28 @@ function openDetail(i){const d=ALL[i];
  const availability=isOpen
    ? 'Full text and answers are published even though it’s off the main curve.'
    : 'The aggregate result is public; the underlying text and answers stay sealed until this model generation retires.';
- set('verdict', d.on_curve
-   ? 'All checks pass. This measurement is on the main curve.'
-   // "flag(s)", not "check(s)": d.flags.length counts entries in the closed FLAGS list
-   // (core/measure/schema.py). Every flag this project actually publishes now has a matching row
-   // above: "Scenario concentration" (scenario_dominated) and the 3 separate "Loss floor" rows
-   // (drop_confounded can fire from any one of A↔B/A↔A′/A↔C alone -- a single combined row used
-   // to hide which one) were both added after a real reader counted the rows, got a different
-   // number from "N flags set" below, and reasonably assumed a bug.
-   : (d.flags.length ? (d.flags.length+' flag'+(d.flags.length===1?'':'s')+' set — see “Off the main curve” above for why. '+availability) : availability+' Off the main curve (see above).'));
+ // A run can look "off curve" purely because zero A↔B/A↔A′ shift sits next to a working
+ // positive control -- exactly the signature a stable, non-degenerate model should produce.
+ // That combination shouldn't read as a defect, so it gets its own bullet below.
+ const stableSignature = d.flags.includes('degenerate_candidate') && d.flags.includes('below_surface_noise')
+   && !!((d.gates&&d.gates['A-C']&&d.gates['A-C'].reading));
+ const verdictEl=document.getElementById('verdict');
+ if(d.on_curve){
+  verdictEl.innerHTML='<p><small>All checks pass. This measurement is on the main curve.</small></p>';
+ }else{
+  // "flag(s)", not "check(s)": d.flags.length counts entries in the closed FLAGS list
+  // (core/measure/schema.py). Every flag this project actually publishes now has a matching row
+  // above: "Scenario concentration" (scenario_dominated) and the 3 separate "Loss floor" rows
+  // (drop_confounded can fire from any one of A↔B/A↔A′/A↔C alone -- a single combined row used
+  // to hide which one) were both added after a real reader counted the rows, got a different
+  // number from "N flags set" below, and reasonably assumed a bug.
+  const items=[];
+  if(d.flags.length) items.push(d.flags.length+' flag'+(d.flags.length===1?'':'s')+' set — see “Off the main curve” above for why.');
+  items.push(availability);
+  if(stableSignature) items.push('Zero A↔B/A↔A′ shift next to a positive control that did move (A↔C: '+d.gap_positive_pct.toFixed(1)+' points) is the expected shape of a stable result, not evidence the model is unresponsive.');
+  if(!d.flags.length) items.push('Off the main curve (see above).');
+  verdictEl.innerHTML='<ul class="verdict-list">'+items.map(t=>'<li>'+t+'</li>').join('')+'</ul>';
+ }
  dr.hidden=false;requestAnimationFrame(()=>{dr.classList.add('on');sc.classList.add('on')});
  document.getElementById('close').focus();}
 function shutDetail(){dr.classList.remove('on');sc.classList.remove('on');setTimeout(()=>dr.hidden=true,220);}
