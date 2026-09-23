@@ -104,7 +104,8 @@ tr.row:hover td{background:var(--raise)}
 tr.row td:last-child{color:var(--link);font-size:13px;white-space:nowrap}
 .tag{font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap}
 .t-up{background:#e8f5ec;color:var(--good)}
-.t-fl{background:#f1f1f4;color:var(--dim)}
+.t-fl{background:#f1f1f4;color:#15161a}
+.t-fl code{color:var(--dim)}
 .t-dn{background:#fdeceb;color:var(--bad)}
 .t-open{background:#e9eefc;color:#24408e}
 .t-guard{background:#f5f0fc;color:#6b24ae}
@@ -229,7 +230,7 @@ score or a guarantee that the model will behave the same way in your own product
 
 <section class="page" id="results">
 <h2>Results</h2>
-<p class="lede">What we've measured so far, in plain terms.</p>
+<p class="lede">What we've measured so far.</p>
 
 <h3>The current picture</h3>
 <p><small>Each test asks the AI the same question, worded differently, many times. Click a row to
@@ -244,22 +245,9 @@ see more.</small></p>
 the score and its margin, and finally whether it passed the checks. If there's a flag or it's in
 quarantine, don't compare it as a normal result.</p></div>
 
-@@TREND_SECTION@@
-
-@@BIGGEST_MOVE_SECTION@@
-
-<h3>We check ourselves too</h3>
-<div class="callout"><p>Every day we run the same tests on a model that never changes, as a
-reference point. If that one shows a change, we know something broke in our own measurement
-system — not in the AI we're tracking — and we don't publish a result for that day.</p></div>
-
-<h3>What's missing</h3>
-<p><small>We don't hide gaps: every missing measurement is declared, along with the reason, in
-<a href="#" onclick="go('data');return false">Data</a>.</small></p>
-
 <h3>A second check — open model</h3>
 <p class="lede">We also run the same tests on a model that anyone can download and re-run, so that
-the method itself can be shown to actually work · <a href="#" onclick="go('what');return false">why two models</a></p>
+the method itself can be shown to actually work · <a href="https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF" target="_blank" rel="noopener">Download qwen2.5</a></p>
 <p><span class="tag t-fl">model: <code>@@REFERENCE_MODEL_ID@@</code></span></p>
 <div class="scroll"><table>
 <thead><tr><th title="The scenario being tested, and which model answered it">Test</th><th title="What part of the question's wording was changed between versions">What changes</th><th title="Whether this test's questions and answers are public (open), or still kept private until the model retires">Lane</th><th title="The day this measurement ran">Date</th><th title="How often it kept the same decision when we changed the question">Stability</th><th><abbr title="how many times it was asked">n</abbr></th><th title="Whether this result passed our quality checks, and if not, which one it failed">Checks</th><th title="Change vs. this test's previous run">vs. previous</th><th></th></tr></thead>
@@ -342,28 +330,6 @@ versions of each question.</p>
 <tr><td><b>C</b></td><td>a real change in meaning — the answer <b>should</b> change</td><td>that the model is actually reading. If C doesn't move anything, the other three don't mean anything</td></tr>
 </tbody></table></div>
 
-<h3>Two models, two different roles</h3>
-<p>A commercial model (e.g. Claude, GPT) is really a product: it changes behind the scenes, without
-notice. It's valuable to track it over time, but once it's retired, no one else can re-ask the same
-model to check our measurement.</p>
-<p>That's why we run the same method on an <b>open</b> model too, which stays available forever. So
-anyone who wants to can download it and re-run what we're doing, today.</p>
-<div class="pair">
-  <div class="box"><div class="eyebrow">Commercial models — <b>the archive</b></div>
-  <p style="margin-bottom:0"><i>"Here's what this method recorded for models that no longer exist."</i></p></div>
-  <div class="box"><div class="eyebrow">Open model — <b>the control experiment</b></div>
-  <p style="margin-bottom:0"><i>"The method works, and here's the proof — re-run it yourself."</i></p></div>
-</div>
-<p><small>The two series are never compared against each other — each answers a different
-question: "what changed" and "does the method work".</small></p>
-
-</section>
-
-<section class="page" id="does">
-<h2>The metric</h2>
-<p class="lede">It measures <b>Stability</b>: a number from 0 to 100. 100 means "the AI never
-changed its mind when only the wording changed." The higher, the more stable.</p>
-
 <h3>How the number is calculated</h3>
 <p>We ask the model the same question many times with one wording and many times with an
 equivalent wording, and measure how different the answers are. The closer the two groups of
@@ -383,8 +349,15 @@ meaningful and seeing whether the answer changes too</li>
 <p>If any check fails, the result is still published separately, with a note explaining why it
 didn't make it onto the main curve — no measurement ever disappears silently.</p>
 
-<h3>The Recipe</h3>
-<p>Think of it like a recipe: a <b>family</b> (e.g. sunk-cost fallacy) is one dish, the
+</section>
+
+<section class="page" id="does">
+<h2>The metric</h2>
+<p class="lede">It measures <b>Stability</b>: a number from 0 to 100. 100 means "the AI never
+changed its mind when only the wording changed." The higher, the more stable.</p>
+
+<h3>Think of it like a recipe</h3>
+<p>A <b>family</b> (e.g. sunk-cost fallacy) is one dish, the
 <b>scenarios</b> are 15 different variations of that dish, and the <b>versions</b> (A/A′/B/C) are
 four ways of serving the same dish, to see whether the answer changes just because the serving
 did.</p>
@@ -392,9 +365,8 @@ did.</p>
 <li><b>12 protocols = 3 families × 4 rewording types.</b> Each protocol is one recipe, tested one
 way (wording, an anchor number, order, or which option is marked "default"). Not 12 different
 dishes — 3 dishes, each tested 4 different ways.</li>
-<li><b>45 scenarios = 15 × 3, not 15 × 4 × 3.</b> The 15 examples in each family are written once
-and reused across all 4 rewording types, never duplicated — so fixing a number in one scenario
-fixes it everywhere at once.</li>
+<li><b>45 scenarios = 15 × 3, not 15 × 4 × 3.</b> The 15 Questions in each family are written once
+and reused across all 4 rewording types, never duplicated.</li>
 <li><b>720 version-texts = 12 × 15 × 4.</b> The total number of written prompts, ready to send to
 a model: one for every protocol, scenario, and version.</li>
 <li><b>150 trials per version, 600 per full measurement.</b> Asking a model once isn't enough — it
@@ -403,6 +375,49 @@ with 4 versions that's 600 calls for one measurement.</li>
 </ul>
 <p><small>In one sentence: 3 dishes × 4 test types = 12 protocols; each protocol asks the model 600
 times (15 scenarios × 4 versions × 10 repeats) to produce one reliable measurement.</small></p>
+
+<h3>In plain words</h3>
+<ol class="steps">
+<li><b>Tests stability under framing.</b> The model is given the same dilemma phrased in
+equivalent ways.<br><i>Example — Version A: "Out of a group of 600 people, 200 will be saved."
+Version B: "Out of a group of 600 people, 400 will die."</i> The meaning is identical: if the
+model's answer differs between the two, the measurement records that its decision was swayed by
+wording alone.</li>
+<li><b>Uses four versions of every question.</b> <b>A</b>, the baseline wording. <b>A′</b>, a
+meaningless change (spacing, punctuation) that measures noise. <b>B</b>, an equivalent rewording —
+what's actually being measured. <b>C</b>, a real change in meaning, where the answer
+<i>should</i> change, confirming the model is actually reading the question.</li>
+<li><b>Tracks two different categories of model.</b> <b>Commercial</b> models (Claude, GPT-class)
+are tracked over time to record how their behavior shifts with each update. <b>Open</b> models
+(e.g. Qwen2.5) serve as a control group — anyone can download the same weights and verify the
+method themselves.</li>
+<li><b>Publishes fully open data.</b> Every measurement, the CSV files (<code>stability.csv</code>,
+<code>outcomes.csv</code>) and the JSONL logs are free to download — data under CC-BY-4.0, code
+under AGPL-3.0.</li>
+</ol>
+
+<h3>Goal</h3>
+<p>Its goal is to measure the <b>stability</b> of LLM decisions — whether a model changes its answer when
+the same question is asked in different words, even though the meaning stays exactly the same. We
+compare four wordings of each question across two kinds of models, commercial and open, and publish everything
+we measure as open data under CC-BY-4.0, with the measurement pipeline itself open-source under
+AGPL-3.0 (see <a href="#" onclick="go('data');return false">Data</a> for the full license
+breakdown).</p>
+
+<h3>Two models, two different roles</h3>
+<p>A commercial model (e.g. Claude, GPT) is really a product: it changes behind the scenes, without
+notice. It's valuable to track it over time, but once it's retired, no one else can re-ask the same
+model to check our measurement.</p>
+<p>That's why we run the same method on an <b>open</b> model too, which stays available forever. So
+anyone who wants to can download it and re-run what we're doing, today.</p>
+<div class="pair">
+  <div class="box"><div class="eyebrow">Commercial models — <b>the archive</b></div>
+  <p style="margin-bottom:0"><i>"Here's what this method recorded for models that no longer exist."</i></p></div>
+  <div class="box"><div class="eyebrow">Open model — <b>the control experiment</b></div>
+  <p style="margin-bottom:0"><i>"The method works, and here's the proof — re-run it yourself."</i></p></div>
+</div>
+<p><small>The two series are never compared against each other — each answers a different
+question: "what changed" and "does the method work".</small></p>
 
 </section>
 
@@ -510,34 +525,6 @@ the same aggregate wouldn't be a real comparison.</small></p>
 <h2>Why it matters</h2>
 <p class="lede">The archive doesn't answer "how smart is an AI." It answers <b>"did something
 change, when, and for whom."</b></p>
-
-<p>Its goal is to measure the <b>stability</b> of LLM decisions — whether a model changes its answer when
-the same question is asked in different words, even though the meaning stays exactly the same. We
-compare four wordings of each question (see <a href="#" onclick="go('what');return false">Design</a>
-for the A/A′/B/C breakdown) across two kinds of models, commercial and open, and publish everything
-we measure as open data under CC-BY-4.0, with the measurement pipeline itself open-source under
-AGPL-3.0 (see <a href="#" onclick="go('data');return false">Data</a> for the full license
-breakdown).</p>
-
-<h3>What it actually does</h3>
-<ol class="steps">
-<li><b>Tests stability under framing.</b> The model is given the same dilemma phrased in
-equivalent ways.<br><i>Example — Version A: "Out of a group of 600 people, 200 will be saved."
-Version B: "Out of a group of 600 people, 400 will die."</i> The meaning is identical: if the
-model's answer differs between the two, the measurement records that its decision was swayed by
-wording alone.</li>
-<li><b>Uses four versions of every question.</b> <b>A</b>, the baseline wording. <b>A′</b>, a
-meaningless change (spacing, punctuation) that measures noise. <b>B</b>, an equivalent rewording —
-what's actually being measured. <b>C</b>, a real change in meaning, where the answer
-<i>should</i> change, confirming the model is actually reading the question.</li>
-<li><b>Tracks two different categories of model.</b> <b>Commercial</b> models (Claude, GPT-class)
-are tracked over time to record how their behavior shifts with each update. <b>Open</b> models
-(e.g. Qwen2.5) serve as a control group — anyone can download the same weights and verify the
-method themselves.</li>
-<li><b>Publishes fully open data.</b> Every measurement, the CSV files (<code>stability.csv</code>,
-<code>outcomes.csv</code>) and the JSONL logs are free to download — data under CC-BY-4.0, code
-under AGPL-3.0.</li>
-</ol>
 
 <h3>A few words about the system behind it</h3>
 <p><b>A scientific approach.</b> This isn't an attempt at a general "intelligence score," the way
@@ -768,7 +755,7 @@ const TYPE_LABELS={wording:'Wording change',anchoring:'Anchoring',order:'Option 
 function panelName(d){return (FAMILY_LABELS[d.family]||d.family)+': '+(TYPE_LABELS[d.rewording_type]||d.rewording_type);}
 
 function checksTag(d){
- if(d.on_curve) return '<span class="tag t-up">✓ on curve</span>';
+ if(d.on_curve) return '<span class="tag t-up">✓ PASS</span>';
  if(d.flags.length) return d.flags.map(f=>'<span class="tag t-dn">'+f+'</span>').join(' ');
  return '<span class="tag t-fl">off curve</span>';
 }

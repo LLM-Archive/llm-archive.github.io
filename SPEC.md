@@ -156,11 +156,12 @@ independent panels per change type** (§3) moving together.*
 | In rotation | **12** — 3 scenario families × 4 types |
 | Lanes | **2 `open`** (fully public) · **10 `guard`** · of which 2 are the twins of the `open` ones, sharing a `twin_id`. Which ones, and by what rule: "Lane assignment and twin pairing" below |
 | Sealed | **2 `sealed`** — off rotation, run **only** at generation boundaries. Existence and count are disclosed; content and results, never |
-| Full sweep | **monthly** — 1,440 calls, ~€8.00 at the measured rate (§9). The real 12-protocol sweep completed 2026-09-22 cost **€7.90** in billed calls |
+| Full sweep | **monthly** — 1,440 calls, at the measured per-call rate (§9). The real 12-protocol sweep completed 2026-09-22, fully billed |
 | Points per protocol | **12 per year** |
 
-*(A `v1` sweep would be 12 × 480 = 5,760 calls, ~€32 — which is why the `v1` series cannot run at
-this cadence inside the same ceiling; see §9 and §2's note on the series.)*
+*(A `v1` sweep would be 12 × 480 = 5,760 calls — several times the v0 sweep's cost, which is why
+the `v1` series cannot run at this cadence inside the same ceiling; see §9 and §2's note on the
+series.)*
 
 ### The three scenario families
 
@@ -357,7 +358,7 @@ allowed to rewrite which series we are measuring. It survives **only** as a brid
 `n_per_scenario=2`** (a bridge check only needs to catch a gross discontinuity, not a fine-grained
 measurement — and repeats add no information without a client-controllable sampling parameter,
 §5) — four versions, **old and new**, same week.
-`4 × 60 × 2 = 480 calls ≈ €2.67` (measured rate, §9). Funded from `bridge_reserve_eur` in
+`4 × 60 × 2 = 480 calls` (measured rate, §9). Funded from `bridge_reserve_eur` in
 `budget.json` (private — §10 — sized with a small margin over this), never from the general
 monthly pool — see `core/budget/budget.py`'s `_general_ceiling`.
 
@@ -368,7 +369,7 @@ monthly pool — see `core/budget/budget.py`'s `_general_ceiling`.
 and a **permanent discontinuity**, disclosed on the curve.
 
 `open_weights` has no sealed lane: frozen weights **cannot be contaminated**. It runs on CPU
-inside Actions' free minutes — **€0, no rented accelerator**. One model, archived with a sha256
+inside Actions' free minutes — **free, no rented accelerator**. One model, archived with a sha256
 in the chain.
 
 ---
@@ -642,17 +643,16 @@ are recorded on every scan.
 |---|---|---|
 | `runtime_fingerprint` — 12 fixed prompts, greedy, temp 0, fixed seed, top-5 logprobs per token hashed | **exact equality** | *any* difference → `instrument_alarm` |
 | Guard protocols on the reference model — one protocol per day, rotating through all 10 guard protocols on a 10-day cycle | statistical | beyond the composite margin → `instrument_alarm` |
-| `subject_fingerprint` — 24 frozen items against the remote model | **daily**, public series | ~€0.09/month (measured, §9) |
+| `subject_fingerprint` — 24 frozen items against the remote model | **daily**, public series | small, measured monthly amount (§9) |
 
 **`subject_fingerprint`'s 24 items are meant to be short, simple, single-fact checks (e.g. "Is 7
 a prime number?"), not full 250-400-word scenarios** — the same design already used for
 `runtime_fingerprint`'s 12 fixed prompts on the reference model. This is what keeps its real cost
 low: a live 3-call sample of that style measured ~103 tokens/call total, against ~496 for a full
-scenario. The first real run (2026-09-21, 24/24 correct) was billed **€0.003 for all 24 calls**,
-so 24×30 = 720 calls/month lands at **~€0.09/month** — well under the ~€0.83/month this section
-originally projected from token counts alone, and far under the ~€4/month a full-scenario-length
-item would cost at the same daily count. This category is never budget-gated (below) — its cost
-has to stay small by design, not by the ladder.
+scenario. The first real run (2026-09-21, 24/24 correct) confirmed this design keeps the series'
+real monthly cost well under what this section originally projected from token counts alone, and
+far under what a full-scenario-length item would cost at the same daily count. This category is
+never budget-gated (below) — its cost has to stay small by design, not by the ladder.
 
 **The guard-protocol rotation runs one protocol a day, not all 10 daily, purely for cost:**
 measured at ~9.6s/call on the pinned reference-model container (this is the reference model's own
@@ -681,7 +681,7 @@ possible causes.
 # The subject
 subject_fingerprint:      1d     # 24 items, temp 0, public series
 full_sweep:               30d     # 12 protocols × 4 versions × n=30
-open_weights_series:  on_new_generation   # NOT on the rotation — CPU, €0
+open_weights_series:  on_new_generation   # NOT on the rotation — CPU, free
 sealed_scan:          on_new_generation   # the 2 sealed ones, only at generation boundaries
 
 # The instrument
@@ -753,15 +753,15 @@ inputs/outputs.
 > **When the budget isn't enough, less coverage is published, with a disclosed cause
 > (`budget_halted`). `n` and the checks are never quietly reduced.**
 
-**Cost per call is now measured** — **~€0.0056/call** (Sonnet-class, `thinking` disabled), first
-measured 2026-09-21 from one full real pilot protocol (120 calls) and since confirmed across
-**13 billed protocol runs / 1,560 calls totalling €8.67** (`state/spend.json`, 2026-09-23): the
-per-protocol figure has stayed inside €0.54–€0.79 throughout. The old placeholder numbers in
-`budget.json` have already been replaced by this real figure.
+**Cost per call is now measured** (Sonnet-class, `thinking` disabled), first measured 2026-09-21
+from one full real pilot protocol (120 calls) and since confirmed across **13 billed protocol runs
+/ 1,560 calls** (`state/spend.json`, 2026-09-23): the per-protocol figure has stayed consistent
+throughout. The old placeholder numbers in `budget.json` have already been replaced by this real,
+measured rate.
 
-A second, much cheaper rate applies to `subject_fingerprint`'s short items — €0.003 per 24-call
-run, ~€0.000125/call (§7) — because those prompts are a fraction of a full scenario's length. The
-two are never averaged into one "cost per call."
+A second, much cheaper rate applies to `subject_fingerprint`'s short items (§7) — because those
+prompts are a fraction of a full scenario's length. The two are never averaged into one "cost per
+call."
 
 Unlike `cadence.yaml` (§13: frozen at commit #1), the ceiling, the reserve, and the ladder's rungs
 are ordinary recalibratable data — editing them after the first real cost is known is a data edit,

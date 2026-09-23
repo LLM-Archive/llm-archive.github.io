@@ -5,18 +5,54 @@ the project isn't "trust us," it's "here is exactly what would have to be true f
 be wrong, go check." This page covers the two things an outside party can actually do with that:
 reproduce an `open`-lane result, and run the same panel against a different model.
 
+## In plain words: how to download our results and compare with your own model
+
+**1. Get our published numbers.** On the site, go to **Downloads** and get `stability.csv`. It's a
+spreadsheet of every test we've run: which question, which model, how stable the answer was (0 to
+100), and whether it passed our quality checks.
+
+**2. Get the real questions and answers — for 2 of the 12 tests.** Only two tests publish their
+actual wording: `risky_choice_framing__wording` and `base_rate_neglect__wording` (marked
+`lane: open` — see [`glossary.md`](glossary.md)). For those, download `open-lane/<year>.jsonl` from
+Downloads: every real question the model was asked, its exact response, and which option it
+picked.
+
+**3. What you can do with that today: check our math, for your own sake.** Take the real responses
+from step 2 and recompute the published stability score yourself — the formula is public
+(`../docs/spec.md` §6, plain arithmetic, no special software needed). This is the difference
+between citing a number because a website says so and knowing it's right because you re-derived it
+yourself. If your number matches ours, you can now cite it with that confidence. If it doesn't,
+you've caught something worth not trusting yet — worth telling us too, since a wrong published
+number helps no one, but either way you now know before you relied on it (see
+[`../CONTRIBUTING.md`](../CONTRIBUTING.md) if you want to send it our way).
+
+**4. What you can't do yet: run your own model on our exact questions.** To fairly compare a model
+of your own, you'd need the wording of all 15 questions in a test. Today, only the **first**
+question's wording is public (shown on the Results page when you open that row) — the other 14
+aren't published anywhere yet. This is a known, disclosed gap, not an oversight — see
+[`../docs/spec.md`](../docs/spec.md) §1.1. Once it's closed, this page will say so, with
+step-by-step instructions for submitting your own comparison.
+
+**5. What a result would tell you, once this opens up.** Not "is my model smarter." Only: does it
+change its answer when asked the exact same question worded differently, on this one day, on this
+one frozen set of 15 questions. It's never merged into the project's own chart or averaged with
+anything — see "What a `comparison_point` is not" below.
+
 ## Reproducing an `open`-lane result
 
-Two of the twelve v0 protocols publish their complete, word-for-word trial text:
+Two of the twelve v0 protocols publish their real trial-level data (every response, in full):
 `risky_choice_framing__wording__v0` and `base_rate_neglect__wording__v0` (see
-[`glossary.md`](glossary.md) for what `lane: open` means and why only these two).
+[`glossary.md`](glossary.md) for what `lane: open` means and why only these two). **This is not the
+same as the full question wording** — see "In plain words," step 4 above, for what's actually
+public today (14 of each test's 15 questions aren't yet).
 
-**Where the text actually lives:** not as a standalone protocol file — `protocols/*.json` stays in
-the private repo even for `open` protocols (`../docs/spec.md` §10). The exact wording reaches the
-public only through `open-lane/<year>.jsonl`: every trial from an `open` run, copied through
-unchanged. To reconstruct the four versions (A / A′ / B / C) of a given scenario, filter that file
-by `protocol_id` and read the `version` and prompt-text fields directly off the trial records — see
-[`data-dictionary.md`](data-dictionary.md) for the exact fields.
+**Where the real trial data lives:** not in a standalone protocol file — `protocols/*.json` stays in
+the private repo even for `open` protocols (`../docs/spec.md` §10). Every trial from an `open` run
+reaches the public only through `open-lane/<year>.jsonl`, copied through unchanged. Each line has
+`run_id` (the protocol id is embedded in it, as a substring — there is no separate `protocol_id`
+field), `scenario_id`, `version`, the model's real `response_text`, the extracted `token`, and
+`prompt_sha256` (a one-way hash — lets you confirm a prompt you already hold is the exact one used,
+but doesn't reveal it). See [`data-dictionary.md`](data-dictionary.md) for the exact field list.
 
 To check a specific published number:
 

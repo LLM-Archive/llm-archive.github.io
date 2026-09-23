@@ -759,116 +759,6 @@ def render_coverage_bar(data: dict) -> str:
     )
 
 
-def _family_series_history(data: dict) -> dict[tuple[str, str], list[dict]]:
-    """(series, family) -> every measurement of that family+series, across all its rewording
-    types, in run_date order -- the trend chart's real replacement for the mockup's hand-typed
-    per-family lines. Never mixes two different families or two different series on one line."""
-    grouped: dict[tuple[str, str], list[dict]] = {}
-    for (pid, _series), ms in data["history"].items():
-        if pid not in data["protocols"]:
-            continue
-        for m in ms:
-            key = (m.get("series"), _family_of(pid))
-            grouped.setdefault(key, []).append(m)
-    for ms in grouped.values():
-        ms.sort(key=lambda m: (m.get("run_date") or "", m.get("run_id") or ""))
-    return grouped
-
-
-def _render_one_trend_chart(series: str, family: str, ms: list[dict]) -> str:
-    by_type: dict[str, list[dict]] = {}
-    for m in ms:
-        by_type.setdefault(m.get("rewording_type"), []).append(m)
-    dates = sorted({m["run_date"] for m in ms if m.get("run_date")})
-    left, right, top, bottom, width = 70, 640, 30, 236, 800
-    x_of = {d: left + i * (right - left) / (len(dates) - 1) for i, d in enumerate(dates)} if len(dates) > 1 else {dates[0]: left}
-    values = [m["stability_pct"] for m in ms if m.get("stability_pct") is not None]
-    axis_min = max(0, 10 * ((min(values) - 1) // 10)) if values else 0
-
-    def y_of(v: float) -> float:
-        return bottom - (v - axis_min) / (100 - axis_min) * (bottom - top) if axis_min < 100 else bottom
-
-    colors = ["var(--c1)", "var(--c2)", "var(--c3)", "var(--c4)"]
-    lines, labels = [], []
-    for i, (rtype, type_ms) in enumerate(sorted(by_type.items())):
-        known = [m for m in type_ms if m.get("stability_pct") is not None]
-        # A single point can't show a trend line -- skip it rather than draw a zero-length
-        # polyline that would render as an invisible dot.
-        if len(known) < 2:
-            continue
-        color = colors[i % len(colors)]
-        pts = " ".join(f"{x_of[m['run_date']]:.1f},{y_of(m['stability_pct']):.1f}" for m in known)
-        lines.append(f'<polyline stroke="{color}" points="{pts}"/>')
-        # Placed at the line's own last point, just right of the chart -- same convention
-        # mockup.html used by hand. Without x/y this text falls back to (0,0) and is clipped
-        # by the viewBox, which is what it did before this fix.
-        label_y = y_of(known[-1]["stability_pct"])
-        labels.append(f'<text x="{right + 12:.1f}" y="{label_y:.1f}" fill="{color}">{TYPE_LABELS.get(rtype, rtype)} {known[-1]["stability_pct"]:.0f}%</text>')
-    date_labels = "".join(f'<text x="{x_of[d]:.1f}" y="268">{d}</text>' for d in dates)
-    series_label = "commercial" if series == "commercial" else "open weights"
-    title = f"{FAMILY_LABELS.get(family, family)} — {series_label}"
-    return (
-        f"<h3>How it's changed over time — {title}</h3>"
-        '<figure><div class="scroll">'
-        f'<svg viewBox="0 0 {width} 300" width="{width}" role="img" aria-label="{title} stability over time">'
-        '<g stroke="var(--line)" stroke-width="1">'
-        f'<line x1="{left}" y1="{top}" x2="{right}" y2="{top}"/>'
-        f'<line x1="{left}" y1="{bottom}" x2="{right}" y2="{bottom}"/></g>'
-        f'<g fill="var(--dim)" font-size="13" text-anchor="middle" font-family="system-ui,sans-serif">{date_labels}</g>'
-        f'<g fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">{"".join(lines)}</g>'
-        f'<g font-size="12" font-family="system-ui,sans-serif" font-weight="600">{"".join(labels)}</g>'
-        "</svg></div></figure>"
-    )
-
-
-def render_trend_section(data: dict) -> str:
-    """Only draws a chart for a (series, family) once it has >=2 distinct run_dates -- otherwise a
-    single point would look like a trend that isn't there yet. Today every kept run is from the
-    same date, so this always renders the placeholder -- documented in decisions.md as a
-    deliberate default, not a silent guess."""
-    grouped = _family_series_history(data)
-    charts = [
-        _render_one_trend_chart(series, family, ms)
-        for (series, family), ms in sorted(grouped.items())
-        if len({m.get("run_date") for m in ms if m.get("run_date")}) >= 2
-    ]
-    if not charts:
-        return (
-            "<h3>How it changes over time</h3>"
-            '<div class="callout"><p>Not enough history yet — each test currently has just one '
-            "measurement. A trend needs at least two dates for the same test on the same model "
-            "series; check back once the pipeline has been running for a while.</p></div>"
-        )
-    return "\n".join(charts)
-
-
-def render_biggest_move_section(data: dict) -> str:
-    """The largest regression seen between two consecutive measurements of the same protocol, if
-    any -- empty string (nothing rendered) if every protocol either has no history yet or never
-    regressed, rather than manufacturing a claim from a single run."""
-    worst: tuple[float, dict] | None = None
-    for ms in data["history"].values():
-        for i in range(1, len(ms)):
-            prev, cur = ms[i - 1], ms[i]
-            if prev.get("stability_pct") is None or cur.get("stability_pct") is None:
-                continue
-            delta = cur["stability_pct"] - prev["stability_pct"]
-            if worst is None or delta < worst[0]:
-                worst = (delta, cur)
-    if worst is None or worst[0] >= 0:
-        return ""
-    delta, cur = worst
-    family = _family_of(cur.get("protocol_id", ""))
-    label = f"{FAMILY_LABELS.get(family, family)}: {TYPE_LABELS.get(cur.get('rewording_type'), cur.get('rewording_type'))}"
-    return (
-        "<h3>Where we saw the biggest change</h3>"
-        '<div class="callout" style="border-color:var(--bad)"><p><b>In the '
-        f'"{label}" test, stability dropped {abs(delta):.1f} points</b> on {cur.get("run_date")} — '
-        "the biggest drop we've seen so far. Open the row in the table above to see exactly which "
-        "question caused it.</p></div>"
-    )
-
-
 def _human_size(num_bytes: int) -> str:
     size = float(num_bytes)
     for unit in ("B", "KB", "MB"):
@@ -951,8 +841,6 @@ def build_site_html(
         "@@REFERENCE_MODEL_ID@@": render_reference_model_id(data),
         "@@COMMERCIAL_MODEL_ID@@": render_commercial_model_id(data),
         "@@CITATION_BIBTEX@@": render_citation_bibtex(data),
-        "@@TREND_SECTION@@": render_trend_section(data),
-        "@@BIGGEST_MOVE_SECTION@@": render_biggest_move_section(data),
         "@@PRIMARY_DOWNLOAD@@": render_primary_download(data_dir, out_dir),
         "@@FILE_ROWS@@": render_file_rows(data_dir, out_dir, open_lane_years),
         "@@SITE_VERSION@@": version_path.read_text(encoding="utf-8").strip(),
@@ -1208,15 +1096,6 @@ def _verify() -> list[str]:
     )
     if "claude-sonnet-5" not in coverage_bar_live:
         errors.append("render_coverage_bar: live state should name the active model")
-
-    sparse_data = {"history": {("p", None): [m_first]}, "protocols": {"p": {}}}
-    if "Not enough history" not in render_trend_section(sparse_data):
-        errors.append("render_trend_section: a single-date protocol should render the placeholder, not a chart")
-    rich_data = {"history": {("fam__wording__v0", "commercial"): [dict(m_first, protocol_id="fam__wording__v0", series="commercial", rewording_type="wording"),
-                                                                   dict(m_second, protocol_id="fam__wording__v0", series="commercial", rewording_type="wording")]},
-                 "protocols": {"fam__wording__v0": {}}}
-    if "<svg" not in render_trend_section(rich_data):
-        errors.append("render_trend_section: two distinct dates should render an actual chart")
 
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
