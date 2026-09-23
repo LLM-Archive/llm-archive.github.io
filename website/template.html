@@ -233,17 +233,17 @@ score or a guarantee that the model will behave the same way in your own product
 <p class="lede">What we've measured so far.</p>
 
 <h3>The current picture</h3>
-<p><small>Each test asks the AI the same question, worded differently, many times. Click a row to
-see more.</small></p>
+<p><small><b>How to read a row:</b> first look at the <b>What changes</b> column (the literal
+question is only visible for the 2 open-lane tests — the rest stay guarded while their model is
+active), then the score and its margin, and finally whether it passed the checks.</small></p>
 <p><span class="tag t-fl">model: <code>@@COMMERCIAL_MODEL_ID@@</code></span></p>
 <div class="scroll"><table>
 <thead><tr><th title="The scenario being tested, and which model answered it">Test</th><th title="What part of the question's wording was changed between versions">What changes</th><th title="Whether this test's questions and answers are public (open), or still kept private until the model retires">Lane</th><th title="The day this measurement ran">Date</th><th title="How often it kept the same decision when we changed the question">Stability</th><th><abbr title="how many times it was asked">n</abbr></th><th title="Whether this result passed our quality checks, and if not, which one it failed">Checks</th><th title="Change vs. this test's previous run">vs. previous</th><th></th></tr></thead>
 <tbody id="rows"></tbody>
 </table></div>
-
-<div class="callout"><p><b>How to read a row:</b> first look at what changed in the question, then
-the score and its margin, and finally whether it passed the checks. If there's a flag or it's in
-quarantine, don't compare it as a normal result.</p></div>
+<p><small>When we change how a test is measured, we release the change as a new version
+(<code>v0</code>, <code>v1</code>, ...) and keep the old version's published numbers too — so you
+can always check a number against what came before, instead of it quietly changing meaning.</small></p>
 
 <h3>A second check — open model</h3>
 <p class="lede">We also run the same tests on a model that anyone can download and re-run, so that
@@ -253,6 +253,9 @@ the method itself can be shown to actually work · <a href="https://huggingface.
 <thead><tr><th title="The scenario being tested, and which model answered it">Test</th><th title="What part of the question's wording was changed between versions">What changes</th><th title="Whether this test's questions and answers are public (open), or still kept private until the model retires">Lane</th><th title="The day this measurement ran">Date</th><th title="How often it kept the same decision when we changed the question">Stability</th><th><abbr title="how many times it was asked">n</abbr></th><th title="Whether this result passed our quality checks, and if not, which one it failed">Checks</th><th title="Change vs. this test's previous run">vs. previous</th><th></th></tr></thead>
 <tbody id="orows"></tbody>
 </table></div>
+<p><small>When we change how a test is measured, we release the change as a new version
+(<code>v0</code>, <code>v1</code>, ...) and keep the old version's published numbers too — so you
+can always check a number against what came before, instead of it quietly changing meaning.</small></p>
 
 </section>
 
@@ -681,10 +684,10 @@ code preserves the record's exact identity.</small></p>
 
   <h3>The measurement</h3>
   <table><tbody>
-    <tr><td><abbr title="How often the model kept the same decision across the two equivalent versions">Stability</abbr> <small>(A ↔ B)</small></td><td class="num" id="ds"></td></tr>
+    <tr><td><abbr title="How often the model kept the same decision across the two equivalent versions">Stability</abbr> <small>(A&nbsp;↔&nbsp;B)</small></td><td class="num" id="ds"></td></tr>
     <tr><td><abbr title="The random difference we expect even when two questions are completely identical">Noise floor</abbr></td><td class="num" id="dnf"></td></tr>
     <tr><td><abbr title="n = how many times each version of the question was repeated">Sample</abbr></td><td class="num" id="dsamp"></td></tr>
-    <tr><td>Panel</td><td><code id="dp"></code> · <span id="dpsha" class="hash"></span></td></tr>
+    <tr><td>Protocol</td><td><code id="dp"></code> · <span id="dpsha" class="hash"></span></td></tr>
     <tr><td>Model</td><td><code id="di"></code></td></tr>
     <tr><td>Series</td><td id="dsr"></td></tr>
     <tr><td>Date</td><td class="num" id="ddate"></td></tr>
@@ -702,8 +705,8 @@ code preserves the record's exact identity.</small></p>
 
   <h3>The checks</h3>
   <table><tbody>
-    <tr><td><span class="status-pill" id="pcgn"></span> Null shift <small>(A ↔ A′)</small> <span class="help-tip" title="Null Shift: the difference between the original question and a deliberately meaningless change; if it stays small, the model isn't reacting to formatting cues.">?</span></td><td class="num" id="cgn"></td></tr>
-    <tr><td><span class="status-pill" id="pcgp"></span> Positive control <small>(A ↔ C)</small></td><td class="num" id="cgp"></td></tr>
+    <tr><td><span class="status-pill" id="pcgn"></span> Null shift <small>(A&nbsp;↔&nbsp;A′)</small> <span class="help-tip" title="Null Shift: the difference between the original question and a deliberately meaningless change; if it stays small, the model isn't reacting to formatting cues.">?</span></td><td class="num" id="cgn"></td></tr>
+    <tr><td><span class="status-pill" id="pcgp"></span> Positive control <small>(A&nbsp;↔&nbsp;C)</small></td><td class="num" id="cgp"></td></tr>
     <tr><td><span class="status-pill" id="pcen"></span> <abbr title="How varied the answers were. Very low entropy means the model answered almost the same way every time">Entropy</abbr> A / B</td><td class="num" id="cen"></td></tr>
     <tr><td><span class="status-pill" id="pcu"></span> Losses A / A′ / B / C</td><td class="num" id="cu"></td></tr>
     <tr><td><span class="status-pill" id="pcb"></span> <abbr title="Loss Floor: the worst-case error that can result from lost or unreadable answers; measures how safe the measurement is when some data is dropped.">Loss floor</abbr> A↔B <span class="help-tip" title="Loss Floor: the worst-case error that can result from lost or unreadable answers; measures how safe the measurement is when some data is dropped.">?</span></td><td class="num" id="cb"></td></tr>
@@ -812,7 +815,7 @@ const FLAG_EXPLAIN={
 
 function openDetail(i){const d=ALL[i];
  set('dk',panelName(d)+' · '+d.protocol_id);
- set('dt',d.run_date+' · '+d.stability_pct.toFixed(1)+'% stability');
+ set('dt',d.run_date+' · '+d.stability_pct.toFixed(1)+'%');
  set('dm','The A↔B distance is '+d.gap_pct.toFixed(1)+' points. Null shift: '+d.gap_null_pct.toFixed(1)
    +' · loss floor (A↔B): '+d.drop_bound_pct_ab.toFixed(1)+'.');
  const isOpen=d.lane==='open';

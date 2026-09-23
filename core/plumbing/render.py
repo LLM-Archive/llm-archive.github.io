@@ -752,10 +752,7 @@ def render_coverage_bar(data: dict) -> str:
     return (
         '<div class="cov"><span class="dot" aria-hidden="true"></span><b>Currently measuring:</b> '
         f'<code>{active["model_id"]}</code> · last full scan <b>{last}</b> · '
-        f"<b>{measured} of {total}</b> panels measured"
-        '<div style="margin-top:7px">We ask it under fixed settings and with no data of our own. '
-        "This shows only how it answered here — not how it will behave in your product · "
-        "<a href=\"#\" onclick=\"go('how');return false\">what this means</a></div></div>"
+        f"<b>{measured} of {total}</b> panels measured</div>"
     )
 
 
