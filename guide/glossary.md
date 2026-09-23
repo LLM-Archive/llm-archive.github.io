@@ -138,9 +138,17 @@ whether it's *allowed to count*, not what it *asks*.
 
 | Lane | What's published | When |
 |---|---|---|
-| `open` | The complete, word-for-word text of every trial | Immediately, in `open-lane/<year>.jsonl` |
+| `open` | Every raw response, per trial (`open-lane/<year>.jsonl`), plus the four-version text of the panel's **first scenario** on the results page. The other 14 scenarios' wording is not yet published — see the note below | Responses immediately; the rest of the panel's wording, not yet |
 | `guard` | Only outcome categories (valid/refused/etc.) — never the wording itself | Full text only after 4 model generations |
 | `sealed` | That the protocol exists and how many trials it has — nothing else | Never |
+
+**A gap disclosed rather than glossed (2026-09-23):** "`open` = the wording is public" is the
+design, and it is not yet fully true in the data. The per-trial file carries each response with its
+`scenario_id`, `version` and `prompt_sha256`, but **not the prompt text**, and the site publishes
+only the first scenario's four versions. So an `open` protocol's numbers can be recomputed from
+scratch by anyone, while the panel itself cannot yet be reconstructed or re-run from outside —
+which is also why no third party can currently produce a `comparison_point` matching
+`panel_sha256`.
 
 **`twin_id`** — links an `open` protocol to a `guard` protocol measuring the same underlying
 phenomenon (same scenario family, different rewording type) whose text stays private. The reason:

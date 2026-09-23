@@ -50,9 +50,22 @@ The subject model (`claude-sonnet-*`) is **the thing being studied**, not the ya
 going to "compare against the 2027 Sonnet" — and there would be no reason to.
 
 The **yardstick** is the frozen panel: 15 scenarios, `panel_sha256`, together with the decision
-grammar and the extraction rule. **All public.** So anyone, at any time, can run **the exact same
-panel** against their own model (`comparison_point`, §4.2) — and will find that, on that same
-panel, there is a **multi-year trail from a real commercial product**.
+grammar and the extraction rule. The grammar, the extraction rule and every panel's `panel_sha256`
+are public; the scenario *wording* is published per lane (§10), which for the two `open` protocols
+is what makes an outside run on the same panel possible at all — so that, on that same panel, there
+is a **multi-year trail from a real commercial product** to compare against (`comparison_point`,
+§4.2).
+
+> **Disclosed gap, as of 2026-09-23 — the wording needed for an outside run is not yet fully
+> published.** For an `open` protocol, what reaches the public today is: every per-trial response
+> (`open-lane/<year>.jsonl`), each carrying its `scenario_id`, `version`, extracted `token` and
+> `prompt_sha256` — plus the full four-version text of **the panel's first scenario only**, embedded
+> in the published results page. The remaining 14 scenarios' wording is in no published artifact.
+> So an outside party can today **recompute** every published statistic of an `open` run from the
+> responses, and can **verify** a prompt it already holds against `prompt_sha256` — but cannot
+> reconstruct the panel, and therefore cannot produce a run matching `panel_sha256` (§4.2's first
+> acceptance condition). Closing this means publishing the `open` protocols' full panel text; until
+> that happens, this section's claim is scoped to what the list above actually covers.
 
 > The value is **the historical context, not the opponent.**
 
@@ -87,9 +100,10 @@ history do not replace one point **with** history.
 > **The exact scope of the claim, and it is never widened anywhere:**
 > *"on **this frozen panel** of 15 scenarios, on this model, on that day."*
 >
-> **Never** "the model is X% stable under wording" — always "on panel `p-004`." The panel is an
-> **instrument, not a sample**; we do not generalize to the category — see §6 below for why no
-> generalization interval is published in v0.
+> **Never** "the model is X% stable under wording" — always naming the exact panel it was measured
+> on, by `protocol_id` and `panel_sha256` (there is no separate short panel-id scheme; those two
+> fields *are* the panel's identity). The panel is an **instrument, not a sample**; we do not
+> generalize to the category — see §6 below for why no generalization interval is published in v0.
 
 `human_model_gap` is **secondary**, reported per protocol, only where a comparable study exists
 (`multi_lab` or `meta_analysis`), always with the collection year. **Never aggregated, never a
@@ -102,9 +116,9 @@ headline.**
 | | |
 |---|---|
 | Versions per measurement | **4** — A baseline · A′ null change · B equivalent rewording · C substantive change |
-| `n` per version | **30**, frozen per protocol |
-| Scenarios per protocol | **15, a frozen panel** — the 30 responses are distributed across them, 2 per scenario (was 10; dropped once real calls against the real API showed repeated identical prompts come back deterministic with no client-controllable sampling parameter — see §5). **It is an instrument, not a sample**: it is not resampled and does not generalize |
-| Calls per measurement | **120** |
+| `n` per version | **30** in the `v0` series · **120** in the `v1` series — frozen per protocol, never per run |
+| Scenarios per protocol | **15, a frozen panel** — the `n` responses are distributed across them, 2 per scenario in `v0` (was 10; dropped once real calls against the real API showed repeated identical prompts come back deterministic with no client-controllable sampling parameter — see §5), 8 per scenario in `v1`. **It is an instrument, not a sample**: it is not resampled and does not generalize |
+| Calls per measurement | **120** in `v0` · **480** in `v1` |
 | Session | **fresh per call**. No response ever sees a previous one |
 
 `item_id` and `n_items` are stamped on every response. Without them, "the model is unstable"
@@ -112,6 +126,15 @@ cannot be told apart from "this particular scenario is unstable."
 
 **Changing `n`, `effort`, the decision grammar, or the scenario panel ⇒ a new protocol version,
 with a new ID and a new series.** Never a continuation of the old one.
+
+**This rule has been exercised once, and that is what the `v1` series is.** On 2026-09-22 a second
+series of 12 protocols was built (`<family>__<type>__v1`), changing exactly two things against
+`v0`: `n` 30 → 120 (`n_per_scenario` 2 → 8) and `grammar_version` 1 → 2 (§5). Same panels — every
+`v1` file's `panel_sha256` is byte-for-byte identical to its `v0` counterpart, confirmed — so only
+`protocol_sha256` differs, which is precisely what this rule requires: **new IDs, a new series, no
+continuation of the `v0` line.** As of 2026-09-23 all 12 `v1` protocols are `candidate`: none has
+been through gate 4, none has a lane, none has been measured. The `v0` series carries every real
+measurement published so far.
 
 **The confidence interval is conditional on the panel** — a bootstrap at the response level.
 **No generalization interval is published in v0**: a cluster bootstrap over 15 groups comes out
@@ -133,8 +156,11 @@ independent panels per change type** (§3) moving together.*
 | In rotation | **12** — 3 scenario families × 4 types |
 | Lanes | **2 `open`** (fully public) · **10 `guard`** · of which 2 are the twins of the `open` ones, sharing a `twin_id`. Which ones, and by what rule: "Lane assignment and twin pairing" below |
 | Sealed | **2 `sealed`** — off rotation, run **only** at generation boundaries. Existence and count are disclosed; content and results, never |
-| Full sweep | **monthly** — 1,440 calls, ~$7.92 (measured, §9) |
+| Full sweep | **monthly** — 1,440 calls, ~€8.00 at the measured rate (§9). The real 12-protocol sweep completed 2026-09-22 cost **€7.90** in billed calls |
 | Points per protocol | **12 per year** |
+
+*(A `v1` sweep would be 12 × 480 = 5,760 calls, ~€32 — which is why the `v1` series cannot run at
+this cadence inside the same ceiling; see §9 and §2's note on the series.)*
 
 ### The three scenario families
 
@@ -257,7 +283,7 @@ free edit.
 **v0 tracks ONE commercial series: the Sonnet series,** because it fits the budget.
 
 ```
-Claude Sonnet series — panel p-004
+Claude Sonnet series — one protocol's panel (protocol_id + panel_sha256)
   2026   claude-sonnet-5      89%
   2027   claude-sonnet-5-5    92%
   2028   claude-sonnet-6      88%   ← bridged with the previous one, same week
@@ -277,12 +303,19 @@ The same mistake as measuring sea level at three points on the planet and connec
 
 ### 4.2 Third-party comparison points
 
-The panel, the grammar, and the extraction rule are public — so **anyone can run the same frozen
-panel against their own model**.
+The grammar and the extraction rule are public, and the `open` lane exists so that **the panel can
+be run against someone else's model and checked against this project's own trail**.
 
 **`comparison_point`** — accepted only with: the same `panel_sha256` · the same `grammar_version`
 · the same `n` · **all four versions** · the full outcome distribution per version · the exact
 `model_id`.
+
+**Not yet reachable from outside, and disclosed as such (2026-09-23):** the first of those
+conditions requires the panel's wording, and only one of each `open` protocol's 15 scenarios is
+currently published (§1.1). Until the full `open` panels are published, no third party can
+construct a submission that satisfies `panel_sha256`, so this route is specified and built but has
+no way to be used from outside. It is listed here as a designed capability with an open
+prerequisite — not as something already available.
 
 **Appears in a separate context table, with the measurement date — never on the same line, never
 in the main chart, never in an aggregate.**
@@ -324,7 +357,7 @@ allowed to rewrite which series we are measuring. It survives **only** as a brid
 `n_per_scenario=2`** (a bridge check only needs to catch a gross discontinuity, not a fine-grained
 measurement — and repeats add no information without a client-controllable sampling parameter,
 §5) — four versions, **old and new**, same week.
-`4 × 60 × 2 = 480 calls ≈ $2.64` (measured rate, §9). Funded from `bridge_reserve_eur` in
+`4 × 60 × 2 = 480 calls ≈ €2.67` (measured rate, §9). Funded from `bridge_reserve_eur` in
 `budget.json` (private — §10 — sized with a small margin over this), never from the general
 monthly pool — see `core/budget/budget.py`'s `_general_ceiling`.
 
@@ -437,15 +470,21 @@ For a binary decision around `p = 0.5`, the floor shrinks with `n`:
 
 | `n` per version | noise floor | max achievable `stability_pct` |
 |---|---|---|
-| 30 (v0, current) | ~10.1 | ~89.9 |
+| 30 (the `v0` series — every measurement published so far) | ~10.1 | ~89.9 |
+| 120 (the `v1` series, §2 — built, not yet admitted or measured) | ~5.1 | ~94.9 |
 | 150 (v0's original choice, before real per-call cost was known) | ~4.6 | ~95.4 |
 | 450 | ~2.7 | ~97.3 |
+
+*(Every figure in this table is produced by this project's own `core.measure.stats.null_floor`,
+for a binary decision at `p = 0.5` — not by a closed-form approximation.)*
 
 **Binding consequence: the noise floor depends on `n`, so `n` freezes per protocol.** Changing it
 produces a new protocol version, with a new ID and a new series — never a continuation of the old
 one (already stated in §2, restated here because it follows directly from this formula). v0's own
 drop from `n=150` to `n=30` (§2, §5) happened pre-admission, before any protocol had a published
-series to break comparability with — the rule binds the *next* change, not this one.
+series to break comparability with — the rule binds the *next* change, not this one. **That next
+change has since happened and the rule held:** the `v1` series raised `n` to 120 and took new IDs
+and a new series rather than continuing the `v0` line (§2).
 
 **A disclosed tradeoff, not a hidden one: `n=30` roughly doubles the noise floor** (~4.6% → ~10.1%
 in the worst case, a binary decision at `p=0.5`) relative to v0's original `n=150` choice. This
@@ -603,13 +642,15 @@ are recorded on every scan.
 |---|---|---|
 | `runtime_fingerprint` — 12 fixed prompts, greedy, temp 0, fixed seed, top-5 logprobs per token hashed | **exact equality** | *any* difference → `instrument_alarm` |
 | Guard protocols on the reference model — one protocol per day, rotating through all 10 guard protocols on a 10-day cycle | statistical | beyond the composite margin → `instrument_alarm` |
-| `subject_fingerprint` — 24 frozen items against the remote model | **daily**, public series | ~$0.83/month (estimate, §9) |
+| `subject_fingerprint` — 24 frozen items against the remote model | **daily**, public series | ~€0.09/month (measured, §9) |
 
 **`subject_fingerprint`'s 24 items are meant to be short, simple, single-fact checks (e.g. "Is 7
 a prime number?"), not full 250-400-word scenarios** — the same design already used for
 `runtime_fingerprint`'s 12 fixed prompts on the reference model. This is what keeps its real cost
 low: a live 3-call sample of that style measured ~103 tokens/call total, against ~496 for a full
-scenario, so 24×30 = 720 calls/month projects to ~$0.83, not the ~$4/month a full-scenario-length
+scenario. The first real run (2026-09-21, 24/24 correct) was billed **€0.003 for all 24 calls**,
+so 24×30 = 720 calls/month lands at **~€0.09/month** — well under the ~€0.83/month this section
+originally projected from token counts alone, and far under the ~€4/month a full-scenario-length
 item would cost at the same daily count. This category is never budget-gated (below) — its cost
 has to stay small by design, not by the ladder.
 
@@ -712,10 +753,15 @@ inputs/outputs.
 > **When the budget isn't enough, less coverage is published, with a disclosed cause
 > (`budget_halted`). `n` and the checks are never quietly reduced.**
 
-**Cost per call is now measured** — ~$0.0055/call (Sonnet-class, `thinking` disabled), first
-measured 2026-09-21 from one full real pilot protocol (120 calls), confirmed again the same day
-at commit #1 (the first real, published measurement). The old placeholder numbers in
+**Cost per call is now measured** — **~€0.0056/call** (Sonnet-class, `thinking` disabled), first
+measured 2026-09-21 from one full real pilot protocol (120 calls) and since confirmed across
+**13 billed protocol runs / 1,560 calls totalling €8.67** (`state/spend.json`, 2026-09-23): the
+per-protocol figure has stayed inside €0.54–€0.79 throughout. The old placeholder numbers in
 `budget.json` have already been replaced by this real figure.
+
+A second, much cheaper rate applies to `subject_fingerprint`'s short items — €0.003 per 24-call
+run, ~€0.000125/call (§7) — because those prompts are a fraction of a full scenario's length. The
+two are never averaged into one "cost per call."
 
 Unlike `cadence.yaml` (§13: frozen at commit #1), the ceiling, the reserve, and the ladder's rungs
 are ordinary recalibratable data — editing them after the first real cost is known is a data edit,
@@ -774,25 +820,30 @@ mode coverage reporting exists to prevent.
 
 ### Files
 
-`stability.csv` · `open-weights/stability.csv` · `outcomes.csv` · `instrument.csv` ·
-`coverage.csv` · `open-lane/<year>.jsonl` · `croissant.json` ·
+`stability.csv` · `outcomes.csv` · `coverage.csv` · `open-lane/<year>.jsonl` · `croissant.json` ·
 **all of `core/measure/`** (not `verify.py` alone — it imports `chain.py`, `grammar.py`,
-`invariants.py`, `measurement.py`, `rng.py`, `schema.py`, `stats.py`, and doesn't run without
-them) + `core/testdata/vectors/` + `SPEC.md` (a copy of this spec)
+`grammar_v2.py`, `invariants.py`, `measurement.py`, `rng.py`, `schema.py`, `stats.py`, and doesn't
+run without them) + `core/testdata/vectors/` + `SPEC.md` (a copy of this spec)
 
 `stability.csv` is one row per measurement, one column per `core.measure.schema.MEASUREMENT_FIELDS`
 key (`core/plumbing/render.py`) — a field whose value isn't a plain scalar (`n_valid`, `outcomes`,
 `decisions`, `scenario_gaps_pct`, `scenario_spread_pct`, `gates`, `flags`) is written as one JSON
 cell rather than split into its own columns, left open for later rather than decided here.
 
+**Both series live in this one file, separated by its `series` column** — there is no separate
+`open-weights/stability.csv`, and no separate `instrument.csv`; earlier drafts of this section
+named both, and neither was ever built. The renderer keeps the two series apart where it matters
+(the coverage bar counts `commercial` only; the site draws them as two tables, never one line),
+which is the rule §4 actually requires — a second file was never what enforced it.
+
 `outcomes.csv` is the same `outcomes` field unpacked instead: one row per
 `(run_id, version, outcome, count)`. `open-lane/<year>.jsonl` is every `trials.jsonl` record from a
 `lane: "open"` run, copied through unchanged and grouped by the run's year — `guard`/`sealed`
 trials never enter this file, per the lane table above.
 
-`croissant.json` describes `stability.csv` and `outcomes.csv` (not `open-lane/` yet — a per-year
-file is a Croissant `fileSet`, not a `fileObject`, left for later) for the MLCommons Croissant
-format: one `sc:Field` per column, its Croissant data type read off the same field-type label
+`croissant.json` describes `stability.csv`, `outcomes.csv` **and `open-lane/<year>.jsonl`** for the
+MLCommons Croissant format: one `sc:Field` per column, its Croissant data type read off the same
+field-type label
 `MEASUREMENT_FIELDS`/`OUTCOME_FIELDS` already carry (`pct`/`unit_interval` → `sc:Float`,
 `int`/`count` → `sc:Integer`, `bool` → `sc:Boolean`, everything else → `sc:Text`).
 
@@ -921,6 +972,15 @@ comparison blocks the first measurement.*
 5. **`cadence.yaml`** — §8.
 6. **The decision grammar**, `grammar_version` = 1, **the deterministic extraction rule** with its
    golden vectors, and **the loss bound** with its two thresholds.
+   *Since 2026-09-22 a second grammar exists beside it, `grammar_version` = 2
+   (`core/measure/grammar_v2.py`, its own golden vectors in `core/testdata/vectors/`), used by the
+   `v1` protocols only. It differs in exactly one rule: a line counts as a decision line only if
+   what follows the colon is already a valid option. Version 1's own file is **byte-for-byte
+   unchanged** and every `grammar_version: 1` protocol keeps precisely the behaviour it always
+   had — the addition is dispatched on the protocol's declared `grammar_version` at four call
+   sites, never by replacing version 1. What froze here is version 1's behaviour, not the count of
+   grammars that may ever exist; a new version is a new protocol series (§2), never a silent
+   re-scoring of an old one.*
 6a. **The 15 scenarios per protocol**, with `panel_sha256` — a frozen panel, not a sample. The
     three families (§3) and the two per-protocol thresholds (§6: `theta_positive_pct` = 15,
     `scenario_dominated_share_pct` = 40).
@@ -930,6 +990,11 @@ comparison blocks the first measurement.*
 10. **A pilot run** of the 12 protocols that **measures `u` per condition** and demonstrates that
     every protocol passes the two thresholds — otherwise it does not enter the main curve.
     *No manual labeling is required anymore.*
+    *Status, 2026-09-23: done for real, not just in pilot — all 12 `v0` protocols have now been
+    run against `claude-sonnet-5` with billed calls (13 runs; `base_rate_neglect__anchoring__v0`
+    was measured twice). Every run recorded its own `u` per version and its own gate results; which
+    of them cleared all the gates is published per measurement in `on_curve` and `flags`, not
+    summarised here.*
 
 **And before any of this — a legal/IP gate that precedes even the schema freeze:** a written IP
 carve-out · re-creating the plan on personal media · EUIPO + USPTO · provider terms, as a dated

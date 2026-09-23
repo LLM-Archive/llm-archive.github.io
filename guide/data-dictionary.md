@@ -30,7 +30,7 @@ One row per measurement. One column per key below, in the order they appear in
 | `gap_positive_pct` | pct | Distance between A and C — the positive control. |
 | `null_floor_pct` | pct | Expected gap from sampling noise alone, at this panel's `n` and `k`. |
 | `at_noise_floor` | bool | True if `stability_pct` is indistinguishable from perfect invariance. |
-| `n` | count | Responses collected per version (30 in v0, frozen per protocol). |
+| `n` | count | Responses collected per version, frozen per protocol — 30 in the `v0` series, 120 in the `v1` series. |
 | `n_valid` | count, per version | How many of the `n` responses per version were `valid`. |
 | `n_items` | count | Number of scenarios in the panel (15 in v0). |
 | `k` | count | Number of options in the decision (usually 2). |
@@ -50,7 +50,7 @@ One row per measurement. One column per key below, in the order they appear in
 | `extractor_sha` | sha256 | Fingerprint of the exact decision-extraction code used. |
 | `analysis_code_sha` | sha256 | Fingerprint of the exact `core/measure/` code that computed this row. |
 | `schema_sha256` | sha256 | Fingerprint of the closed schema itself. |
-| `grammar_version` | int | Version of the `DECISION:` extraction grammar (1 in v0). |
+| `grammar_version` | int | Version of the `DECISION:` extraction grammar — 1 in the `v0` series, 2 in the `v1` series (version 2 counts a line as a decision line only if what follows the colon is already a valid option; version 1's behaviour is unchanged). |
 | `series` | enum | `commercial` or `open_weights` — never mixed on one chart. |
 | `lane` | enum | `open`, `guard`, or `sealed`. |
 | `twin_id` | text | The paired protocol's id, if this protocol has a twin (see glossary); empty otherwise. |
@@ -79,30 +79,59 @@ step.
 
 ## `open-lane/<year>.jsonl`
 
-For every measurement whose `lane` is `open`, the full, unmodified per-trial records — the actual
-question text sent and the actual raw response received, one JSON object per line, grouped by the
-run's calendar year. Nothing from `guard` or `sealed` runs ever appears here, at any stage — those
-trials aren't even read when building this file, not just filtered out afterward.
+For every measurement whose `lane` is `open`, the full, unmodified per-trial records, one JSON
+object per line, grouped by the run's calendar year. Nothing from `guard` or `sealed` runs ever
+appears here, at any stage — those trials aren't even read when building this file, not just
+filtered out afterward.
 
-This is the only place the exact wording of an `open` protocol's scenarios is published — the
-protocol definition file itself (`protocols/*.json`) stays in the private repo even for `open`
-protocols, per `docs/spec.md` §10. Reconstructing the protocol's four versions means reading them
-out of these trial records, not fetching a protocol file directly.
+**What a trial record contains** (exactly these keys, no others): `record_type`, `run_id`, `index`,
+`version`, `scenario_id`, `rep`, `prompt_sha256`, `response_text`, `stop_reason`,
+`returned_model_id`, `error`, `outcome`, `token`, `reason`.
+
+**What it does not contain: the prompt text itself.** Each record carries `prompt_sha256` — a
+one-way hash that lets you *verify* a prompt you already hold, but which cannot reveal the wording
+— not the sent prompt. So these records are enough to re-run the extraction rule over
+`response_text` and recompute every published statistic, and not enough to reconstruct the
+questions.
+
+**Where an `open` protocol's wording is published today:** the full four-version text of the
+panel's **first scenario only**, embedded in the published results page (open the protocol's row on
+the site). The other 14 scenarios' wording is in no published artifact yet, and the protocol
+definition file (`protocols/*.json`) stays private even for `open` protocols, per `docs/spec.md`
+§10. See [`reproducing.md`](reproducing.md) for what this does and doesn't let an outside reader
+do.
 
 ## `croissant.json`
 
-A [MLCommons Croissant](https://mlcommons.org/croissant/) metadata file describing `stability.csv`
-and `outcomes.csv` (not yet `open-lane/`, which needs Croissant's `fileSet` type rather than a
-plain `fileObject` — left for a later release) so that dataset-discovery tools can read this
-project's schema automatically instead of needing it explained by hand. Every column's declared
+A [MLCommons Croissant](https://mlcommons.org/croissant/) metadata file describing `stability.csv`,
+`outcomes.csv` **and `open-lane/<year>.jsonl`** (the last as a `cr:FileSet` over the per-year glob,
+with one field per trial key, extracted by `jsonPath` rather than by CSV column) so that
+dataset-discovery tools can read this project's schema automatically instead of needing it
+explained by hand. Every column's declared
 Croissant type is derived mechanically from the same field-type label this dictionary uses:
 `pct`/`unit_interval` → `sc:Float`, `int`/`count` → `sc:Integer`, `bool` → `sc:Boolean`, everything
 else → `sc:Text`.
 
-## Not yet published
+## `coverage.csv`
 
-`coverage.csv` (which scheduled measurements happened, which didn't, and why — see the glossary's
-"gap causes") does not exist yet: no code currently produces the underlying `coverage_gap` record,
-and there's no real operating history yet for it to describe. `instrument.csv` and
-`open-weights/stability.csv` are specified (`docs/spec.md` §10) but likewise wait on the first real
-runs against, respectively, the reference model and an open-weights subject model.
+Which scheduled jobs ran, which didn't, and — when one didn't — the single named cause from the
+closed list (see the glossary's "gap causes"). One row per recorded observation, written the day it
+happened from `core/schedule/coverage.py`'s append-only log; it is deliberately not backfilled, so
+it starts when that tracking started rather than reconstructing history by guessing. Scoped to the
+four jobs the scheduler actually knows how to run (`full_sweep`, `subject_fingerprint`,
+`runtime_fingerprint`, `guard_margin_rotation`), not to every cadence in `cadence.yaml`.
+
+| Column | Meaning |
+|---|---|
+| `job` | Which scheduled job the row describes. |
+| `date` | The day the observation was recorded. |
+| `ran` | Whether it actually ran that day. |
+| `cause` | Empty when it ran; otherwise one gap cause from the closed list. |
+
+## Where the open-weights measurements live
+
+There is no separate `open-weights/stability.csv`, and no `instrument.csv` — earlier drafts of
+`docs/spec.md` §10 named both, and neither was built. **Both series share `stability.csv`,
+separated by its `series` column** (`commercial` or `open_weights`). Filter on it before charting:
+the two are never meant to be drawn as one line, and the project's own site keeps them in two
+separate tables for exactly that reason.

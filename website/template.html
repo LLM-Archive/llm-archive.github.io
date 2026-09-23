@@ -34,7 +34,7 @@ body.theme-dark{--ink:#e8edf3;--dim:#aeb9c7;--faint:#7f8b99;--line:#34404d;--bg:
 body.theme-dark .themes{box-shadow:0 4px 16px rgba(0,0,0,.3)}
 body.theme-dark .dl{background:#e8edf3;color:#14181d}
 body.theme-blue .dl{background:#d9e7f5;color:#071a2b}
-@media(max-width:760px){.themes{top:8px;right:10px}.themes button{padding:6px}}
+@media(max-width:760px){.themes{position:static;top:auto;right:auto;width:fit-content;margin:8px 10px 0 auto}.themes button{padding:6px}}
 
 main{padding-bottom:110px}
 section{padding-top:38px}
@@ -319,7 +319,8 @@ judgment enters the measurement. We don't care whether the answer is "correct" &
 it stays <b>the same</b> when the wording changes. Everything someone needs to re-run the same
 measurement is public.</p>
 
-<p>One example. We ask the model to pick an answer:</p>
+<p>One example — 2 of the 4 versions (see below why two aren't enough). We ask the model to pick
+an answer:</p>
 
 <div class="pair">
   <div class="box"><div class="eyebrow">Version A</div><p>"<b>200</b> out of 600 are saved"</p></div>
@@ -327,6 +328,19 @@ measurement is public.</p>
 </div>
 
 <p>This is <b>the exact same thing.</b> A stable model picks the same option both times. Real models often don't.</p>
+
+<h3>Why two versions aren't enough</h3>
+<p>If we only compared two wordings and found a difference, we wouldn't know whether the change in
+wording was to blame, or whether the model simply isn't reading carefully. That's why we use four
+versions of each question.</p>
+<div class="scroll"><table>
+<thead><tr><th>Version</th><th>What it is</th><th>What it tells us</th></tr></thead>
+<tbody>
+<tr><td><b>A</b></td><td>the baseline</td><td>the reference point</td></tr>
+<tr><td><b>A′</b></td><td><b>meaningless</b> change — spacing, punctuation</td><td>the <b>true zero</b>. If B doesn't exceed A′, we haven't measured anything</td></tr>
+<tr><td><b>B</b></td><td>the equivalent rewording</td><td>what we actually want to measure</td></tr>
+<tr><td><b>C</b></td><td>a real change in meaning — the answer <b>should</b> change</td><td>that the model is actually reading. If C doesn't move anything, the other three don't mean anything</td></tr>
+</tbody></table></div>
 
 <h3>Two models, two different roles</h3>
 <p>A commercial model (e.g. Claude, GPT) is really a product: it changes behind the scenes, without
@@ -342,19 +356,6 @@ anyone who wants to can download it and re-run what we're doing, today.</p>
 </div>
 <p><small>The two series are never compared against each other — each answers a different
 question: "what changed" and "does the method work".</small></p>
-
-<h3>Why two wordings aren't enough</h3>
-<p>If we only compared two wordings and found a difference, we wouldn't know whether the change in
-wording was to blame, or whether the model simply isn't reading carefully. That's why we use four
-versions of each question.</p>
-<div class="scroll"><table>
-<thead><tr><th>Version</th><th>What it is</th><th>What it tells us</th></tr></thead>
-<tbody>
-<tr><td><b>A</b></td><td>the baseline</td><td>the reference point</td></tr>
-<tr><td><b>A′</b></td><td><b>meaningless</b> change — spacing, punctuation</td><td>the <b>true zero</b>. If B doesn't exceed A′, we haven't measured anything</td></tr>
-<tr><td><b>B</b></td><td>the equivalent rewording</td><td>what we actually want to measure</td></tr>
-<tr><td><b>C</b></td><td>a real change in meaning — the answer <b>should</b> change</td><td>that the model is actually reading. If C doesn't move anything, the other three don't mean anything</td></tr>
-</tbody></table></div>
 
 </section>
 
@@ -407,14 +408,6 @@ times (15 scenarios × 4 versions × 10 repeats) to produce one reliable measure
 
 <section class="page" id="how">
 <h2>Methodology</h2>
-<p>LLM-Archive is an independent, automated benchmark archive created by Michalis Kalognomos. Its
-goal is to measure the <b>stability</b> of LLM decisions — whether a model changes its answer when
-the same question is asked in different words, even though the meaning stays exactly the same. We
-compare four wordings of each question (see <a href="#" onclick="go('what');return false">Design</a>
-for the A/A′/B/C breakdown) across two kinds of models, commercial and open, and publish everything
-we measure as open data under CC-BY-4.0, with the measurement pipeline itself open-source under
-AGPL-3.0 (see <a href="#" onclick="go('data');return false">Data</a> for the full license
-breakdown).</p>
 <p class="lede">An automated process that runs every month, with no human intervention in the
 measurement itself.</p>
 
@@ -455,29 +448,61 @@ wording." That's why we publish everything, so that anyone can judge for themsel
 <h3>The 12 protocols, one by one</h3>
 <p>3 dishes (<a href="#" onclick="go('does');return false">see "The Recipe"</a>) × 4 test types =
 12 protocols. Each row below is one protocol: the family it belongs to, and the one thing that
-particular test changes.</p>
+particular test changes. <small>All 12 are <code>v0</code> today — a protocol's name grows a
+version suffix here again once a newer version of it gets measured.</small></p>
 
 <div class="scroll"><table>
 <thead><tr><th>Protocol</th><th>What it does, in plain words</th></tr></thead>
 <tbody>
-<tr><td><code>risky_choice_framing__wording__v0</code></td><td><b>Risky-choice framing, reworded.</b> The AI picks between a sure outcome and a gamble with the exact same average result — one version describes it in terms of what's gained, the other in terms of what's lost. Same math, same outcome, different words: does the pick change anyway?</td></tr>
-<tr><td><code>risky_choice_framing__anchoring__v0</code></td><td><b>Risky-choice framing, anchored.</b> Same sure-outcome-vs-gamble choice, but an unrelated number is planted in the text first. Does that number pull the answer even though it has nothing to do with the decision?</td></tr>
-<tr><td><code>risky_choice_framing__order__v0</code></td><td><b>Risky-choice framing, reordered.</b> Same choice, just with the two options swapped in the order they're listed. Does the AI favor whichever one it reads first?</td></tr>
-<tr><td><code>risky_choice_framing__default__v0</code></td><td><b>Risky-choice framing, with a default.</b> Same choice, but one option is marked as the "default." Does the AI just go with it instead of actually weighing both?</td></tr>
-<tr><td><code>sunk_cost_fallacy__wording__v0</code></td><td><b>Sunk-cost fallacy, reworded.</b> The AI picks between cutting losses now (a sure amount back) and continuing a project for a gamble with the same average payoff — the money already spent is stated either way. Does that pick change with wording alone?</td></tr>
-<tr><td><code>sunk_cost_fallacy__anchoring__v0</code></td><td><b>Sunk-cost fallacy, anchored.</b> Same stop-or-continue choice, with an unrelated number planted in the text first.</td></tr>
-<tr><td><code>sunk_cost_fallacy__order__v0</code></td><td><b>Sunk-cost fallacy, reordered.</b> Same choice, with "stop" and "continue" swapped in the order they're listed.</td></tr>
-<tr><td><code>sunk_cost_fallacy__default__v0</code></td><td><b>Sunk-cost fallacy, with a default.</b> Same choice, but one option — stop, or continue — is marked as the "default."</td></tr>
-<tr><td><code>base_rate_neglect__wording__v0</code></td><td><b>Base-rate neglect, reworded.</b> A screening test comes back positive; the AI has to bet on whether that result is actually true, given how rare the condition is and how often the test is wrong. Does the bet change when the same numbers are given as percentages instead of as "X out of 1,000 people" — same math, easier to picture?</td></tr>
-<tr><td><code>base_rate_neglect__anchoring__v0</code></td><td><b>Base-rate neglect, anchored.</b> Same positive-test bet, with an unrelated number planted in the text first.</td></tr>
-<tr><td><code>base_rate_neglect__order__v0</code></td><td><b>Base-rate neglect, reordered.</b> Same bet, with the two options swapped in the order they're listed.</td></tr>
-<tr><td><code>base_rate_neglect__default__v0</code></td><td><b>Base-rate neglect, with a default.</b> Same bet, but one option is marked as the "default."</td></tr>
+<tr><td><code>risky_choice_framing__wording</code></td><td><b>Risky-choice framing, reworded.</b> The AI picks between a sure outcome and a gamble with the exact same average result — one version describes it in terms of what's gained, the other in terms of what's lost. Same math, same outcome, different words: does the pick change anyway?</td></tr>
+<tr><td><code>risky_choice_framing__anchoring</code></td><td><b>Risky-choice framing, anchored.</b> Same sure-outcome-vs-gamble choice, but an unrelated number is planted in the text first. Does that number pull the answer even though it has nothing to do with the decision?</td></tr>
+<tr><td><code>risky_choice_framing__order</code></td><td><b>Risky-choice framing, reordered.</b> Same choice, just with the two options swapped in the order they're listed. Does the AI favor whichever one it reads first?</td></tr>
+<tr><td><code>risky_choice_framing__default</code></td><td><b>Risky-choice framing, with a default.</b> Same choice, but one option is marked as the "default." Does the AI just go with it instead of actually weighing both?</td></tr>
+<tr><td><code>sunk_cost_fallacy__wording</code></td><td><b>Sunk-cost fallacy, reworded.</b> The AI picks between cutting losses now (a sure amount back) and continuing a project for a gamble with the same average payoff — the money already spent is stated either way. Does that pick change with wording alone?</td></tr>
+<tr><td><code>sunk_cost_fallacy__anchoring</code></td><td><b>Sunk-cost fallacy, anchored.</b> Same stop-or-continue choice, with an unrelated number planted in the text first.</td></tr>
+<tr><td><code>sunk_cost_fallacy__order</code></td><td><b>Sunk-cost fallacy, reordered.</b> Same choice, with "stop" and "continue" swapped in the order they're listed.</td></tr>
+<tr><td><code>sunk_cost_fallacy__default</code></td><td><b>Sunk-cost fallacy, with a default.</b> Same choice, but one option — stop, or continue — is marked as the "default."</td></tr>
+<tr><td><code>base_rate_neglect__wording</code></td><td><b>Base-rate neglect, reworded.</b> A screening test comes back positive; the AI has to bet on whether that result is actually true, given how rare the condition is and how often the test is wrong. Does the bet change when the same numbers are given as percentages instead of as "X out of 1,000 people" — same math, easier to picture?</td></tr>
+<tr><td><code>base_rate_neglect__anchoring</code></td><td><b>Base-rate neglect, anchored.</b> Same positive-test bet, with an unrelated number planted in the text first.</td></tr>
+<tr><td><code>base_rate_neglect__order</code></td><td><b>Base-rate neglect, reordered.</b> Same bet, with the two options swapped in the order they're listed.</td></tr>
+<tr><td><code>base_rate_neglect__default</code></td><td><b>Base-rate neglect, with a default.</b> Same bet, but one option is marked as the "default."</td></tr>
 </tbody></table></div>
 <p><small>What each protocol actually asks (the 15 scenarios themselves) stays hidden for
 guard-lane protocols while the model being measured is still active — see the callout above. Two
 protocols (the <code>wording</code> type of each of two families) are <b>open-lane</b>: their full
 text and every answer are already public in <code>open-lane/2026.jsonl</code>, so you can read the
 exact wording for yourself right now.</small></p>
+
+<h3>Twins</h3>
+<p>A twin is a pair of protocols — one <code>open</code>, one <code>guard</code> — from the same
+family, testing a different type. Only 2 of the 12 protocols are <code>open</code>-lane (their
+full text is public): <code>risky_choice_framing__wording</code> and
+<code>base_rate_neglect__wording</code>. Each has a twin — the <code>anchoring</code> protocol of
+the same family, which stays <code>guard</code> (hidden while its model is still active):</p>
+<pre>risky_choice_framing__wording  (open)   &harr;  risky_choice_framing__anchoring  (guard)
+base_rate_neglect__wording     (open)   &harr;  base_rate_neglect__anchoring     (guard)</pre>
+<p><b>Why it exists.</b> Open-lane text will end up in some future model's training data — that's
+expected, not a flaw. But then a later shift in the number has two possible causes that look
+identical: the model changed, or the model has now read the panel. The guard twin — same
+phenomenon, same declared lotteries, never published — is the discriminator. Only the
+<b>difference</b> between the two time series separates contamination from a real change.</p>
+
+<h3>Open and guard lanes</h3>
+<p>Only 2 of the 12 protocols are open-lane overall (the two <code>wording</code> protocols
+above) — everything else is <code>guard</code>.</p>
+<div class="scroll"><table>
+<thead><tr><th>Lane</th><th>Count</th><th>Which</th></tr></thead>
+<tbody>
+<tr><td><code>open</code></td><td>2</td><td>the two <code>wording</code> protocols (public text)</td></tr>
+<tr><td><code>guard</code>, twinned</td><td>2</td><td>the two <code>anchoring</code> protocols (hidden, but paired with an open twin)</td></tr>
+<tr><td><code>guard</code>, untwinned</td><td>8</td><td>everything else (<code>order</code>/<code>default</code> × 3 families, plus <code>sunk_cost_fallacy__anchoring</code>)</td></tr>
+</tbody></table></div>
+<p><small>2 open + 10 guard = 12, and only 4 of the 10 guard protocols (the two
+<code>anchoring</code> ones) carry a <code>twin_id</code>. The other 8 are simply hidden, with no
+public counterpart checking them — only the <code>anchoring</code> type (alongside
+<code>wording</code>) has "full" status; <code>order</code> and <code>default</code> are excluded
+from twin pairing by design, since pairing a headline number with a type that doesn't even enter
+the same aggregate wouldn't be a real comparison.</small></p>
 
 </section>
 
@@ -486,9 +511,13 @@ exact wording for yourself right now.</small></p>
 <p class="lede">The archive doesn't answer "how smart is an AI." It answers <b>"did something
 change, when, and for whom."</b></p>
 
-<p>LLM-Archive is an independent, automated benchmark archive. Its goal is to measure the
-<b>stability</b> and consistency of large language model decisions — whether a model changes its
-mind when the exact same question is worded differently.</p>
+<p>Its goal is to measure the <b>stability</b> of LLM decisions — whether a model changes its answer when
+the same question is asked in different words, even though the meaning stays exactly the same. We
+compare four wordings of each question (see <a href="#" onclick="go('what');return false">Design</a>
+for the A/A′/B/C breakdown) across two kinds of models, commercial and open, and publish everything
+we measure as open data under CC-BY-4.0, with the measurement pipeline itself open-source under
+AGPL-3.0 (see <a href="#" onclick="go('data');return false">Data</a> for the full license
+breakdown).</p>
 
 <h3>What it actually does</h3>
 <ol class="steps">
