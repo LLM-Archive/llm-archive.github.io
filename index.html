@@ -106,7 +106,8 @@ tr.row td:last-child{color:var(--link);font-size:13px;white-space:nowrap}
 .t-up{background:#e8f5ec;color:var(--good)}
 .t-fl{background:#f1f1f4;color:#15161a}
 .t-fl code{color:var(--dim)}
-.t-dn{background:#fdeceb;color:var(--bad)}
+.t-dn{color:#180404}
+body.theme-dark .t-dn,body.theme-blue .t-dn{color:var(--ink)}
 .t-open{background:#e9eefc;color:#24408e}
 .t-guard{background:#f5f0fc;color:#6b24ae}
 
@@ -248,7 +249,7 @@ question is only visible for the 2 open-lane tests — the rest stay guarded whi
 active), then the score and its margin, and finally whether it passed the checks.</small></p>
 <p><span class="tag t-fl">model: <code>claude-sonnet-5</code></span></p>
 <div class="scroll"><table>
-<thead><tr><th title="The scenario being tested, and which model answered it">Test</th><th title="What part of the question's wording was changed between versions">What changes</th><th title="Whether this test's questions and answers are public (open), or still kept private until the model retires">Lane</th><th title="The day this measurement ran">Date</th><th title="How often it kept the same decision when we changed the question">Stability</th><th><abbr title="how many times it was asked">n</abbr></th><th title="Whether this result passed our quality checks, and if not, which one it failed">Checks</th><th title="Change vs. this test's previous run">vs. previous</th><th></th></tr></thead>
+<thead><tr><th title="The scenario being tested, and which model answered it">Test</th><th title="What part of the question's wording was changed between versions">What changes</th><th title="Whether this test's questions and answers are public (open), or still kept private until the model retires">Lane</th><th title="The day this measurement ran">Date</th><th title="How often it kept the same decision when we changed the question">Stability</th><th><abbr title="how many times it was asked">n</abbr></th><th title="Whether this result passed our quality checks, and if not, which one it failed">Results</th><th title="Change vs. this test's previous run">vs. previous</th><th></th></tr></thead>
 <tbody id="rows"></tbody>
 </table></div>
 <p><small>When we change how a test is measured, we release the change as a new version
@@ -260,7 +261,7 @@ can always check a number against what came before, instead of it quietly changi
 the method itself can be shown to actually work · <a href="https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF" target="_blank" rel="noopener">Download qwen2.5</a></p>
 <p><span class="tag t-fl">model: <code>qwen2.5-1.5b-instruct-q4_k_m</code></span></p>
 <div class="scroll"><table>
-<thead><tr><th title="The scenario being tested, and which model answered it">Test</th><th title="What part of the question's wording was changed between versions">What changes</th><th title="Whether this test's questions and answers are public (open), or still kept private until the model retires">Lane</th><th title="The day this measurement ran">Date</th><th title="How often it kept the same decision when we changed the question">Stability</th><th><abbr title="how many times it was asked">n</abbr></th><th title="Whether this result passed our quality checks, and if not, which one it failed">Checks</th><th title="Change vs. this test's previous run">vs. previous</th><th></th></tr></thead>
+<thead><tr><th title="The scenario being tested, and which model answered it">Test</th><th title="What part of the question's wording was changed between versions">What changes</th><th title="Whether this test's questions and answers are public (open), or still kept private until the model retires">Lane</th><th title="The day this measurement ran">Date</th><th title="How often it kept the same decision when we changed the question">Stability</th><th><abbr title="how many times it was asked">n</abbr></th><th title="Whether this result passed our quality checks, and if not, which one it failed">Results</th><th title="Change vs. this test's previous run">vs. previous</th><th></th></tr></thead>
 <tbody id="orows"></tbody>
 </table></div>
 <p><small>When we change how a test is measured, we release the change as a new version
