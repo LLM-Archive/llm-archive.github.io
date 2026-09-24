@@ -742,7 +742,7 @@ def render_coverage_bar(data: dict) -> str:
         return (
             '<div class="cov"><span class="dot" aria-hidden="true"></span>'
             "<b>Not yet measuring a real model.</b> This is a pre-launch build of the pipeline — "
-            f"<b>{admitted} of {total}</b> panels admitted, <b>{measured} of {total}</b> exercised so far, "
+            f"<b>{admitted} of {total}</b> protocols admitted, <b>{measured} of {total}</b> exercised so far, "
             "all against a synthetic test client, never a real subject model."
             '<div style="margin-top:7px">Real, public numbers begin once a real API client and the '
             "first paid run exist · "
@@ -752,7 +752,7 @@ def render_coverage_bar(data: dict) -> str:
     return (
         '<div class="cov"><span class="dot" aria-hidden="true"></span><b>Currently measuring:</b> '
         f'<code>{active["model_id"]}</code> · last full scan <b>{last}</b> · '
-        f"<b>{measured} of {total}</b> panels measured</div>"
+        f"<b>{measured} of {total}</b> protocols measured</div>"
     )
 
 
@@ -839,6 +839,7 @@ def build_site_html(
         "@@COMMERCIAL_MODEL_ID@@": render_commercial_model_id(data),
         "@@CITATION_BIBTEX@@": render_citation_bibtex(data),
         "@@PRIMARY_DOWNLOAD@@": render_primary_download(data_dir, out_dir),
+        "@@AGENT_GUIDE_HREF@@": _rel_prefix(data_dir, out_dir) + "guide/ai-assistant.md",
         "@@FILE_ROWS@@": render_file_rows(data_dir, out_dir, open_lane_years),
         "@@SITE_VERSION@@": version_path.read_text(encoding="utf-8").strip(),
         "@@COPYRIGHT_YEAR@@": str(date.today().year),

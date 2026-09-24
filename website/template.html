@@ -73,7 +73,7 @@ tbody tr:last-child td{border-bottom:0}
 .box p{font-size:15px;margin:0}
 
 .cov{border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:0 8px 8px 0;
-  padding:11px 15px;margin-bottom:14px;font-size:13.5px;color:var(--dim);background:var(--raise)}
+  padding:7px 12px;margin-bottom:12px;font-size:11.5px;color:var(--dim);background:var(--raise)}
 .up{color:var(--good);font-weight:600}
 .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#22a355;
   margin-right:6px;vertical-align:middle;animation:p 2.4s ease-in-out infinite}
@@ -155,6 +155,14 @@ tr.row td:last-child{color:var(--link);font-size:13px;white-space:nowrap}
   text-decoration:none;padding:13px 20px;border-radius:9px;font-weight:600;font-size:15px;margin-bottom:10px}
 .dl:hover{opacity:.87}
 .dl span{font-weight:400;opacity:.75;font-size:13.5px}
+.agentdl{display:flex;align-items:center;gap:14px;max-width:520px;background:var(--ink);color:#fff;
+  text-decoration:none;padding:14px 20px;border-radius:9px;margin:6px 0 10px;cursor:pointer}
+.agentdl:hover{opacity:.87}
+.agentdl svg{flex:none;width:22px;height:22px}
+.agentdl b{display:block;font-size:15px;font-weight:600;color:inherit}
+.agentdl small{display:block;font-size:13px;font-weight:400;opacity:.75;color:inherit;line-height:1.4}
+body.theme-dark .agentdl{background:#e8edf3;color:#14181d}
+body.theme-blue .agentdl{background:#d9e7f5;color:#071a2b}
 .filedl{color:var(--link);text-decoration:none}
 .filedl:hover{opacity:.7}
 .hash{font:11.5px ui-monospace,Menlo,monospace;color:var(--faint);white-space:nowrap}
@@ -202,9 +210,9 @@ footer{border-top:1px solid var(--line);margin-top:70px;padding-top:22px;font-si
 
 <section class="page active" id="out">
 
-<h1>We check whether an AI changes its mind when a question says the same thing in different words and we publish the results</h1>
-
 @@COVERAGE_BAR@@
+
+<h1>We check whether an AI changes its mind when a question says the same thing in different words and we publish the results</h1>
 
 <h3>What LLM-Archive is</h3>
 <p class="lede">An independent, automated "instrument" that checks whether an AI keeps the same
@@ -256,6 +264,13 @@ the method itself can be shown to actually work · <a href="https://huggingface.
 <p><small>When we change how a test is measured, we release the change as a new version
 (<code>v0</code>, <code>v1</code>, ...) and keep the old version's published numbers too — so you
 can always check a number against what came before, instead of it quietly changing meaning.</small></p>
+
+<h3>Compare your own model</h3>
+<a class="agentdl" href="@@AGENT_GUIDE_HREF@@" download="LLM-Archive-run-on-your-computer.md" id="agent-guide">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>
+  <span><b>AI Assistant</b><small>An .md guide with instructions you can give to your AI agent to compare your model.</small></span>
+</a>
+<p><small>Everything comes from the public GitHub repo. No account, no API key, no cost.</small></p>
 
 </section>
 
