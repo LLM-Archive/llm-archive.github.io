@@ -114,6 +114,11 @@ td{padding:11px 14px 11px 0;border-bottom:1px solid var(--line);vertical-align:t
 td:last-child,th:last-child{padding-right:0}
 tbody tr:last-child td{border-bottom:0}
 .num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.vtabs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.vtabs[hidden]{display:none}
+.vtabs button{font:inherit;font-size:13px;font-weight:600;padding:5px 14px;border:1px solid var(--line);
+  border-radius:20px;background:transparent;color:var(--dim);cursor:pointer}
+.vtabs button[aria-selected="true"]{background:var(--raise);color:var(--ink);border-color:var(--ink)}
 
 .callout{background:var(--raise);border:1px solid var(--line);border-left:3px solid var(--ink);
   border-radius:0 8px 8px 0;padding:16px 18px;margin:0 0 20px}
@@ -301,6 +306,7 @@ score or a guarantee that the model will behave the same way in your own product
 question is only visible for the 2 open-lane protocols — the rest stay guarded while their model is
 active), then the score and its margin, and finally whether it passed the checks.</small></p>
 <p><span class="tag t-fl">model: <code>@@COMMERCIAL_MODEL_ID@@</code></span></p>
+<div class="vtabs" id="rows-tabs" role="tablist" aria-label="Protocol version" hidden></div>
 <div class="scroll"><table>
 <thead><tr><th title="The protocol, and which model answered it">Protocol</th><th title="What part of the question's wording was changed between versions">What changes</th><th title="Whether this protocol's questions and answers are public (open), or still kept private until the model retires">Lane</th><th title="The day this measurement ran">Date</th><th title="How often it kept the same decision when we changed the question">Stability</th><th><abbr title="how many times it was asked">n</abbr></th><th title="Whether this result passed our quality checks, and if not, which one it failed">Results</th><th title="Change vs. this protocol's previous run">vs. previous</th><th></th></tr></thead>
 <tbody id="rows"></tbody>
@@ -313,6 +319,7 @@ can always check a number against what came before, instead of it quietly changi
 <p class="lede">We also run the same protocols on a model that anyone can download and re-run, so that
 the method itself can be shown to actually work · <a href="https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF" target="_blank" rel="noopener">Download qwen2.5</a></p>
 <p><span class="tag t-fl">model: <code>@@REFERENCE_MODEL_ID@@</code></span></p>
+<div class="vtabs" id="orows-tabs" role="tablist" aria-label="Protocol version" hidden></div>
 <div class="scroll"><table>
 <thead><tr><th title="The protocol, and which model answered it">Protocol</th><th title="What part of the question's wording was changed between versions">What changes</th><th title="Whether this protocol's questions and answers are public (open), or still kept private until the model retires">Lane</th><th title="The day this measurement ran">Date</th><th title="How often it kept the same decision when we changed the question">Stability</th><th><abbr title="how many times it was asked">n</abbr></th><th title="Whether this result passed our quality checks, and if not, which one it failed">Results</th><th title="Change vs. this protocol's previous run">vs. previous</th><th></th></tr></thead>
 <tbody id="orows"></tbody>
@@ -877,10 +884,28 @@ function rowHtml(d){const i=ALL.indexOf(d);
  `<td class="num">${trendCell(d)}</td>`+
  `<td>view →</td></tr>`;}
 
-function renderTable(id,rows){
- document.getElementById(id).innerHTML = rows.length
+function versionOf(d){const m=/__(v\d+)$/.exec(d.protocol_id);return m?m[1]:'v0';}
+function bodyHtml(rows){
+ return rows.length
    ? rows.map(rowHtml).join('')
    : '<tr><td colspan="9"><small>No measurements yet.</small></td></tr>';
+}
+// One tab per protocol version, so versions are not mixed in one list. Both tables show the same
+// set of versions (every version present in either table); a version with no measurements in a
+// table says so. Filtering only hides rows: each row keeps its index into ALL, so the detail
+// drawer is unaffected.
+const VERSIONS=[...new Set(ALL.map(versionOf))].sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1)));
+function renderTable(id,rows){
+ const body=document.getElementById(id), tabs=document.getElementById(id+'-tabs');
+ if(VERSIONS.length<2){tabs.hidden=true;body.innerHTML=bodyHtml(rows);return;}
+ const show=v=>{
+  body.innerHTML=bodyHtml(rows.filter(d=>versionOf(d)===v));
+  tabs.querySelectorAll('button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.v===v)));
+ };
+ tabs.innerHTML=VERSIONS.map(v=>'<button type="button" role="tab" data-v="'+v+'">'+v+'</button>').join('');
+ tabs.hidden=false;
+ tabs.onclick=e=>{const b=e.target.closest('button');if(b)show(b.dataset.v);};
+ show(VERSIONS[0]);
 }
 renderTable('rows',ROWS);
 renderTable('orows',OROWS);
