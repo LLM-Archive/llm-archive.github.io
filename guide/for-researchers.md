@@ -20,7 +20,7 @@ The formal statement is `../docs/spec.md` §1.2.
 
 `stability_pct` answers one question: *on this frozen 15-scenario panel, did this model's decision
 distribution shift when the same question was reworded in a way that shouldn't have changed the
-answer?* It is a distance between two independent response distributions (total variation
+answer?* It is a gap between two independent response distributions (total variation
 distance), not a per-question agreement rate — the two wordings of a question are never shown to
 the same conversation, so there is no way to say "in 9 out of 10 matched pairs it answered the
 same way," and no such claim is ever published.

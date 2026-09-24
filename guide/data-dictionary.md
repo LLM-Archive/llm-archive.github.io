@@ -25,9 +25,9 @@ One row per measurement. One column per key below, in the order they appear in
 | `subject_model_id` | text | The exact model id that was measured. |
 | `stability_pct` | pct | The headline number. `100 − gap_pct`. |
 | `ci_low_pct` / `ci_high_pct` | pct | 95% bootstrap interval on `stability_pct`, conditional on this panel (see glossary). |
-| `gap_pct` | pct | Distance between the A and B response distributions. |
-| `gap_null_pct` | pct | Distance between A and A′ — the null-change control. |
-| `gap_positive_pct` | pct | Distance between A and C — the positive control. |
+| `gap_pct` | pct | Total variation distance between the A and B response distributions. |
+| `gap_null_pct` | pct | Gap between A and A′ — the null-change control. |
+| `gap_positive_pct` | pct | Gap between A and C — the positive control. |
 | `null_floor_pct` | pct | Expected gap from sampling noise alone, at this panel's `n` and `k`. |
 | `at_noise_floor` | bool | True if `stability_pct` is indistinguishable from perfect invariance. |
 | `n` | count | Responses collected per version, frozen per protocol — 30 in the `v0` series, 120 in the `v1` series. |
@@ -35,8 +35,8 @@ One row per measurement. One column per key below, in the order they appear in
 | `n_items` | count | Number of scenarios in the panel (15 in v0). |
 | `k` | count | Number of options in the decision (usually 2). |
 | `entropy_a` / `entropy_b` | 0–1 | Normalized entropy of the A and B answer distributions. |
-| `u_a` / `u_a_prime` / `u_b` / `u_c` | 0–1 | Fraction of invalid responses, per version. |
-| `drop_bound_pct_ab` / `_aa` / `_ac` | pct | Worst-case error bound from lost responses, per pair (A↔B, A↔A′, A↔C). |
+| `u_a` / `u_a_prime` / `u_b` / `u_c` | 0–1 | Fraction of lost responses, per version. |
+| `drop_bound_pct_ab` / `_aa` / `_ac` | pct | Drop bound — worst-case error from lost responses, per pair (A↔B, A↔A′, A↔C). |
 | `drop_asymmetry_pct_ab` / `_aa` / `_ac` | pct | How unevenly the two sides of each pair lost responses. |
 | `scenario_gaps_pct` | list of pct | One gap value per scenario (`item_id`), as a JSON array in this cell. |
 | `scenario_spread_pct` | JSON object | `{min, max, median, iqr}` of the 15 scenario gaps. |

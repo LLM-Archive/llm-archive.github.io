@@ -134,10 +134,10 @@ onto giving the same answer regardless of the question" — a model that always 
 as a valid decision (refused, unparseable, truncated, etc.), from 0 to 1.
 
 **`drop_bound_pct`** (per pair: `_ab`, `_aa`, `_ac`) — the worst-case amount the published gap
-could be wrong by, purely because of the lost/invalid responses counted in `u`. This is not a
+could be wrong by, purely because of the lost responses counted in `u`. This is not a
 confidence interval and not a statistical estimate — it's a hard mathematical bound (total
 variation distance can move by at most `u_X + u_Y` when up to that fraction of responses on each
-side are unknown), computed with **no assumption at all** about what those missing responses would
+side are unknown), computed with **no assumption at all** about what those lost responses would
 have said.
 
 **`drop_asymmetry_pct`** (per pair) — how differently the two versions being compared lost
@@ -172,7 +172,7 @@ just excluded from the headline chart and visibly marked with the reason.
 | `degenerate_candidate` | Near-zero entropy with high stability — it always gives the same answer, which isn't the same thing as being stable. |
 | `drop_confounded` | Too many responses were lost in at least one of the three comparisons to trust the result. |
 | `asymmetric_missingness` | One version lost noticeably more responses than the other it's being compared against. |
-| `below_drop_bound` | The measured gap is smaller than the worst-case error from lost responses — it could be entirely an artifact of missing data. |
+| `below_drop_bound` | The measured gap is smaller than the worst-case error from lost responses — it could be entirely an artifact of lost responses. |
 | `scenario_dominated` | Two of the panel's 15 scenarios account for an unusually large share of the total gap. |
 | `instrument_suspect` | The daily reference-model self-check moved that day — the whole pipeline is suspect, not just this measurement. |
 | `exploratory` | Outside the one pre-declared comparison for this protocol. Informative, but never charted. |

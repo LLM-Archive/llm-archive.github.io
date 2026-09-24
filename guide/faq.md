@@ -6,7 +6,7 @@ or seems to conflict with it.
 
 **What does LLM-Archive actually measure?**
 Whether a commercial AI model's decision changes when the same question is reworded in a way that
-shouldn't change the answer — measured as a distance between two response distributions, not a
+shouldn't change the answer — measured as a gap between two response distributions, not a
 per-question "did it flip" count. See [`glossary.md`](glossary.md) for the exact terms and
 [`for-researchers.md`](for-researchers.md) for what the number does and doesn't prove.
 

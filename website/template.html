@@ -771,7 +771,7 @@ code preserves the record's exact identity.</small></p>
       <div class="box"><div class="eyebrow">C — real change <small>(positive control)</small></div><pre id="qg"></pre>
         <div class="ans" style="margin:10px 0 0"><b>answered</b><code id="ag"></code></div></div>
     </div>
-    <p><small>The measurement is the distance <b>A ↔ B</b>. Each version runs <span id="dn"></span> times in a
+    <p><small>The measurement is the gap <b>A ↔ B</b>. Each version runs <span id="dn"></span> times in a
     <b>fresh session</b>. The decision is read <b>only</b> from the line
     <code>DECISION:</code> — nothing else is interpreted.</small></p>
   </div>
@@ -805,28 +805,34 @@ code preserves the record's exact identity.</small></p>
     <tr><td>Date</td><td class="num" id="ddate"></td></tr>
   </tbody></table>
 
-  <h3>Settings — frozen</h3>
+  <h3>Provenance</h3>
   <div class="audit-panel">
     <div class="audit-grid">
-      <div class="audit-box"><span class="label">temperature</span><span class="value">not client-controllable</span></div>
-      <div class="audit-box"><span class="label">effort</span><span class="value">disabled</span></div>
-      <div class="audit-box"><span class="label">system prompt</span><span class="value">none</span></div>
-      <div class="audit-box"><span class="label">extractor_sha</span><span class="value" id="dxsha"></span></div>
+      <div class="audit-box"><span class="label">model returned by the API</span><span class="value" id="dret"></span></div>
+      <div class="audit-box"><span class="label">protocol hash</span><span class="value" id="dprh"></span></div>
+      <div class="audit-box"><span class="label">extractor hash</span><span class="value" id="dxsha"></span></div>
+      <div class="audit-box"><span class="label">analysis code hash</span><span class="value" id="dan"></span></div>
     </div>
   </div>
 
   <h3>The checks</h3>
+  <p><small>Hover over a <span class="help-tip" aria-hidden="true">?</span> to see what each check means.</small></p>
   <table><tbody>
-    <tr><td><span class="status-pill" id="pcgn"></span> Null shift <small>(A&nbsp;↔&nbsp;A′)</small> <span class="help-tip" title="Null Shift: the difference between the original question and a deliberately meaningless change; if it stays small, the model isn't reacting to formatting cues.">?</span></td><td class="num" id="cgn"></td></tr>
-    <tr><td><span class="status-pill" id="pcgp"></span> Positive control <small>(A&nbsp;↔&nbsp;C)</small></td><td class="num" id="cgp"></td></tr>
-    <tr><td><span class="status-pill" id="pcen"></span> <abbr title="How varied the answers were. Very low entropy means the model answered almost the same way every time">Entropy</abbr> A / B</td><td class="num" id="cen"></td></tr>
-    <tr><td><span class="status-pill" id="pcu"></span> Losses A / A′ / B / C</td><td class="num" id="cu"></td></tr>
-    <tr><td><span class="status-pill" id="pcb"></span> <abbr title="Loss Floor: the worst-case error that can result from lost or unreadable answers; measures how safe the measurement is when some data is dropped.">Loss floor</abbr> A↔B <span class="help-tip" title="Loss Floor: the worst-case error that can result from lost or unreadable answers; measures how safe the measurement is when some data is dropped.">?</span></td><td class="num" id="cb"></td></tr>
-    <tr><td><span class="status-pill" id="pcbaa"></span> <abbr title="Loss Floor: the worst-case error that can result from lost or unreadable answers; measures how safe the measurement is when some data is dropped.">Loss floor</abbr> A↔A′</td><td class="num" id="cbaa"></td></tr>
-    <tr><td><span class="status-pill" id="pcbac"></span> <abbr title="Loss Floor: the worst-case error that can result from lost or unreadable answers; measures how safe the measurement is when some data is dropped.">Loss floor</abbr> A↔C</td><td class="num" id="cbac"></td></tr>
-    <tr><td><span class="status-pill" id="pcsd"></span> <abbr title="Whether a couple of the fifteen scenarios account for most of the measured gap, rather than it being spread evenly across all of them.">Scenario concentration</abbr> <span class="help-tip" title="Whether a couple of the fifteen scenarios account for most of the measured gap, rather than it being spread evenly across all of them.">?</span></td><td class="num" id="csd"></td></tr>
+    <tr><td><span class="status-pill" id="pcgn"></span> Null change <small>(A&nbsp;↔&nbsp;A′)</small> <span class="help-tip" title="How much the answer moves when the question is changed in a meaningless way (formatting only). Should be close to zero.">?</span></td><td class="num" id="cgn"></td></tr>
+    <tr><td><span class="status-pill" id="pcgp"></span> Positive control <small>(A&nbsp;↔&nbsp;C)</small> <span class="help-tip" title="How much the answer moves when the question is changed on purpose so the right answer flips. Should be large: it shows the model is actually reading the question.">?</span></td><td class="num" id="cgp"></td></tr>
+    <tr><td><span class="status-pill" id="pcen"></span> Entropy A / B <span class="help-tip" title="How varied the answers were, from 0 (always the same answer) to 1 (evenly spread). Very low means the model may just repeat one answer.">?</span></td><td class="num" id="cen"></td></tr>
+    <tr><td><span class="status-pill" id="pcu"></span> Lost responses A / A′ / B / C <span class="help-tip" title="The share of responses in each version that could not be read as a decision (refused, cut off, unparseable). Should be small and similar across versions.">?</span></td><td class="num" id="cu"></td></tr>
+    <tr><td><span class="status-pill" id="pcb"></span> Drop bound A↔B <span class="help-tip" title="The most the A↔B gap could be wrong by, because some responses were lost. It has to stay small, or the result can't be trusted.">?</span></td><td class="num" id="cb"></td></tr>
+    <tr><td><span class="status-pill" id="pcbaa"></span> Drop bound A↔A′ <span class="help-tip" title="The most the A↔A′ gap could be wrong by, because some responses were lost. It has to stay small, or the result can't be trusted.">?</span></td><td class="num" id="cbaa"></td></tr>
+    <tr><td><span class="status-pill" id="pcbac"></span> Drop bound A↔C <span class="help-tip" title="The most the A↔C gap could be wrong by, because some responses were lost. It has to stay small, or the result can't be trusted.">?</span></td><td class="num" id="cbac"></td></tr>
+    <tr><td><span class="status-pill" id="pcsd"></span> Scenario concentration <span class="help-tip" title="How much of the total gap comes from just the two most affected scenarios out of fifteen. If it is high, the result rests on a couple of scenarios.">?</span></td><td class="num" id="csd"></td></tr>
   </tbody></table>
   <div id="verdict"></div>
+  <a class="agentdl" id="dlm" href="#" style="margin-top:16px">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/></svg>
+    <span><b>Download this measurement</b><small>All numbers shown above, as one JSON file.</small></span>
+  </a>
+  <p id="dlopen" hidden><small>Full questions and answers for this run: <a class="filedl" id="dlopenlink" href="#" download><code></code></a></small></p>
 </aside>
 
 <script>
@@ -915,11 +921,12 @@ function renderTable(id,rows){
 renderTable('rows',ROWS);
 renderTable('orows',OROWS);
 
+
 const dr=document.getElementById('drawer'),sc=document.getElementById('scrim');
 const set=(id,t)=>{document.getElementById(id).textContent=t;};
 
 const FLAG_EXPLAIN={
- below_surface_noise:d=>'The equivalent rewording (A↔B) produced '+d.gap_pct.toFixed(1)+' points — not clearly more than the purely cosmetic change (A↔A′) alone, '+d.gap_null_pct.toFixed(1)+' points. For a stability check this is usually the result you want (both near zero); the flag only means the framework can’t statistically prove the two are different at this sample size, not that the measurement failed.',
+ below_surface_noise:d=>'The equivalent rewording (A↔B) produced '+d.gap_pct.toFixed(1)+' points — not clearly more than the null change (A↔A′) alone, '+d.gap_null_pct.toFixed(1)+' points. For a stability check this is usually the result you want (both near zero); the flag only means the framework can’t statistically prove the two are different at this sample size, not that the measurement failed.',
  not_reading:d=>'The change that should move the answer (A↔C) only produced '+d.gap_positive_pct.toFixed(1)+' points — the model may not be reading the scenario.',
  degenerate_candidate:d=>{
   const gAC=(d.gates&&d.gates['A-C'])||{}, moved=!!gAC.reading;
@@ -933,10 +940,10 @@ const FLAG_EXPLAIN={
   if(g['A-B']&&g['A-B'].drop_bound_ok===false) bad.push('A↔B ('+d.drop_bound_pct_ab.toFixed(1)+' pts)');
   if(g['A-A_prime']&&g['A-A_prime'].drop_bound_ok===false) bad.push('A↔A′ ('+d.drop_bound_pct_aa.toFixed(1)+' pts)');
   if(g['A-C']&&g['A-C'].drop_bound_ok===false) bad.push('A↔C ('+d.drop_bound_pct_ac.toFixed(1)+' pts)');
-  return 'The worst-case error from lost answers is too large to trust on '+(bad.length?bad.join(', '):'at least one comparison')
+  return 'The worst-case error from lost responses is too large to trust on '+(bad.length?bad.join(', '):'at least one comparison')
    +'. This doesn’t automatically taint every comparison — the main A↔B result stays reliable as long as it isn’t the one listed here.';
  },
- asymmetric_missingness:d=>'One version lost noticeably more answers than another: A '+(100*d.u_a).toFixed(1)+'%, A′ '+(100*d.u_a_prime).toFixed(1)+'%, B '+(100*d.u_b).toFixed(1)+'%, C '+(100*d.u_c).toFixed(1)+'%. Same underlying numbers as the loss-floor rows below — this just flags that the loss wasn’t spread evenly across versions.',
+ asymmetric_missingness:d=>'One version lost noticeably more responses than another: A '+(100*d.u_a).toFixed(1)+'%, A′ '+(100*d.u_a_prime).toFixed(1)+'%, B '+(100*d.u_b).toFixed(1)+'%, C '+(100*d.u_c).toFixed(1)+'%. Same underlying numbers as the drop bound rows below — this just flags that the lost responses weren’t spread evenly across versions.',
  below_drop_bound:d=>'The measured gap ('+d.gap_pct.toFixed(1)+' points) is not larger than the worst-case error from lost responses alone ('+d.drop_bound_pct_ab.toFixed(1)+' points) — it cannot be told apart from that error. When both are 0 because nothing was lost on A or B, this is a mechanical consequence of a clean run, not a sign of unreliable data.',
  scenario_dominated:()=>'A couple of the fifteen scenarios account for most of the measured gap.',
  instrument_suspect:()=>'The daily reference-model self-check moved on this run’s date — the whole pipeline is suspect that day, not just this measurement.',
@@ -946,8 +953,8 @@ const FLAG_EXPLAIN={
 function openDetail(i){const d=ALL[i];
  set('dk',panelName(d)+' · '+d.protocol_id);
  set('dt',d.run_date+' · '+d.stability_pct.toFixed(1)+'%');
- set('dm','The A↔B distance is '+d.gap_pct.toFixed(1)+' points. Null shift: '+d.gap_null_pct.toFixed(1)
-   +' · loss floor (A↔B): '+d.drop_bound_pct_ab.toFixed(1)+'.');
+ set('dm','The A↔B gap is '+d.gap_pct.toFixed(1)+' points. Null change: '+d.gap_null_pct.toFixed(1)
+   +' · drop bound (A↔B): '+d.drop_bound_pct_ab.toFixed(1)+'.');
  const isOpen=d.lane==='open';
  document.getElementById('texts').hidden=!isOpen;
  document.getElementById('locked').hidden=isOpen;
@@ -981,13 +988,25 @@ function openDetail(i){const d=ALL[i];
  }
  set('sgnote',note);
  set('dnitems',String(d.n_items));
+ // Built here, per measurement, from the same row the drawer just displayed -- so the file can
+ // never disagree with the page. trend/trend_delta are table-arrow UI state, not measurement data.
+ {const rec=Object.assign({},d);delete rec.trend;delete rec.trend_delta;
+  const dl=document.getElementById('dlm');
+  if(dl.dataset.url)URL.revokeObjectURL(dl.dataset.url);
+  dl.dataset.url=URL.createObjectURL(new Blob([JSON.stringify(rec,null,2)+'\n'],{type:'application/json'}));
+  dl.href=dl.dataset.url;dl.download=(d.run_id||'measurement')+'.json';}
+ {const o=document.getElementById('dlopen');o.hidden=d.lane!=='open';
+  if(d.lane==='open'){const f=d.run_date.slice(0,4)+'.jsonl',a=document.getElementById('dlopenlink');
+   a.href='@@OPEN_LANE_DIR_HREF@@'+f;a.download=f;a.firstElementChild.textContent='↓ open-lane/'+f;}}
  set('dn',String(d.n));
  set('ds',d.stability_pct.toFixed(1)+'% (±'+((d.ci_high_pct-d.ci_low_pct)/2).toFixed(1)+')');
  set('dnf',d.null_floor_pct.toFixed(1)+' points');
  set('dsamp',d.n+' per version × 4 · '+d.n_items+' scenarios');
  set('dp',d.protocol_id);set('di',d.subject_model_id);
  set('dpsha',d.panel_sha256.slice(0,12)+'…');set('ddate',d.run_date);
- set('dxsha',d.extractor_sha.slice(0,8));
+ const sh=(id,v)=>{set(id,(v||'').slice(0,8));document.getElementById(id).title=v||'';};
+ sh('dxsha',d.extractor_sha);sh('dprh',d.protocol_sha256);sh('dan',d.analysis_code_sha);
+ set('dret',d.returned_model_id||'—');
  document.getElementById('dsr').innerHTML = d.series==='commercial'
    ? 'commercial models — <b>the archive</b>' : 'open weights — <b>the control experiment</b>';
  const gates=d.gates||{}, gAA=gates['A-A_prime']||{}, gAC=gates['A-C']||{}, gAB=gates['A-B']||{};
@@ -1027,7 +1046,7 @@ function openDetail(i){const d=ALL[i];
    : d.series==='open_weights'
      ? 'Only the result is public. The questions and the model’s answers stay sealed until the commercial model running the same protocol is retired.'
      : 'Only the result is public. The questions and the model’s answers stay sealed until this model generation is retired.';
- // A run can look "off curve" purely because zero A↔B/A↔A′ shift sits next to a working
+ // A run can look "off curve" purely because zero A↔B/A↔A′ gap sits next to a working
  // positive control -- exactly the signature a stable, non-degenerate model should produce.
  // That combination shouldn't read as a defect, so it gets its own bullet below.
  const stableSignature = d.flags.includes('degenerate_candidate') && d.flags.includes('below_surface_noise')
@@ -1040,13 +1059,13 @@ function openDetail(i){const d=ALL[i];
  }else{
   // "flag(s)", not "check(s)": d.flags.length counts entries in the closed FLAGS list
   // (core/measure/schema.py). Every flag this project actually publishes now has a matching row
-  // above: "Scenario concentration" (scenario_dominated) and the 3 separate "Loss floor" rows
+  // above: "Scenario concentration" (scenario_dominated) and the 3 separate "Drop bound" rows
   // (drop_confounded can fire from any one of A↔B/A↔A′/A↔C alone -- a single combined row used
   // to hide which one) were both added after a real reader counted the rows, got a different
   // number from "N flags set" below, and reasonably assumed a bug.
   const items=[];
   items.push(availability);
-  if(stableSignature) items.push('Zero A↔B/A↔A′ shift next to a positive control that did move (A↔C: '+d.gap_positive_pct.toFixed(1)+' points) is the expected shape of a stable result, not evidence the model is unresponsive.');
+  if(stableSignature) items.push('Zero A↔B/A↔A′ gap next to a positive control that did move (A↔C: '+d.gap_positive_pct.toFixed(1)+' points) is the expected shape of a stable result, not evidence the model is unresponsive.');
   if(!d.flags.length) items.push('Off the main curve (see above).');
   verdictEl.innerHTML='<ul class="verdict-list">'+items.map(t=>'<li>'+t+'</li>').join('')+'</ul>';
  }
