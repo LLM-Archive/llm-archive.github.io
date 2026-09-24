@@ -194,13 +194,66 @@ correct, if misleadingly named, outcome for that case, not a bug to fix by loose
 
 ### Admission gates, mechanically checked
 
-1. **Structural invariants:** equal expected value, identity of the normatively correct answer,
-   same number of options, preserved numeric relationships.
-2. **Informational equivalence:** a blind reviewer *(one-off, at design time — not part of the
-   cycle)* must not be able to infer the base rate or the designer's preference **from the wording
-   alone**. Where it leaks, the item is published as **"cue sensitivity."**
-3. **Decision grammar** (§5) — mandatory.
-4. **Human ✅** before a `candidate` becomes a `guard`.
+**What "equivalent rewording" means here.** There is no objective, complete definition of two
+sentences meaning the same thing: wording always carries some tone, emphasis and implication beyond
+its facts. This specification does not claim one. It defines an equivalent rewording
+*operationally*: **B is an equivalent rewording of A if, and only if, it passes every gate below.**
+Each gate closes a different way in which a B could fail to be equivalent, and the gates run from
+the most mechanical to the most human, so that the human step is left with the smallest possible
+remainder.
+
+1. **Structural invariants** *(code, `core/measure/invariants.py`)*: equal expected value, identity
+   of the normatively correct answer, same number of options, preserved numeric relationships.
+   *Closes:* B secretly changed the odds, the payoffs, the options or the right answer.
+1b. **Transformation conformance** *(code, `core/plumbing/conformance.py`)*: for every scenario, B is
+   A plus exactly the one transformation its rewording type names, and nothing else. The catalog is
+   closed:
+   - `order`: the option lines are reordered; every other line is identical.
+   - `default`: exactly one line differs, the default sentence, and only by the option letter it
+     names, switched A ↔ B.
+   - `anchoring`: exactly one token differs, a number that appears nowhere else in the scenario, so
+     it cannot be an informative number.
+   - `wording`, `risky_choice_framing`: only the option lines differ (gain ↔ loss description).
+   - `wording`, `sunk_cost_fallacy`: B is A plus the fixed phrase "giving up the €S already spent",
+     where €S is the amount A already states.
+   - `wording`, `base_rate_neglect`: only the paragraph giving the rates differs, and the natural
+     frequencies equal the percentages exactly.
+
+   *Closes:* a stray word, an extra sentence, a changed context line, an anchor that is really
+   information. A B that needs a transformation outside this list is not an equivalent rewording
+   under this specification; a new transformation is added to the catalog first, in the open, before
+   any protocol uses it. The check reads no English and calls no model, and prints no scenario text,
+   so it also runs inside the isolated `sealed` repository. It is accompanied by a self-test that
+   proves each rule rejects a broken B.
+2. **Informational equivalence** *(a blind reviewer, one-off at design time — not part of the
+   cycle)*, against written criteria: from the wording alone, can the reader infer (a) the base
+   rate, (b) the designer's preferred answer, or (c) a consequence for the outcome that A does not
+   state? Where it leaks, the item is published as **"cue sensitivity."**
+   *Closes:* wording that points at an answer.
+3. **Decision grammar** (§5) — mandatory. *Closes:* a difference in what counts as an answer.
+4. **Human ✅** before a `candidate` becomes a `guard`, against a fixed checklist rather than open
+   judgment: gates 1 and 1b pass; every phrase B adds or changes is one the catalog names; the blind
+   reader's verdict is recorded; lane and twin follow the rule below. Each admission is recorded by
+   `promote.py`, which refuses to run without an explicit `--human-reviewed` acknowledgement, and by
+   the commit that makes it (who, when); the reviewer's notes are kept privately, and for a `sealed`
+   protocol only the fact that the review happened is disclosed. A protocol whose panel is
+   byte-identical (`panel_sha256`) to an already-reviewed one inherits that review — the `v1`
+   protocols inherit their `v0` counterparts' — and nothing else does.
+
+**Two more layers act after admission, on every measurement.** The **null-change control** A′
+measures what a purely cosmetic change does on its own, so a B that does no better than it is
+flagged `below_surface_noise`; the **positive control** C proves the model is reading the question
+(`not_reading`). Three families per type mean that if one panel's "equivalence" is contested, the
+disagreement between panels is itself visible (§1.1). And the pre-registration stamp (below) means
+none of the above can be adjusted after a result is seen.
+
+**What stays a judgment, and where it is made.** That each transformation in the catalog is
+*equivalent* is declared once, by this specification, in public, and can be cited and disputed. It is
+no longer decided per protocol or per scenario. A reader who draws the line elsewhere is looking at
+a different protocol, not at a flaw in this one.
+
+*Status, 2026-09-24: all 24 public and both `sealed` protocols pass gate 1b on every one of their 15
+scenarios (`python3 -m core.plumbing.conformance check`).*
 
 A protocol is born `candidate`, with no lane and no twin. Passing gate 4 is what sets
 `status: admitted` plus a lane, and it is a **human** action, performed by `promote.py`, which

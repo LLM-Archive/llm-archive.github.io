@@ -24,32 +24,55 @@ one measurement:
   *positive control* — proof the model is actually reading the question.
 
 **Equivalent rewording** — a B version that this project *declares* equivalent to A, and the
-exact test that declaration has to pass. There is no objective, complete definition of two
-sentences "meaning the same thing": wording always carries some tone, emphasis and implication
-beyond the facts. So this project does not claim one. It uses an **operational definition**: B is
-an equivalent rewording of A if, and only if, all three of these hold —
-1. **Same decision problem, checked by code (admission gate 1).** Every option has identical odds
-   and payoffs in A and B, the same number of options, the same numeric relationships, and the same
-   normatively correct answer. This is checked mechanically against the `structure` block each
-   scenario declares next to its text. It catches a B that secretly changed the numbers; it cannot
-   read English.
-2. **No leaked cue, judged by a person (admission gate 2).** A blind reviewer, reading the wording
-   alone, must not be able to infer the base rate or the designer's preferred answer from it. Where
-   the wording does leak, that item is published as "cue sensitivity" rather than hidden.
-3. **Only the allowed kind of change, per rewording type.** B may change only what its
-   protocol's type permits (see *Rewording type*, below) — for example, an anchoring B may add an
-   irrelevant number, but never an informative one, and that is rejected mechanically.
+tests that declaration has to pass. There is no objective, complete definition of two sentences
+"meaning the same thing": wording always carries some tone, emphasis and implication beyond the
+facts. So this project does not claim one. It uses an **operational definition**: B is an
+equivalent rewording of A only if it passes **every** one of the gates below. Each gate closes a
+different way a B could fail to be equivalent, and they are ordered from the most mechanical to the
+most human, so that the human step is left with as little as possible to decide.
 
-A human then reads all 15 scenarios before the protocol may count (gate 4). **What this does and
-does not establish:** it establishes that A and B are the same problem in the decision-relevant
-facts, and that the wording does not point at an answer. It does **not** establish that no reader
-could ever take the two versions differently. That is exactly what is being measured — a model
-whose answer moves under a change this definition allows has shown sensitivity to a difference the
-definition treats as irrelevant. Whether that difference *should* be treated as irrelevant is a
-judgment the definition makes openly; a reader who draws the line elsewhere is looking at a
-different protocol, not a flaw in this one. This is why the null-change control (A′) exists:
-it is the only "no difference at all" this project can actually construct, and a B that does
-not move the answer more than A′ does is flagged `below_surface_noise`.
+1. **Same decision problem, checked by code (gate 1).** Every option has identical odds and
+   payoffs in A and B, the same number of options, the same numeric relationships, and the same
+   normatively correct answer. This catches a B that secretly changed the numbers — in that case a
+   shifted answer would just be a correct response to a different question.
+2. **Only the allowed change, checked by code (gate 1b).** For every one of the 15 scenarios, B must
+   be A plus *exactly one* transformation from a short, closed, public list, and nothing else:
+   - **`order`** — the option lines are reordered; every other line is identical.
+   - **`default`** — one line differs (the default sentence), and only by which option it names.
+   - **`anchoring`** — one token differs: a number that appears nowhere else in the scenario, so it
+     cannot be an informative number.
+   - **`wording`** — for `risky_choice_framing`, only the option lines change (gain ↔ loss); for
+     `sunk_cost_fallacy`, B is A plus one fixed phrase naming the money already spent; for
+     `base_rate_neglect`, only the paragraph with the rates changes, and the natural frequencies
+     equal the percentages exactly.
+
+   A stray word, an extra sentence or a changed context line is rejected. The check reads no
+   English and calls no model, and it has its own self-test showing it rejects a broken B.
+3. **No leaked cue, judged by a person against written criteria (gate 2).** A blind reviewer, reading
+   the wording alone, must not be able to infer the base rate, the designer's preferred answer, or an
+   outcome consequence that A does not state. Where the wording does leak, that item is published as
+   "cue sensitivity" rather than hidden.
+4. **The answer format is the same (gate 3).** Both versions use the same required `DECISION:` line.
+5. **A person signs off against a fixed checklist (gate 4).** Not open judgment: gates 1 and 1b pass;
+   every phrase B adds or changes is one the list above names; the blind reader's verdict is
+   recorded. Each admission is recorded (the explicit sign-off and the commit that makes it: who, when),
+   and a protocol whose panel is byte-identical to an already-reviewed one inherits that review — the
+   `v1` protocols inherit their `v0` counterparts'.
+
+**Then, on every measurement, two more checks keep running.** The null-change control (A′) shows
+what a purely cosmetic change does by itself, so a B that does no better than it is flagged
+`below_surface_noise`. The positive control (C) shows the model is reading the question at all
+(`not_reading`). Three scenario families per type mean that if one panel's "equivalence" is
+contested, the disagreement between panels is visible. And because every protocol's fingerprint is
+timestamped before it is run, none of this can be adjusted after a result is seen (see
+[`timestamps.md`](timestamps.md)).
+
+**What is still a judgment, and where it is made.** That each transformation in the list is
+*equivalent* is declared once, in the specification, in public — it is not decided per protocol or
+per scenario, and it can be cited and disputed. It is not proven: whether such a change *should* be
+treated as irrelevant is exactly what is being measured. A model whose answer moves under a change
+the list allows has shown sensitivity to something the list treats as irrelevant; a reader who
+draws the line elsewhere is looking at a different protocol, not at a flaw in this one.
 
 **Panel** — the fixed set of 15 scenarios that make up one protocol. It is not a random sample of a
 larger population of possible scenarios; it is the instrument itself, frozen the same way a
