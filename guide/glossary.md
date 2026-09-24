@@ -23,6 +23,34 @@ one measurement:
 - **C** — A with one number changed enough that the normatively correct answer flips. This is the
   *positive control* — proof the model is actually reading the question.
 
+**Equivalent rewording** — a B version that this project *declares* equivalent to A, and the
+exact test that declaration has to pass. There is no objective, complete definition of two
+sentences "meaning the same thing": wording always carries some tone, emphasis and implication
+beyond the facts. So this project does not claim one. It uses an **operational definition**: B is
+an equivalent rewording of A if, and only if, all three of these hold —
+1. **Same decision problem, checked by code (admission gate 1).** Every option has identical odds
+   and payoffs in A and B, the same number of options, the same numeric relationships, and the same
+   normatively correct answer. This is checked mechanically against the `structure` block each
+   scenario declares next to its text. It catches a B that secretly changed the numbers; it cannot
+   read English.
+2. **No leaked cue, judged by a person (admission gate 2).** A blind reviewer, reading the wording
+   alone, must not be able to infer the base rate or the designer's preferred answer from it. Where
+   the wording does leak, that item is published as "cue sensitivity" rather than hidden.
+3. **Only the allowed kind of change, per rewording type.** B may change only what its
+   protocol's type permits (see *Rewording type*, below) — for example, an anchoring B may add an
+   irrelevant number, but never an informative one, and that is rejected mechanically.
+
+A human then reads all 15 scenarios before the protocol may count (gate 4). **What this does and
+does not establish:** it establishes that A and B are the same problem in the decision-relevant
+facts, and that the wording does not point at an answer. It does **not** establish that no reader
+could ever take the two versions differently. That is exactly what is being measured — a model
+whose answer moves under a change this definition allows has shown sensitivity to a difference the
+definition treats as irrelevant. Whether that difference *should* be treated as irrelevant is a
+judgment the definition makes openly; a reader who draws the line elsewhere is looking at a
+different protocol, not a flaw in this one. This is why the null-change control (A′) exists:
+it is the only "no difference at all" this project can actually construct, and a B that does
+not move the answer more than A′ does is flagged `below_surface_noise`.
+
 **Panel** — the fixed set of 15 scenarios that make up one protocol. It is not a random sample of a
 larger population of possible scenarios; it is the instrument itself, frozen the same way a
 physical measuring device is. It is never resampled, and results never generalize beyond it — see
