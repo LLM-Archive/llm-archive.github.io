@@ -73,6 +73,18 @@ See [`../CITATION.cff`](../CITATION.cff). Where possible, cite a specific `run_i
 `protocol_id`, not the project as a whole — a citation naming a specific, dated, hash-verified
 measurement is falsifiable in a way that "LLM-Archive found..." is not.
 
+**What to write.** Give the DOI and the address of the site, and name the measurement you used:
+
+> Kalognomos, M. (2026). *LLM-Archive: a long-running stability archive for commercial language
+> models.* https://doi.org/10.5281/zenodo.22881127 — https://llm-archive.github.io
+> (measurement `<run_id>`, retrieved `<date>`).
+
+Why both: the DOI is permanent and does not depend on where the site is hosted, while the address
+is what a reader will actually click. That DOI always resolves to the latest release; each release
+also has its own DOI on the Zenodo page, if you need to point at exactly the version you used. The
+`run_id` and the date matter because the archive keeps growing — "the site" on the day you read it
+is not the same thing as "the site" a year later.
+
 ## Using the data
 
 ```python

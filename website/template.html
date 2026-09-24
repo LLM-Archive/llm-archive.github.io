@@ -696,10 +696,20 @@ code preserves the record's exact identity.</small></p>
 
   <div id="locked" hidden>
     <div class="callout"><div class="lock-badge" title="Contamination Shield Active">🔒 <span>Contamination Shield Active</span></div>
+    <div id="lock-commercial">
     <p><b>The text is closed.</b> If we published it now, the next
     model would learn it and the measurement would die — permanently, for every generation after it.</p>
     <p style="margin-bottom:0">It all opens up once the model is retired: all four versions,
-    every answer, code — <b>right next to the numbers you see now</b>. <span id="lockyr"></span>.</p></div>
+    every answer, code — <b>right next to the numbers you see now</b>. <span id="lockyr"></span>.</p>
+    </div>
+    <div id="lock-frozen" hidden>
+    <p><b>The text is closed — but not because of this model.</b> This one is frozen and can't learn
+    anything. The same protocol also runs on the commercial model, and publishing it now would let a
+    future version of that model learn it and end the measurement.</p>
+    <p style="margin-bottom:0">It opens when the commercial model is retired: all four versions, every
+    answer, code — <b>right next to the numbers you see now</b>. This frozen model is never retired,
+    so it has no date of its own.</p>
+    </div></div>
   </div>
 
   <h3>The measurement</h3>
@@ -848,7 +858,12 @@ function openDetail(i){const d=ALL[i];
     : '<p>No check failed, but this run isn’t eligible for the main curve (the protocol wasn’t admitted yet when it ran, or this is a sealed-lane run).</p>';
  }
  if(isOpen){['qa','qn','qb','qg','aa','an','ab','ag'].forEach(k=>set(k,d[k]||''));}
- else set('lockyr','disclosed once this model generation is retired');
+ else{
+  const frozen=d.series==='open_weights';
+  document.getElementById('lock-commercial').hidden=frozen;
+  document.getElementById('lock-frozen').hidden=!frozen;
+  if(!frozen)set('lockyr','disclosed once this model generation is retired');
+ }
  const sg=d.scenario_gaps_pct||[], mx=sg.length?Math.max.apply(null,sg):0;
  document.getElementById('sgw').innerHTML=sg.map((g,j)=>
    `<div class="sgb" title="scenario ${j+1}: ${g==null?'not computable — no valid responses to compare':g.toFixed(1)+' points'}"><i style="height:${g!=null&&mx>0?(100*g/mx).toFixed(0):0}%"></i><span>${j+1}</span></div>`).join('');
@@ -909,7 +924,9 @@ function openDetail(i){const d=ALL[i];
  // this model generation retires (see the "locked" panel above, isOpen just above). Lane-aware now.
  const availability=isOpen
    ? 'Full text and answers are published even though it’s off the main curve.'
-   : 'The aggregate result is public; the underlying text and answers stay sealed until this model generation retires.';
+   : d.series==='open_weights'
+     ? 'Only the result is public. The questions and the model’s answers stay sealed until the commercial model running the same protocol is retired.'
+     : 'Only the result is public. The questions and the model’s answers stay sealed until this model generation is retired.';
  // A run can look "off curve" purely because zero A↔B/A↔A′ shift sits next to a working
  // positive control -- exactly the signature a stable, non-degenerate model should produce.
  // That combination shouldn't read as a defect, so it gets its own bullet below.
