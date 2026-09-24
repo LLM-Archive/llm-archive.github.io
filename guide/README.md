@@ -12,11 +12,7 @@ docs site alongside the closed 8-page main site (spec.md §11), not inside it. T
 files aren't committed (see `.gitignore`); see `core/plumbing/render_guide.py`'s docstring for why
 that renderer is a hand-rolled markdown converter rather than a dependency.
 
-**Current status: the public site is live, with one real measurement on it.** The pipeline has run
-against the real commercial model once (`claude-sonnet-5`, 2026-09-21 — "commit #1" in the build
-log, which also froze `core/measure/` for good, spec.md §13); the other 11 v0 protocols haven't
-run against it yet, so the coverage bar on the homepage says so honestly rather than implying more
-coverage than exists. The public repository is `github.com/LLM-Archive/llm-archive.github.io`,
+The public site is live. The public repository is `github.com/LLM-Archive/llm-archive.github.io`,
 serving `llm-archive.github.io`; this guide ships as part of it. Everything below describes how
 the finished project is designed to work. Where something described here isn't built yet, it's
 marked as such — this project's own principle (`docs/spec.md` §9, §10) is to disclose gaps rather

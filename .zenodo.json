@@ -3,18 +3,36 @@
   "description": "A public, append-only measurement archive tracking whether a commercial language model's decisions change under equivalent rewordings of the same question, checked monthly against a frozen 15-scenario panel per protocol, with a daily self-check against an independent, frozen, open-weights reference model. Publishes the noise floor, entropy series, and a worst-case loss bound alongside every measurement. Published under three licenses by content type: code AGPL-3.0-only, data CC-BY-4.0, prose CC-BY-SA-4.0 -- this record's single license field below names the code license, since that is what the archived GitHub snapshot primarily is; see CITATION.cff and LICENSE.md in the archived files for the other two.",
   "creators": [
     {
-      "name": "Kalognomos, Michalis"
+      "name": "LLM-Archive"
     }
   ],
   "upload_type": "software",
   "access_right": "open",
   "license": "AGPL-3.0-only",
   "keywords": [
+    "LLM benchmark",
+    "LLM evaluation",
+    "AI model evaluation",
     "large language models",
-    "reproducibility",
+    "AI model comparison",
+    "LLM consistency",
+    "LLM stability",
+    "prompt sensitivity",
+    "prompt robustness",
+    "framing effect",
+    "cognitive bias in LLMs",
     "decision stability",
-    "framing effects",
-    "model evaluation",
-    "AI transparency"
+    "risky choice framing",
+    "sunk cost fallacy",
+    "base rate neglect",
+    "Asian disease problem",
+    "model drift",
+    "LLM drift",
+    "model update regression",
+    "reproducibility",
+    "open data",
+    "AI transparency",
+    "benchmark contamination",
+    "pre-registration"
   ]
 }

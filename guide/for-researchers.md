@@ -33,6 +33,32 @@ same way," and no such claim is ever published.
   human-model gap and a model's self-stability are not guaranteed to be measuring the same
   underlying thing, and this project does not claim they are.
 
+## How this differs from LMSYS Arena, HELM, MMLU, BIG-bench
+
+These are well-known ways of evaluating language models. LLM-Archive is not another entry in that
+list, and its numbers should not be read against theirs: it asks a different question, so it
+sits next to them, not in their ranking.
+
+| | What it measures | The question it answers |
+|---|---|---|
+| **MMLU**, **BIG-bench** | Accuracy on questions that have a correct answer, across many subjects and tasks | How capable is the model? |
+| **HELM** | Many metrics (accuracy, robustness, fairness, and others) over many scenarios, as a broad snapshot | How does the model do overall? |
+| **LMSYS Arena** | Which of two answers people prefer, collected from votes | Which model do people like more? |
+| **LLM-Archive** | Whether the same model keeps the same decision when a question is reworded without changing its meaning, repeated over time | Did something change, when, and for which model? |
+
+Three differences matter when you use the data:
+
+- **No correct answer is assumed.** Most of these protocols are framing and preference-style
+  decisions with no ground truth, so a score here is a measure of consistency, not of being right.
+- **Repeated over time, not one snapshot.** The point is to see whether a model's behavior moved
+  after its maker shipped an update, so every measurement is kept with its date and its model.
+- **One property, measured narrowly.** HELM does include a robustness metric among many others;
+  LLM-Archive measures only decision stability, on a small fixed set of protocols, with the
+  checks and noise floor published next to every number.
+
+A model can rank high on MMLU and be unstable here, or the reverse. That is why the two kinds of
+result are not combined into one score.
+
 ## The scope every published number carries
 
 Every measurement's claim is exactly: *"on this frozen panel, on this model, on that day."* Never
@@ -67,6 +93,12 @@ A model that answers randomly with a fixed probability, or that always gives the
 regardless of the question, would otherwise score very well on `stability_pct` alone — the entropy
 series and the positive control exist specifically to catch each of those two failure modes.
 
+## Independent research support
+
+A research team supports this project. It checks the methodology, reviews the protocols (the
+blind-reader admission gate, gate 2, in `../docs/spec.md`), repeats measurements to see whether
+they reproduce, and advises on design decisions.
+
 ## Citing this project
 
 See [`../CITATION.cff`](../CITATION.cff). Where possible, cite a specific `run_id` and
@@ -75,7 +107,7 @@ measurement is falsifiable in a way that "LLM-Archive found..." is not.
 
 **What to write.** Give the DOI and the address of the site, and name the measurement you used:
 
-> Kalognomos, M. (2026). *LLM-Archive: a long-running stability archive for commercial language
+> LLM-Archive (2026). *LLM-Archive: a long-running stability archive for commercial language
 > models.* https://doi.org/10.5281/zenodo.22881127 — https://llm-archive.github.io
 > (measurement `<run_id>`, retrieved `<date>`).
 

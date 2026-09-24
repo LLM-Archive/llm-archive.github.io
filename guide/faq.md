@@ -89,7 +89,6 @@ See [`../CONTRIBUTING.md`](../CONTRIBUTING.md) for the correction process, inclu
 response is verified before being treated as authoritative.
 
 **Is this live yet?**
-Yes, but with one measurement so far. The public site (`llm-archive.github.io`) and its repository
-(`github.com/LLM-Archive/llm-archive.github.io`) are both live; as of this writing, one real
-measurement exists on it (`claude-sonnet-5`, one of the 12 v0 protocols, 2026-09-21). See the root
+Yes. The public site (`llm-archive.github.io`) and its repository
+(`github.com/LLM-Archive/llm-archive.github.io`) are both live. See the root
 [`README.md`](../README.md) and [`CHANGELOG.md`](../CHANGELOG.md) for the current build state.

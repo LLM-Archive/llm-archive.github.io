@@ -1,6 +1,59 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LLM-Archive</title>
+<meta name="description" content="Independent archive tracking whether AI models keep the same decision when a question is reworded. Open data, monthly measurements, noise floor published.">
+<meta name="keywords" content="LLM benchmark, LLM evaluation, AI model evaluation, large language models, AI model comparison, LLM consistency, LLM stability, prompt sensitivity, prompt robustness, framing effect, cognitive bias in LLMs, decision stability, risky choice framing, sunk cost fallacy, base rate neglect, Asian disease problem, model drift, LLM drift, model update regression, reproducibility, open data, AI transparency, benchmark contamination, pre-registration">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="LLM-Archive">
+<meta property="og:title" content="LLM-Archive">
+<meta property="og:description" content="Independent archive tracking whether AI models keep the same decision when a question is reworded. Open data, monthly measurements, noise floor published.">
+<meta property="og:url" content="https://llm-archive.github.io/">
+<meta property="og:image" content="https://llm-archive.github.io/logo.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="LLM-Archive">
+<meta name="twitter:description" content="Independent archive tracking whether AI models keep the same decision when a question is reworded. Open data, monthly measurements, noise floor published.">
+<meta name="twitter:image" content="https://llm-archive.github.io/logo.png">
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "Dataset",
+ "name": "LLM-Archive",
+ "description": "Whether a commercial language model's decision changes under an equivalent rewording of the same question, measured on a fixed set of protocols and published on every run.",
+ "url": "https://llm-archive.github.io/",
+ "keywords": [
+  "LLM benchmark",
+  "LLM evaluation",
+  "AI model evaluation",
+  "large language models",
+  "AI model comparison",
+  "LLM consistency",
+  "LLM stability",
+  "prompt sensitivity",
+  "prompt robustness",
+  "framing effect",
+  "cognitive bias in LLMs",
+  "decision stability",
+  "risky choice framing",
+  "sunk cost fallacy",
+  "base rate neglect",
+  "Asian disease problem",
+  "model drift",
+  "LLM drift",
+  "model update regression",
+  "reproducibility",
+  "open data",
+  "AI transparency",
+  "benchmark contamination",
+  "pre-registration"
+ ],
+ "license": "https://creativecommons.org/licenses/by/4.0/",
+ "isAccessibleForFree": true,
+ "creator": {
+  "@type": "Organization",
+  "name": "LLM-Archive"
+ }
+}
+</script>
 <style>
 :root{
   --ink:#15161a; --dim:#5a5c66; --faint:#8c8f99; --line:#e4e4e8; --bg:#fff; --raise:#fafafb;
@@ -283,7 +336,7 @@ can always check a number against what came before, instead of it quietly changi
 <tbody>
 <tr><td><a class="filedl" href="stability.csv" download="stability.csv"><code>↓ stability.csv</code></a></td><td>The series — one row per measurement</td><td class="num">77.6 KB</td><td class="hash">c508267e61e91db5…</td></tr>
 <tr><td><a class="filedl" href="outcomes.csv" download="outcomes.csv"><code>↓ outcomes.csv</code></a></td><td>How many answers were valid, how many refusals or errors</td><td class="num">88.8 KB</td><td class="hash">61c5a612ea5fcfc2…</td></tr>
-<tr><td><a class="filedl" href="croissant.json" download="croissant.json"><code>↓ croissant.json</code></a></td><td>Machine-readable description of the two CSVs above (MLCommons Croissant)</td><td class="num">24.6 KB</td><td class="hash">c9e65fa0bc9dc3e7…</td></tr>
+<tr><td><a class="filedl" href="croissant.json" download="croissant.json"><code>↓ croissant.json</code></a></td><td>Machine-readable description of the two CSVs above (MLCommons Croissant)</td><td class="num">25.2 KB</td><td class="hash">c8aaf0c28dd219c1…</td></tr>
 <tr><td><a class="filedl" href="coverage.csv" download="coverage.csv"><code>↓ coverage.csv</code></a></td><td>What was scheduled, what's missing, and why</td><td class="num">254 B</td><td class="hash">fe030d112e4ae647…</td></tr>
 <tr><td><a class="filedl" href="open-lane/2026.jsonl" download="2026.jsonl"><code>↓ open-lane/2026.jsonl</code></a></td><td>Full trial-level answers for the protocols that are already open</td><td class="num">1.1 MB</td><td class="hash">5ccfe436e060793a…</td></tr>
 </tbody></table></div>
@@ -300,8 +353,8 @@ in the <a href="guide/data-dictionary.html">data dictionary</a>, part of the sep
 <p><small>Everything comes from the public GitHub repo. No account, no API key, no cost.</small></p>
 
 <h3>How to cite it</h3>
-<pre>@software{kalognomos_2026_22881127,
-  author       = {Kalognomos, Michalis},
+<pre>@software{llm_archive_2026_22881127,
+  author       = {LLM-Archive},
   title        = {LLM-Archive: a long-running stability archive for commercial language models},
   month        = sep,
   year         = 2026,

@@ -23,8 +23,7 @@ abstract: >-
   open-weights reference model. Publishes the noise floor, entropy series, and a worst-case loss
   bound alongside every measurement.
 authors:
-  - family-names: Kalognomos
-    given-names: Michalis
+  - name: "LLM-Archive"
     email: mkalognomos@gmail.com
 license:
   - AGPL-3.0-only  # published code
@@ -42,9 +41,27 @@ identifiers:
     value: "swh:1:snp:2c3b82bdd758e0bf600bf759b6f4f2a195124ee7"
     description: "Software Heritage snapshot of the public repository, taken 2026-09-24 (a snapshot in time, not the latest state)"
 keywords:
+  - LLM benchmark
+  - LLM evaluation
+  - AI model evaluation
   - large language models
-  - reproducibility
+  - AI model comparison
+  - LLM consistency
+  - LLM stability
+  - prompt sensitivity
+  - prompt robustness
+  - framing effect
+  - cognitive bias in LLMs
   - decision stability
-  - framing effects
-  - model evaluation
+  - risky choice framing
+  - sunk cost fallacy
+  - base rate neglect
+  - Asian disease problem
+  - model drift
+  - LLM drift
+  - model update regression
+  - reproducibility
+  - open data
   - AI transparency
+  - benchmark contamination
+  - pre-registration

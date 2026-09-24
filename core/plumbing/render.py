@@ -290,6 +290,36 @@ def _croissant_field_jsonpath(record_set_id: str, file_set_id: str, key: str, fi
     }
 
 
+# Shared by croissant.json and (by hand, kept in sync) CITATION.cff, .zenodo.json and the site's
+# <meta>/JSON-LD in website/template.html -- phrases people actually search for.
+KEYWORDS = [
+    "LLM benchmark",
+    "LLM evaluation",
+    "AI model evaluation",
+    "large language models",
+    "AI model comparison",
+    "LLM consistency",
+    "LLM stability",
+    "prompt sensitivity",
+    "prompt robustness",
+    "framing effect",
+    "cognitive bias in LLMs",
+    "decision stability",
+    "risky choice framing",
+    "sunk cost fallacy",
+    "base rate neglect",
+    "Asian disease problem",
+    "model drift",
+    "LLM drift",
+    "model update regression",
+    "reproducibility",
+    "open data",
+    "AI transparency",
+    "benchmark contamination",
+    "pre-registration"
+]
+
+
 def build_croissant() -> dict:
     """Describes stability.csv and outcomes.csv for Croissant-reading tools. Doesn't touch
     experiments/ -- it describes the two files' shape, which only ever changes when
@@ -302,6 +332,7 @@ def build_croissant() -> dict:
         "description": "Whether a commercial language model's decision changes under an "
         "equivalent rewording of the same question -- measured on a fixed panel, published "
         "on every run.",
+        "keywords": KEYWORDS,
         "license": "https://creativecommons.org/licenses/by/4.0/",
         "distribution": [
             {
@@ -324,7 +355,7 @@ def build_croissant() -> dict:
                 "per line, one file per year.",
                 "encodingFormat": "application/jsonlines",
                 "includes": "open-lane/*.jsonl",
-            },
+            }
         ],
         "recordSet": [
             {
@@ -350,7 +381,7 @@ def build_croissant() -> dict:
                     _croissant_field_jsonpath("open-lane-trials", "open-lane", key, field_type)
                     for key, field_type in TRIAL_FIELDS
                 ],
-            },
+            }
         ],
     }
 
@@ -770,7 +801,7 @@ def _file_manifest(data_dir: Path, open_lane_years: list[str]) -> list[tuple[str
         ("stability.csv", "The series — one row per measurement", data_dir / "stability.csv"),
         ("outcomes.csv", "How many answers were valid, how many refusals or errors", data_dir / "outcomes.csv"),
         ("croissant.json", "Machine-readable description of the two CSVs above (MLCommons Croissant)", data_dir / "croissant.json"),
-        ("coverage.csv", "What was scheduled, what's missing, and why", data_dir / "coverage.csv"),
+        ("coverage.csv", "What was scheduled, what's missing, and why", data_dir / "coverage.csv")
     ]
     for year in open_lane_years:
         entries.append(
@@ -901,7 +932,7 @@ def _verify() -> list[str]:
     outcome_rows = build_outcome_rows({"run_id": "r0", "outcomes": {"A": {"valid": 3, "refused": 1}}})
     want = [
         {"run_id": "r0", "version": "A", "outcome": "valid", "count": "3"},
-        {"run_id": "r0", "version": "A", "outcome": "refused", "count": "1"},
+        {"run_id": "r0", "version": "A", "outcome": "refused", "count": "1"}
     ]
     if outcome_rows != want:
         errors.append(f"build_outcome_rows: got {outcome_rows}, want {want}")
