@@ -135,7 +135,25 @@ anything outside `SPEC.md` §10's published-file list (development notes, the pr
 and unpublished protocols all stay out). If something here looks wrong, it's a bug in the generator
 or the underlying data, not a one-off edit worth patching directly.
 
-## Questions, corrections, or reproducing a result
+## Corrections and errata
+
+If you think a published number, a scenario, or a piece of code here is wrong, please say so. Open
+an issue at [github.com/LLM-Archive/llm-archive.github.io/issues](https://github.com/LLM-Archive/llm-archive.github.io/issues)
+or write to **mkalognomos@gmail.com**, with the run id (or file) and what you expected instead.
+
+- **Response time: within 30 days.** This is a one-person project reviewed in a monthly batch, so
+  that is the honest figure; a faster answer is possible but not promised.
+- **Nothing is edited or deleted silently.** A measurement that turns out to be wrong stays in the
+  archive, and the correction is disclosed publicly (in the next release notes on GitHub and Zenodo),
+  so anyone who already used the old number can see what changed and why.
+- **A bug in the frozen measurement code** (`core/measure/`) is not patched in place. It is fixed
+  by a disclosed change, and the affected part of the series is marked as a break, because a silent
+  patch would make earlier measurements quietly incomparable.
+- **What this project publishes:** model responses to invented scenarios, with no personal data
+  about real people. If you nevertheless believe something published here concerns you or your
+  work, use the same channels.
+
+## Questions or reproducing a result
 
 Start with [`guide/faq.html`](https://llm-archive.github.io/guide/faq.html) and
 [`guide/reproducing.html`](https://llm-archive.github.io/guide/reproducing.html). Contact details
