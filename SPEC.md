@@ -1,6 +1,6 @@
-# LLM-Archive — IMPLEMENTATION SPECIFICATION v0
+# LLM-Archive — IMPLEMENTATION SPECIFICATION
 
-*September 14, 2026 · freezes at commit #1 · last substantively updated September 20, 2026*
+*Version v0.3 · first written September 14, 2026 · frozen at commit #1 (September 21, 2026) · last substantively updated September 24, 2026*
 
 This is the **single, self-contained specification** of the measurement system. Every value,
 threshold, formula, and rule the pipeline runs on is stated here in full — nothing is deferred to
@@ -8,11 +8,6 @@ another file, and no other file needs to be read to build or check any part of t
 
 This document **is not append-only**. It is corrected in place, so what's written here is always
 the current, governing version.
-
----
-
-Kalognomos Michalis
-mkalognomos@gmail.com
 
 ---
 
