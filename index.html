@@ -245,35 +245,28 @@ score or a guarantee that the model will behave the same way in your own product
 
 <h3>The current picture</h3>
 <p><small><b>How to read a row:</b> first look at the <b>What changes</b> column (the literal
-question is only visible for the 2 open-lane tests — the rest stay guarded while their model is
+question is only visible for the 2 open-lane protocols — the rest stay guarded while their model is
 active), then the score and its margin, and finally whether it passed the checks.</small></p>
 <p><span class="tag t-fl">model: <code>claude-sonnet-5</code></span></p>
 <div class="scroll"><table>
-<thead><tr><th title="The scenario being tested, and which model answered it">Test</th><th title="What part of the question's wording was changed between versions">What changes</th><th title="Whether this test's questions and answers are public (open), or still kept private until the model retires">Lane</th><th title="The day this measurement ran">Date</th><th title="How often it kept the same decision when we changed the question">Stability</th><th><abbr title="how many times it was asked">n</abbr></th><th title="Whether this result passed our quality checks, and if not, which one it failed">Results</th><th title="Change vs. this test's previous run">vs. previous</th><th></th></tr></thead>
+<thead><tr><th title="The protocol, and which model answered it">Protocol</th><th title="What part of the question's wording was changed between versions">What changes</th><th title="Whether this protocol's questions and answers are public (open), or still kept private until the model retires">Lane</th><th title="The day this measurement ran">Date</th><th title="How often it kept the same decision when we changed the question">Stability</th><th><abbr title="how many times it was asked">n</abbr></th><th title="Whether this result passed our quality checks, and if not, which one it failed">Results</th><th title="Change vs. this protocol's previous run">vs. previous</th><th></th></tr></thead>
 <tbody id="rows"></tbody>
 </table></div>
-<p><small>When we change how a test is measured, we release the change as a new version
+<p><small>When we change how a protocol is measured, we release the change as a new version
 (<code>v0</code>, <code>v1</code>, ...) and keep the old version's published numbers too — so you
 can always check a number against what came before, instead of it quietly changing meaning.</small></p>
 
 <h3>A second check — open model</h3>
-<p class="lede">We also run the same tests on a model that anyone can download and re-run, so that
+<p class="lede">We also run the same protocols on a model that anyone can download and re-run, so that
 the method itself can be shown to actually work · <a href="https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF" target="_blank" rel="noopener">Download qwen2.5</a></p>
 <p><span class="tag t-fl">model: <code>qwen2.5-1.5b-instruct-q4_k_m</code></span></p>
 <div class="scroll"><table>
-<thead><tr><th title="The scenario being tested, and which model answered it">Test</th><th title="What part of the question's wording was changed between versions">What changes</th><th title="Whether this test's questions and answers are public (open), or still kept private until the model retires">Lane</th><th title="The day this measurement ran">Date</th><th title="How often it kept the same decision when we changed the question">Stability</th><th><abbr title="how many times it was asked">n</abbr></th><th title="Whether this result passed our quality checks, and if not, which one it failed">Results</th><th title="Change vs. this test's previous run">vs. previous</th><th></th></tr></thead>
+<thead><tr><th title="The protocol, and which model answered it">Protocol</th><th title="What part of the question's wording was changed between versions">What changes</th><th title="Whether this protocol's questions and answers are public (open), or still kept private until the model retires">Lane</th><th title="The day this measurement ran">Date</th><th title="How often it kept the same decision when we changed the question">Stability</th><th><abbr title="how many times it was asked">n</abbr></th><th title="Whether this result passed our quality checks, and if not, which one it failed">Results</th><th title="Change vs. this protocol's previous run">vs. previous</th><th></th></tr></thead>
 <tbody id="orows"></tbody>
 </table></div>
-<p><small>When we change how a test is measured, we release the change as a new version
+<p><small>When we change how a protocol is measured, we release the change as a new version
 (<code>v0</code>, <code>v1</code>, ...) and keep the old version's published numbers too — so you
 can always check a number against what came before, instead of it quietly changing meaning.</small></p>
-
-<h3>Compare your own model</h3>
-<a class="agentdl" href="guide/ai-assistant.md" download="LLM-Archive-run-on-your-computer.md" id="agent-guide">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>
-  <span><b>AI Assistant</b><small>An .md guide with instructions you can give to your AI agent to compare your model.</small></span>
-</a>
-<p><small>Everything comes from the public GitHub repo. No account, no API key, no cost.</small></p>
 
 </section>
 
@@ -292,12 +285,19 @@ can always check a number against what came before, instead of it quietly changi
 <tr><td><a class="filedl" href="outcomes.csv" download="outcomes.csv"><code>↓ outcomes.csv</code></a></td><td>How many answers were valid, how many refusals or errors</td><td class="num">70.6 KB</td><td class="hash">931831882ab65e8f…</td></tr>
 <tr><td><a class="filedl" href="croissant.json" download="croissant.json"><code>↓ croissant.json</code></a></td><td>Machine-readable description of the two CSVs above (MLCommons Croissant)</td><td class="num">24.6 KB</td><td class="hash">c9e65fa0bc9dc3e7…</td></tr>
 <tr><td><a class="filedl" href="coverage.csv" download="coverage.csv"><code>↓ coverage.csv</code></a></td><td>What was scheduled, what's missing, and why</td><td class="num">254 B</td><td class="hash">fe030d112e4ae647…</td></tr>
-<tr><td><a class="filedl" href="open-lane/2026.jsonl" download="2026.jsonl"><code>↓ open-lane/2026.jsonl</code></a></td><td>Full trial-level answers for the tests that are already open</td><td class="num">1.1 MB</td><td class="hash">5ccfe436e060793a…</td></tr>
+<tr><td><a class="filedl" href="open-lane/2026.jsonl" download="2026.jsonl"><code>↓ open-lane/2026.jsonl</code></a></td><td>Full trial-level answers for the protocols that are already open</td><td class="num">1.1 MB</td><td class="hash">5ccfe436e060793a…</td></tr>
 </tbody></table></div>
 <p><small>Every file comes with a <code>sha256</code> — a digital fingerprint that lets you check you
 downloaded exactly the same file. What each column inside each csv means is explained in full
 in the <a href="guide/data-dictionary.html">data dictionary</a>, part of the separate
 <a href="guide/index.html">guide</a>.</small></p>
+
+<h3>Compare your own model</h3>
+<a class="agentdl" href="guide/ai-assistant.md" download="LLM-Archive-run-on-your-computer.md">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>
+  <span><b>AI Assistant</b><small>An .md guide with instructions you can give to your AI agent to compare your model.</small></span>
+</a>
+<p><small>Everything comes from the public GitHub repo. No account, no API key, no cost.</small></p>
 
 <h3>How to cite it</h3>
 <pre>@software{kalognomos_2026_22881127,
@@ -317,7 +317,7 @@ If they match, the file is authentic. <code>verify.py</code> does this check aut
 don't need to install anything else.</p>
 
 <h3>What isn't downloadable yet</h3>
-<p>The questions and answers for tests that are still "closed" stay hidden — if we published them
+<p>The questions and answers for protocols that are still "closed" stay hidden — if we published them
 now, the next model could "learn" them and the measurement would lose its meaning. They all open up
 once the corresponding model is retired. Their number and existence are always disclosed.</p>
 
@@ -408,7 +408,7 @@ isn't enough — it can answer differently by chance. In the <code>v0</code> ser
 2 times per version (2 × 15 = 30), and with 4 versions that's 120 calls for one measurement. The
 <code>v1</code> series asks 8 times per scenario (8 × 15 = 120), so 480 calls.</li>
 </ul>
-<p><small>In one sentence: 3 dishes × 4 test types = 12 protocols per series; each <code>v0</code> protocol asks
+<p><small>In one sentence: 3 dishes × 4 rewording types = 12 protocols per series; each <code>v0</code> protocol asks
 the model 120 times (15 scenarios × 4 versions × 2 repeats) and each <code>v1</code> protocol 480 times
 (× 8 repeats) to produce one measurement.</small></p>
 
@@ -497,10 +497,13 @@ wording." That's why we publish everything, so that anyone can judge for themsel
 </tbody></table></div>
 
 <h3>The 12 protocols, one by one</h3>
-<p>3 dishes (<a href="#" onclick="go('does');return false">see "The Recipe"</a>) × 4 test types =
+<p>3 dishes (<a href="#" onclick="go('does');return false">see "The Recipe"</a>) × 4 rewording types =
 12 protocols. Each row below is one protocol: the family it belongs to, and the one thing that
-particular test changes. <small>All 12 are <code>v0</code> today — a protocol's name grows a
-version suffix here again once a newer version of it gets measured.</small></p>
+particular protocol changes. <small>Each of the 12 exists in two series. <code>v0</code> is the
+first, measured on both models. <code>v1</code> asks the same scenarios with more repeats per
+scenario and an updated rule for reading the answer, so it is a separate series, never a
+continuation of <code>v0</code>; its measurements appear in the tables above as they are made.
+The names below leave the series off.</small></p>
 
 <div class="scroll"><table>
 <thead><tr><th>Protocol</th><th>What it does, in plain words</th></tr></thead>
@@ -595,7 +598,7 @@ wordings and answers each model gave.</li>
 your own statistical analysis of LLM bias — framing effects, anchoring bias, and so on.</p>
 
 <h3>3. Replication and control experiments</h3>
-<p>Researcher or AI engineer who wants to run the same tests on your own models?</p>
+<p>Researcher or AI engineer who wants to run the same protocols on your own models?</p>
 <ul>
 <li><b>Verify the files.</b> Download <code>verify.py</code> from the site and confirm the data's
 authenticity against its published SHA-256 checksums.</li>
@@ -622,7 +625,17 @@ break.</small></p>
 <p class="lede">You don't need to know about benchmarks to read the results. Here we explain, in
 plain terms, the codes and words that show up in the tables.</p>
 
-<h3>Test codes</h3>
+<h3>Protocols and versions</h3>
+<div class="scroll glossary"><table>
+<thead><tr><th>Term</th><th>What it is</th><th>Why it matters</th></tr></thead>
+<tbody>
+<tr><td>Protocol</td><td>One fixed question set, paired with one kind of change (see the next table). Its name looks like <code>base_rate_neglect__wording__v0</code>: the family of scenarios, the kind of change, and the series (<code>v0</code>, <code>v1</code>).</td><td>A protocol is a question, never a result. We run the same protocol again every month, so any change in the numbers comes from the model and not from the questions.</td></tr>
+<tr><td>Panel</td><td>The 15 fixed scenarios that make up one protocol.</td><td>The panel is frozen and never resampled, so every result means exactly "on this panel, on this model, on that day", not a claim about all questions.</td></tr>
+<tr><td>Version (A, A′, B, C)</td><td>The four copies of each scenario. <b>A</b> is the base wording. <b>A′</b> changes only spaces and punctuation. <b>B</b> changes the wording, the anchor, the option order or the default. <b>C</b> changes a number so that the right answer flips.</td><td>Only A against B is the measurement. A′ should not change anything (if it does, the answers are just unsteady). C should change (if it doesn't, the model isn't reading the question).</td></tr>
+<tr><td>Lane (open, guard, sealed)</td><td>How much of a protocol is public. <b>Open</b>: every response is published, and the first scenario in full. <b>Guard</b>: only outcome counts, and the wording stays private. <b>Sealed</b>: only the fact that it exists.</td><td>Keeping guard and sealed protocols private protects them from ending up in future models' training data while the model they measure is in use. The open ones are the public sample anyone can check.</td></tr>
+</tbody></table></div>
+
+<h3>Rewording types</h3>
 <div class="scroll glossary"><table>
 <thead><tr><th>Code</th><th>What it means</th><th>What it checks</th></tr></thead>
 <tbody>
@@ -638,11 +651,13 @@ code preserves the record's exact identity.</small></p>
 <div class="scroll glossary"><table>
 <thead><tr><th>Term</th><th>In plain terms</th><th>How to read it</th></tr></thead>
 <tbody>
-<tr><td>Score / Robustness score</td><td>Stability indicator</td><td>How often the decision stayed the same when we changed something that shouldn't matter. Not a measure of "intelligence."</td></tr>
-<tr><td><abbr title="How different the answers are from one another">Entropy</abbr></td><td>Variety of answers</td><td>Very low entropy means the AI answers almost the same way every time, so a high score can be misleading.</td></tr>
+<tr><td>Stability</td><td>How steady the decisions are</td><td>How often the decision stayed the same when we changed something that shouldn't matter (A against B). Not a measure of "intelligence."</td></tr>
+<tr><td><abbr title="How different the answers are from one another">Entropy</abbr></td><td>Variety of answers</td><td>Very low entropy means the AI answers almost the same way every time, so a high stability can be misleading.</td></tr>
 <tr><td><abbr title="The random difference we expect even when there's no real change">Noise floor</abbr></td><td>Random variation</td><td>A change below this threshold could just be chance, and isn't presented as a real improvement or weakness.</td></tr>
-<tr><td>Confidence interval / CI95%</td><td>Margin of uncertainty</td><td>The range around the score, e.g. 92%–96%. Shows how precise the estimate is from that particular sample.</td></tr>
-<tr><td>Sample size / <code>n</code></td><td>How many repeats were done</td><td>Here it's 30 repeats for each version (<code>n_per_scenario</code>=2 across 15 scenarios). <code>n_items</code> is how many different scenarios a panel has.</td></tr>
+<tr><td>Confidence interval / CI95%</td><td>Margin of uncertainty</td><td>The range around the stability, e.g. 92%–96%. Shows how precise the estimate is from that particular sample.</td></tr>
+<tr><td>Sample size / <code>n</code></td><td>How many responses each version gets</td><td><code>n</code> is 30 in the <code>v0</code> protocols and 120 in the <code>v1</code> protocols (15 scenarios, asked 2 or 8 times each). It is fixed per protocol and never changes from run to run.</td></tr>
+<tr><td>PASS / off curve</td><td>Whether a result counts in the main chart</td><td>A result that fails one of our checks is still published in full, but marked with the reason and left off the main chart. It doesn't by itself mean the measurement is wrong.</td></tr>
+<tr><td>Flag</td><td>The name of the check that failed</td><td>For example <code>below_surface_noise</code>: the real change moved the answer no more than a punctuation-only change did, so there is nothing to report. Each flag is explained in the results panel.</td></tr>
 </tbody></table></div>
 
 <h3>Run settings</h3>
@@ -650,20 +665,21 @@ code preserves the record's exact identity.</small></p>
 <thead><tr><th>Term</th><th>What it is</th><th>What applies here</th></tr></thead>
 <tbody>
 <tr><td>Greedy decoding</td><td>Always picking the most likely next word.</td><td>Reduces randomness, but doesn't mean the whole service is fully predictable.</td></tr>
-<tr><td>Temperature</td><td>A setting that affects randomness.</td><td>Not exposed as a client-controllable parameter on this API at all. Repeated calls were found to return identical answers anyway, which is why <code>n_per_scenario</code> is 2, not a larger sampling count.</td></tr>
+<tr><td>Temperature</td><td>A setting that affects randomness.</td><td>Not exposed as a client-controllable parameter on this API at all. In our checks, repeated calls returned identical answers anyway.</td></tr>
 <tr><td>System prompt</td><td>The initial instruction that sets role and rules.</td><td>In the base measurement there is none, so the setting stays explicit and comparable.</td></tr>
-<tr><td>SHA-256 hash</td><td>A digital fingerprint of a file.</td><td>Lets you check you downloaded the same file, not a modified copy.</td></tr>
+<tr><td>SHA-256</td><td>A digital fingerprint of a file: a short code that changes if even one character changes.</td><td>Lets you check you downloaded the same file, not a modified copy.</td></tr>
 </tbody></table></div>
 
 <h3>Things you see on the page</h3>
 <div class="scroll glossary"><table>
 <thead><tr><th>Term</th><th>What you see</th><th>Why it's there</th></tr></thead>
 <tbody>
-<tr><td>Panel</td><td>A set of fixed scenarios and questions.</td><td>We keep the same test over time, so changes can be compared fairly.</td></tr>
 <tr><td>Heatmap</td><td>A table with colored cells.</td><td>Shows at a glance where the model is more stable and where it falls short.</td></tr>
 <tr><td>JSONL / Croissant-RAI</td><td>Data file formats.</td><td>JSONL has one record per line. Croissant-RAI describes the dataset and responsible-use information.</td></tr>
 <tr><td>Baseline / reference model</td><td>A reference point, or the frozen control model.</td><td>Here, the reference model is <code>qwen2.5-1.5b-instruct-q4_k_m</code> — it checks whether our own measurement pipeline drifted; it's not a general model ranking.</td></tr>
-<tr><td>Silent update</td><td>A change behind the same API with no new visible name.</td><td>The fingerprint and the long-running series help reveal whether the product's behavior changed.</td></tr>
+<tr><td>Silent update</td><td>A change behind the same API with no new visible name.</td><td>The daily fixed-question checks and the long-running series help reveal whether the product's behavior changed.</td></tr>
+<tr><td>Bridge</td><td>A measurement of the old and the new model version in the same week.</td><td>When a new model version appears, the old one can disappear for good. Measuring both side by side keeps the line from jumping without explanation.</td></tr>
+<tr><td>Time stamp</td><td>A dated proof that a list of protocols existed.</td><td>Before running a new protocol for the first time, we stamp its fingerprints with a free public service, so nobody can claim we chose the protocol after seeing the result. <a href="guide/timestamps.html">How it works</a>.</td></tr>
 </tbody></table></div>
 </section>
 

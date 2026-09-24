@@ -283,7 +283,7 @@ def render_page(current_out_name: str, title: str, body_html: str) -> str:
 {body_html}
 </main>
 <footer class="wrap">
-Written for people using LLM-Archive, not building it — see <a href="../README.md">../README.md</a>
+Written for people using LLM-Archive — see <a href="../README.md">../README.md</a>
 and <a href="../docs/spec.md">docs/spec.md</a> for the project itself.
 </footer>
 </body>

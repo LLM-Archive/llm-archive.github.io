@@ -774,7 +774,7 @@ def _file_manifest(data_dir: Path, open_lane_years: list[str]) -> list[tuple[str
     ]
     for year in open_lane_years:
         entries.append(
-            (f"open-lane/{year}.jsonl", "Full trial-level answers for the tests that are already open", data_dir / "open-lane" / f"{year}.jsonl")
+            (f"open-lane/{year}.jsonl", "Full trial-level answers for the protocols that are already open", data_dir / "open-lane" / f"{year}.jsonl")
         )
     return entries
 

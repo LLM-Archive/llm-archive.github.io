@@ -1,8 +1,8 @@
 # LLM-Archive guide
 
 This folder is written for people **using** LLM-Archive — researchers, developers, journalists,
-students — rather than for people building it. Everything here is in English, kept in sync with
-the frozen specification at [`../docs/spec.md`](../docs/spec.md). If the two ever disagree,
+students. Everything here is in English, kept in sync with the frozen
+specification at [`../docs/spec.md`](../docs/spec.md). If the two ever disagree,
 `docs/spec.md` is correct and this guide is what needs fixing.
 
 These `.md` files are the source; `python3 -m core.plumbing.render_guide build` turns each into a
