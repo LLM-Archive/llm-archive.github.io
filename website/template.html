@@ -68,7 +68,7 @@ body{margin:0;background:var(--bg);color:var(--ink);
 
 header{border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);
   backdrop-filter:blur(8px);z-index:50}
-header .wrap{max-width:1180px;display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding-block:10px;position:relative}
+header .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding-block:10px;position:relative}
 .brand{position:relative;display:inline-flex;flex-direction:column;align-items:flex-start;font-size:14px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
   margin-right:14px;color:var(--ink);text-decoration:none;cursor:pointer}
 .brand:hover{background:none;opacity:.65}
@@ -386,7 +386,6 @@ once the corresponding model is retired. Their number and existence are always d
 <h2>Design</h2>
 <p class="lede">We ask the AI the same question in different words, and see if it changes its
 mind.</p>
-<p><small>Every rule on this page is defined in full in the <a href="@@SPEC_HREF@@">specification (SPEC.md)</a>.</small></p>
 
 <p>Every month, the same model answers 15 fixed questions, each one worded in 4 different ways. A
 program &mdash; not a human, and not another AI &mdash; reads its decision, so that no subjective
