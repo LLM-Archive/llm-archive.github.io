@@ -213,6 +213,52 @@ refuses to run without an explicit lane and an explicit acknowledgement of this 
 `status` nor `lane` nor `twin_id` is part of `protocol_sha256` (§13): admission changes whether a
 protocol may count, never what it asks, so the hash a measurement cites is unaffected.
 
+### Pre-registration stamp (OpenTimestamps)
+
+Admission fixes *what* a protocol asks. It does not prove *when* that was fixed: file dates and
+commit dates are ours to set. So before a protocol is run for real, its hashes are written into a
+**manifest**, and the manifest's own `sha256` is timestamped with
+[OpenTimestamps](https://opentimestamps.org), which anchors it in the Bitcoin blockchain — a clock
+nobody in this project controls. Plain-words version for readers: `guide/timestamps.md`.
+
+- **The manifest** is a JSON file in `state/timestamps/`: one row per admitted protocol
+  (`protocol_id`, `panel_sha256`, `protocol_sha256`) plus the repo's HEAD commit at that moment.
+  Hashes only, never scenario text.
+- **The proof** is the `<manifest>.ots` file next to it. It starts as a pending stub (calendar
+  receipts only) and is upgraded, hours later, into a full proof that carries a **Bitcoin block
+  attestation**. The first manifest, `preregistration_2026-09-24.json` (24 public protocols, `v0`
+  and `v1`, plus the 2 `sealed`), was upgraded to a completed Bitcoin proof, block 968390.
+- **What it proves, and in which direction:** the manifest existed *no later than* that block's
+  time. It can show a protocol was declared before it ran; it can never show a date *earlier* than
+  the truth, so a protocol cannot be backdated. For the `v0` protocols, which had already run when
+  the first manifest was stamped, it proves only "existed by that date", not "declared before
+  running". The manifest was stamped before any `v1` commercial run, so for those it proves both.
+- **A changed protocol is not covered.** Any edit to a protocol's text or design changes its
+  hashes, so its current triple no longer appears in the manifest — exactly the point. A new
+  protocol needs a new manifest (same shape), stamped and committed, *before* its first real run.
+- **The guard.** `core/schedule/run_due.run_full_sweep`, the unattended paid path, skips a
+  protocol as `not_preregistered` (nothing spent) unless its current
+  `(protocol_id, panel_sha256, protocol_sha256)` is listed in a manifest whose `.ots` header digest
+  matches that manifest's own `sha256`. A hand-typed `core.measure.pilot` run is **not** guarded,
+  because `core/measure/` is frozen (§13) and cannot be changed to call it: run
+  `python3 -m core.plumbing.prereg check` first. Runs against the free reference model spend
+  nothing and are not gated.
+- **What the guard does not check.** That the proof was upgraded to a full Bitcoin proof, nor that
+  it verifies cryptographically (that needs the `ots` tool, run by a maintainer as
+  `ots verify`). It protects against forgetting, not against a determined insider.
+- **A second, independent witness: every release goes through Zenodo.** Each tagged release of the
+  public repo (`release_publish`, §8) is archived by [Zenodo](https://zenodo.org), operated by CERN,
+  through the GitHub–Zenodo webhook (§10), which mints a DOI for that exact version. Zenodo keeps
+  an immutable, dated copy of the public payload as released, so a third party outside this project
+  holds a record of what the public repo said at that date — a clock independent both of our own
+  git history and of the Bitcoin stamp. It is a **witness**, not a reviewer: Zenodo does not check
+  that anything is correct, only that this exact content was deposited on that date. It sees only
+  the public payload (§10), never the manifest, the `guard` or `sealed` text, or `experiments/`.
+
+- **Private, on purpose.** The manifest lists the `sealed` protocols' hashes, so it stays under
+  `state/` (§10) and is never published. To reveal a protocol later, publish the manifest; anyone
+  can recompute its `sha256`, check it against the `.ots`, and find the protocol's row.
+
 ### Lane assignment and twin pairing
 
 **The rule, applied to all 12 at once on 2026-09-20, before any protocol had ever been run
@@ -886,14 +932,14 @@ what it automates and what stays a human decision (which version, when).
    from), so both folders stay private, not just the JSON output. The `open` lane's text still
    reaches the public — through `open-lane/<year>.jsonl`, generated from `experiments/` per trial
    — never by publishing `protocols/`/`mutable/` directly.
-4. **The private strategy trail** — `my_help/decisions.md`, `my_help/plan.md`,
-   `my_help/research-findings.md`, `my_help/explanations.md`, `my_help/repo_structure.md`. Not code, and not
-   data the public site needs: competitive reasoning, legal/trademark notes, planning history.
+4. **The private strategy trail** — the private planning and strategy notes kept alongside the
+   project. Not code, and not data the public site needs: competitive reasoning, legal/trademark notes, planning history.
 
 **`experiments/` and `state/` stay private** for the same reason as point 3 above (and point 2):
 `experiments/` mixes all three lanes' raw data (only `open` is meant to be fully public, and only
 through the renderer's extraction, never as a wholesale copy); `state/` is transient bookkeeping
-the public site has no use for in raw form.
+the public site has no use for in raw form. That includes `state/timestamps/`, whose manifest
+carries the `sealed` protocols' hashes (§3, "Pre-registration stamp").
 
 `llm-archive-sealed` stays fully isolated at all times — a separate, disconnected repository, never
 pushed anywhere near the public or private archive repos. Only two hashes (`panel_sha256`,

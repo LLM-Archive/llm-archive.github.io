@@ -871,6 +871,7 @@ def build_site_html(
         "@@CITATION_BIBTEX@@": render_citation_bibtex(data),
         "@@PRIMARY_DOWNLOAD@@": render_primary_download(data_dir, out_dir),
         "@@AGENT_GUIDE_HREF@@": _rel_prefix(data_dir, out_dir) + "guide/ai-assistant.md",
+        "@@SPEC_HREF@@": _rel_prefix(data_dir, out_dir) + ("SPEC.md" if (data_dir / "SPEC.md").exists() else "docs/spec.md"),
         "@@FILE_ROWS@@": render_file_rows(data_dir, out_dir, open_lane_years),
         "@@SITE_VERSION@@": version_path.read_text(encoding="utf-8").strip(),
         "@@COPYRIGHT_YEAR@@": str(date.today().year),
