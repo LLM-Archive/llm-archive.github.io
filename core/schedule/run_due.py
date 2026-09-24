@@ -44,7 +44,7 @@ from pathlib import Path
 from core.budget import budget
 from core.measure import pilot
 from core.measure.schema import VERSIONS
-from core.plumbing import subject_fingerprint
+from core.plumbing import prereg, subject_fingerprint
 
 from . import coverage, schedule
 
@@ -142,6 +142,7 @@ def run_full_sweep(
     budget_config: Path = budget.DEFAULT_CONFIG,
     model_id: str | None = None,
     model_family: str | None = None,
+    manifests_dir: Path | None = prereg.DEFAULT_MANIFESTS_DIR,
 ) -> list[dict]:
     """One call per admitted protocols/*.json (12 today), same shape as cadence.yaml's own
     description ("12 protocols x 4 versions x n=30"). Budget is re-checked before every single
@@ -217,6 +218,17 @@ def run_full_sweep(
                     "detail": f"real run already exists this month: {already_this_month[0].name} "
                     "-- full_sweep is monthly (cadence.yaml), not daily, so a protocol already "
                     "measured for real earlier this month is not re-spent on",
+                })
+                continue
+            # A paid run only for a protocol whose CURRENT hashes were stamped (OpenTimestamps)
+            # before it ran -- core/plumbing/prereg.py and guide/timestamps.md say why.
+            # `manifests_dir=None` switches this off (tests that exercise the ladder, not this).
+            if manifests_dir is not None and prereg.is_preregistered(protocol, prereg.load_stamped(manifests_dir)) is None:
+                results.append({
+                    "protocol_id": pid, "skipped": "not_preregistered",
+                    "detail": "no stamped manifest in state/timestamps/ lists this protocol's current "
+                    "panel_sha256/protocol_sha256 -- stamp a manifest first (state/timestamps/README.md), "
+                    "then re-run; nothing was spent",
                 })
                 continue
             ledger = budget.load_ledger(budget_ledger)

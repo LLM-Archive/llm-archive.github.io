@@ -38,6 +38,9 @@ identifiers:
   - type: doi
     value: "10.5281/zenodo.22881127"
     description: "Zenodo concept DOI — always resolves to the latest version"
+  - type: swh
+    value: "swh:1:snp:2c3b82bdd758e0bf600bf759b6f4f2a195124ee7"
+    description: "Software Heritage snapshot of the public repository, taken 2026-09-24 (a snapshot in time, not the latest state)"
 keywords:
   - large language models
   - reproducibility

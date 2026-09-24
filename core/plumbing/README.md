@@ -66,6 +66,19 @@
   never switches the active model (a new id is `needs_review`). First run only records a baseline.
   Append-only log: `state/model_registry.jsonl`. Exit status 10 = action needed. Own build check:
   `python3 -m core.plumbing.model_watch verify`.
+- `prereg.py` — the pre-registration guard: a protocol counts as pre-registered only if a manifest in
+  `state/timestamps/` lists its current `panel_sha256`/`protocol_sha256` and that manifest has a matching
+  OpenTimestamps `.ots` (checked by comparing the `.ots` header digest to the manifest's sha256, stdlib
+  only). Enforced in `core/schedule/run_due.run_full_sweep` (paid runs are skipped as
+  `not_preregistered`); NOT enforced on a hand-typed `core.measure.pilot` run (frozen). `python3 -m
+  core.plumbing.prereg check` lists every protocol; own build check `... prereg verify`. Plain-words
+  explanation: `guide/timestamps.md`.
+- `revalidate.py` — the `revalidation_daily` job (cadence.yaml: "10 historical records, local, zero cost"),
+  which had a schedule and no code. Re-derives a fixed daily selection of old runs from their raw
+  `trials.jsonl` and checks four things: protocol hash, prompts, classifications, and the whole
+  measurement. An `analysis_code_sha`-only difference is a NOTE (the code legitimately evolved), any
+  other difference a failure. Appends to `state/revalidation_log.jsonl`. `python3 -m
+  core.plumbing.revalidate run|verify`. Not on any schedule yet.
 - `render_guide.py` — turns `guide/*.md` into `guide/*.html`, a small standalone docs site sitting
   next to (not inside) the closed 8-page site spec.md §11 describes, per `guide/README.md`'s own
   plan to eventually lift it "alongside the main website." A hand-rolled markdown→HTML converter,

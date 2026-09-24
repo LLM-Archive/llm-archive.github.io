@@ -31,6 +31,7 @@ than imply a feature exists before it does, and this guide follows the same rule
 | Someone who wants to run the same panel against a different model | [`reproducing.md`](reproducing.md) |
 | Someone who wants to know what a specific column or term means | [`data-dictionary.md`](data-dictionary.md) and [`glossary.md`](glossary.md) |
 | Someone with a quick question | [`faq.md`](faq.md) |
+| Someone who wants to know how "declared before it was run" is proved | [`timestamps.md`](timestamps.md) |
 | A cited researcher who found an inaccurate quote or wants to respond | [`../CONTRIBUTING.md`](../CONTRIBUTING.md) |
 
 ## The one thing to understand before reading anything else

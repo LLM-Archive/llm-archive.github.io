@@ -54,7 +54,7 @@ Two things the output will not support:
 
 - **Answering differently from our models is not instability.** Which option a model prefers is its
   own call. Stability is only about whether *your* model's answer moved between A and B.
-- **Two questions is a spot-check, not a score.** Each real test uses a frozen panel of 15
+- **Two questions is a spot-check, not a score.** Each real protocol uses a frozen panel of 15
   scenarios asked many times over. A difference here is a reason to look closer, not a result.
 
 ---
@@ -74,7 +74,7 @@ the **Downloads** page of the site.
 | `stability.csv` | one row per measurement — the main file |
 | `outcomes.csv` | how many replies were valid / refused / unparseable |
 | `coverage.csv` | what ran, what didn't, and why |
-| `open-lane/<year>.jsonl` | every raw response, for the two `open` tests |
+| `open-lane/<year>.jsonl` | every raw response, for the two `open` protocols |
 | `SPEC.md` | the method, with the formulas in §6 |
 
 A readable summary of the main file:
@@ -83,7 +83,7 @@ A readable summary of the main file:
 python3 - <<'PY'
 import csv
 rows = [r for r in csv.DictReader(open("stability.csv", encoding="utf-8")) if r["record_type"] == "measurement"]
-print(f'{"date":<11}{"model":<34}{"test":<44}{"stability":>9}  n')
+print(f'{"date":<11}{"model":<34}{"protocol":<44}{"stability":>9}  n')
 for r in sorted(rows, key=lambda r: (r["run_date"], r["protocol_id"])):
     print(f'{r["run_date"]:<11}{r["subject_model_id"]:<34}{r["protocol_id"]:<44}{float(r["stability_pct"]):>8.1f}%  {r["n"]}')
 PY
@@ -97,7 +97,7 @@ decision X % of the time when the wording changed."* Every column is explained i
 
 ## 3. Check our arithmetic yourself
 
-The two `open` tests publish every raw response, so a published score can be re-derived from
+The two `open` protocols publish every raw response, so a published score can be re-derived from
 scratch rather than taken on trust. Stability = 100 − the gap between the A and B answer
 distributions, counting valid answers only.
 
@@ -135,10 +135,10 @@ number — exactly the kind of thing the project wants to hear about, at **mkalo
 
 ## Why only two questions, and what a full comparison needs
 
-Each test is a frozen panel of 15 scenarios, and only the **first** scenario of each of the two
-`open` tests is published in full. The raw records carry a `prompt_sha256` — enough to *verify* a
+Each protocol is a frozen panel of 15 scenarios, and only the **first** scenario of each of the two
+`open` protocols is published in full. The raw records carry a `prompt_sha256` — enough to *verify* a
 prompt you already hold, never enough to reveal one. So a complete, like-for-like run of your model
-against a whole test is possible today only for someone who holds the panels. This is a disclosed
+against a whole protocol is possible today only for someone who holds the panels. This is a disclosed
 gap, not an oversight: see `SPEC.md` §1.1.
 
 If you do hold them, `guide/reproducing.md` lists what a submittable `comparison_point` must match —

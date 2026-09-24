@@ -50,7 +50,8 @@ footer a{color:var(--faint)}
 <a href="reproducing.html">Reproducing</a>
 <a href="data-dictionary.html">Data dictionary</a>
 <a href="glossary.html">Glossary</a>
-<a href="faq.html">FAQ</a></nav>
+<a href="faq.html">FAQ</a>
+<a href="timestamps.html">Time proofs</a></nav>
 </div></header>
 <main class="wrap">
 <h1 id="for-researchers">For researchers</h1>
@@ -66,7 +67,7 @@ footer a{color:var(--faint)}
 <li><strong>Not a human-likeness score.</strong> Any comparison to a published human result (<code>human_model_gap</code>) is secondary, reported only where a multi-lab or meta-analytic human finding exists for direct comparison, and is never aggregated or treated as a headline. Published research on this question has found that models can fail to reproduce human response biases at all — so a human-model gap and a model's self-stability are not guaranteed to be measuring the same underlying thing, and this project does not claim they are.</li>
 </ul>
 <h2 id="the-scope-every-published-number-carries">The scope every published number carries</h2>
-<p>Every measurement's claim is exactly: <em>"on this frozen panel, on this model, on that day."</em> Never "the model is X% stable under wording" as a general property — always "on panel <code>p-004</code>," naming the specific panel. This isn't a hedge added after the fact; it follows from a specific, disclosed design decision: the confidence interval is a bootstrap over responses, <strong>conditional on the panel</strong>, and no generalization interval is published (<code>docs/spec.md</code> §6). A 15-scenario cluster bootstrap would understate uncertainty, so rather than publish a falsely narrow interval, this project publishes the raw per-scenario heterogeneity instead (<code>scenario_gaps_pct</code>, <code>scenario_concentration_pct</code>) and lets you see directly whether a finding rides on the whole panel or on two scenarios.</p>
+<p>Every measurement's claim is exactly: <em>"on this frozen panel, on this model, on that day."</em> Never "the model is X% stable under wording" as a general property — always "on protocol <code>risky_choice_framing__wording__v0</code>," naming the specific protocol and, through its <code>panel_sha256</code>, the specific panel. This isn't a hedge added after the fact; it follows from a specific, disclosed design decision: the confidence interval is a bootstrap over responses, <strong>conditional on the panel</strong>, and no generalization interval is published (<code>docs/spec.md</code> §6). A 15-scenario cluster bootstrap would understate uncertainty, so rather than publish a falsely narrow interval, this project publishes the raw per-scenario heterogeneity instead (<code>scenario_gaps_pct</code>, <code>scenario_concentration_pct</code>) and lets you see directly whether a finding rides on the whole panel or on two scenarios.</p>
 <p>The nearest thing to a generalization signal is architectural, not statistical: <strong>each rewording type runs as three independent scenario-family panels</strong>, and if all three move together, that's much stronger evidence than any interval over 15 items could provide.</p>
 <h2 id="reading-the-checks-not-just-the-headline">Reading the checks, not just the headline</h2>
 <p>Before treating any <code>stability_pct</code> as meaningful, check three things the record publishes alongside it:</p>

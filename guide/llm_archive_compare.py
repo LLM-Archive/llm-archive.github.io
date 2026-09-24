@@ -9,7 +9,7 @@
 It asks your model the 8 questions LLM-Archive publishes in full (2 dilemmas x 4 versions) and
 prints your model's answers next to the ones the archive recorded.
 
-This is a spot-check on 2 questions, not a stability score: each real test uses a frozen panel of
+This is a spot-check on 2 questions, not a stability score: each real protocol uses a frozen panel of
 15 scenarios, and only the first one of each is published. The full numbers are at
 https://llm-archive.github.io.
 

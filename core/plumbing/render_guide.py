@@ -45,6 +45,7 @@ PAGES: list[tuple[str, str, str]] = [
     ("data-dictionary.md", "data-dictionary.html", "Data dictionary"),
     ("glossary.md", "glossary.html", "Glossary"),
     ("faq.md", "faq.html", "FAQ"),
+    ("timestamps.md", "timestamps.html", "Time proofs"),
 ]
 
 _MD_TO_HTML = {md: out for md, out, _ in PAGES}

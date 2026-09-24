@@ -19,6 +19,8 @@ from unittest import mock
 from core.budget import budget
 from core.plumbing.fake_client import FakeClient
 
+from core.plumbing import prereg
+
 from . import coverage, run_due, schedule
 
 _VECTORS = Path(__file__).resolve().parent / "vectors.json"
@@ -165,6 +167,7 @@ def check_run_full_sweep_ladder(data) -> list[str]:
                 protocols_dir=protocols_dir, out_root=tmp / "experiments_count",
                 subject_models_path=_REAL_SUBJECT_MODELS,
                 budget_ledger=ledger, budget_config=huge_ceiling_config,
+                manifests_dir=None,
             )
         ran = [r for r in results if "run_id" in r]
         capped = [r for r in results if r.get("skipped") == "budget_halted" and "caps this sweep" in r.get("detail", "")]
@@ -193,6 +196,7 @@ def check_run_full_sweep_ladder(data) -> list[str]:
                 protocols_dir=protocols_dir_open, out_root=tmp / "experiments_lane_open",
                 subject_models_path=_REAL_SUBJECT_MODELS,
                 budget_ledger=ledger_open, budget_config=budget.DEFAULT_CONFIG,
+                manifests_dir=None,
             )
         open_result = next((r for r in results_open if r["protocol_id"] == open_lane), None)
         if "run_id" in (open_result or {}):
@@ -213,6 +217,7 @@ def check_run_full_sweep_ladder(data) -> list[str]:
                 protocols_dir=protocols_dir_guard, out_root=tmp / "experiments_lane_guard",
                 subject_models_path=_REAL_SUBJECT_MODELS,
                 budget_ledger=ledger_guard, budget_config=budget.DEFAULT_CONFIG,
+                manifests_dir=None,
             )
         by_pid_guard = {r["protocol_id"]: r for r in results_guard}
         for pid in guard_lane:
@@ -286,7 +291,7 @@ def check_already_run_this_month(data) -> list[str]:
                 protocols_dir=protocols_dir, out_root=out_root,
                 subject_models_path=_REAL_SUBJECT_MODELS,
                 budget_ledger=ledger, budget_config=budget.DEFAULT_CONFIG,
-                model_id="stub-model", model_family="stub-family",
+                model_id="stub-model", model_family="stub-family", manifests_dir=None,
             )
         by_pid = {r["protocol_id"]: r for r in results}
         if by_pid.get(already_pid, {}).get("skipped") != "already_run_this_month":
@@ -336,7 +341,7 @@ def check_sweep_rotation(data) -> list[str]:
                 protocols_dir=protocols_dir, out_root=out_root,
                 subject_models_path=_REAL_SUBJECT_MODELS,
                 budget_ledger=ledger, budget_config=budget.DEFAULT_CONFIG,
-                model_id="stub-model", model_family="stub-family",
+                model_id="stub-model", model_family="stub-family", manifests_dir=None,
             )
         order = [r["protocol_id"] for r in results]
         if order[:1] != [never_pid]:
@@ -350,6 +355,67 @@ def check_sweep_rotation(data) -> list[str]:
         errors.append(f"cost estimate must scale with n: n=30 -> {est_small}, n=120 -> {est_large}")
     if est_small != Fraction("0.792"):
         errors.append(f"n=30 estimate drifted from the €0.79/protocol it replaced: {est_small}")
+    return errors
+
+
+def check_prereg_guard(data) -> list[str]:
+    """A paid sweep must refuse a protocol that no stamped manifest covers, spend nothing on it,
+    and still run one that is covered (core/plumbing/prereg.py; guide/timestamps.md says why).
+
+    Two real protocols are copied to a temp dir. Only the first is listed in a stamped manifest.
+    Expect: the first runs, the second is skipped as `not_preregistered`. Then the same sweep with an
+    empty manifests dir: nothing runs at all. Then the first protocol is 'edited' after stamping (its
+    protocol_sha256 changes): it must stop being covered."""
+    del data
+    errors = []
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = Path(tmp)
+        protocols_dir = tmp / "protocols"
+        protocols_dir.mkdir()
+        chosen = sorted(_REAL_PROTOCOLS_DIR.glob("*__v0.json"))[:2]
+        protos = [json.loads(f.read_text()) for f in chosen]
+        for f in chosen:
+            shutil.copy(f, protocols_dir / f.name)
+        covered_pid, uncovered_pid = protos[0]["protocol_id"], protos[1]["protocol_id"]
+
+        def sweep(manifests_dir: Path, out: str) -> list[dict]:
+            ledger = tmp / f"ledger_{out}.json"
+            _write_ledger(ledger, "2026-06-01", "0")
+            with mock.patch("core.plumbing.anthropic_client.AnthropicClient", _StubClient), contextlib.redirect_stdout(io.StringIO()):
+                return run_due.run_full_sweep(
+                    client_kind="anthropic", run_date="2026-06-15",
+                    protocols_dir=protocols_dir, out_root=tmp / out,
+                    subject_models_path=_REAL_SUBJECT_MODELS,
+                    budget_ledger=ledger, budget_config=budget.DEFAULT_CONFIG,
+                    model_id="stub-model", model_family="stub-family", manifests_dir=manifests_dir,
+                )
+
+        def row(p: dict, **over) -> dict:
+            return {"protocol_id": p["protocol_id"], "panel_sha256": p["panel_sha256"],
+                    "protocol_sha256": p["protocol_sha256"], **over}
+
+        manifests = tmp / "manifests"
+        manifests.mkdir()
+        prereg._write_manifest(manifests, "m.json", [row(protos[0])])
+        by_pid = {r["protocol_id"]: r for r in sweep(manifests, "exp_a")}
+        if "run_id" not in by_pid.get(covered_pid, {}):
+            errors.append(f"a stamped protocol must run: {by_pid.get(covered_pid)}")
+        if by_pid.get(uncovered_pid, {}).get("skipped") != "not_preregistered":
+            errors.append(f"an unstamped protocol must be skipped as not_preregistered: {by_pid.get(uncovered_pid)}")
+
+        empty = tmp / "empty"
+        empty.mkdir()
+        results = sweep(empty, "exp_b")
+        if any("run_id" in r for r in results):
+            errors.append("with no stamped manifest nothing may run")
+        if list((tmp / "exp_b").glob("*")) if (tmp / "exp_b").exists() else []:
+            errors.append("a refused protocol must not create any run directory")
+
+        edited = tmp / "edited"
+        edited.mkdir()
+        prereg._write_manifest(edited, "m.json", [row(protos[0], protocol_sha256="0" * 64), row(protos[1], panel_sha256="0" * 64)])
+        if any("run_id" in r for r in sweep(edited, "exp_c")):
+            errors.append("a protocol whose hash differs from the stamped one must not run")
     return errors
 
 
@@ -367,6 +433,7 @@ def main() -> int:
         ("ladder_projection", lambda: check_ladder_projection(data)),
         ("already_run_this_month", lambda: check_already_run_this_month(data)),
         ("sweep_rotation", lambda: check_sweep_rotation(data)),
+        ("prereg_guard", lambda: check_prereg_guard(data)),
     )
 
     all_errors: list[str] = []

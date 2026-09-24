@@ -36,8 +36,8 @@ same way," and no such claim is ever published.
 ## The scope every published number carries
 
 Every measurement's claim is exactly: *"on this frozen panel, on this model, on that day."* Never
-"the model is X% stable under wording" as a general property — always "on panel `p-004`," naming
-the specific panel. This isn't a hedge added after the fact; it follows from a specific, disclosed
+"the model is X% stable under wording" as a general property — always "on protocol `risky_choice_framing__wording__v0`," naming
+the specific protocol and, through its `panel_sha256`, the specific panel. This isn't a hedge added after the fact; it follows from a specific, disclosed
 design decision: the confidence interval is a bootstrap over responses, **conditional on the
 panel**, and no generalization interval is published (`docs/spec.md` §6). A 15-scenario cluster
 bootstrap would understate uncertainty, so rather than publish a falsely narrow interval, this

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How we prove we decided first — LLM-Archive Guide</title>
+<style>
+:root{--ink:#15161a;--dim:#5a5c66;--faint:#8c8f99;--line:#e4e4e8;--bg:#fff;--raise:#fafafb;--link:#1a4fd6}
+@media(prefers-color-scheme:dark){
+  :root{--ink:#e8edf3;--dim:#aeb9c7;--faint:#7f8b99;--line:#34404d;--bg:#14181d;--raise:#1d242c;--link:#79aef2}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 system-ui,-apple-system,"Segoe UI",Inter,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:760px;margin:0 auto;padding:0 20px}
+header{border-bottom:1px solid var(--line);padding:16px 0;margin-bottom:8px}
+header .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px}
+.brand{font-size:14px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);text-decoration:none;margin-right:8px}
+.brand small{display:block;font-size:10px;font-weight:600;letter-spacing:.08em;color:var(--faint)}
+nav{display:flex;flex-wrap:wrap;gap:2px}
+nav a{font-size:13px;color:var(--dim);text-decoration:none;padding:5px 9px;border-radius:6px}
+nav a.on{color:var(--ink);font-weight:650;background:var(--raise)}
+main{padding:28px 0 80px}
+h1{font-size:clamp(22px,3.6vw,28px);line-height:1.3;font-weight:660;letter-spacing:-.02em;margin:0 0 16px}
+h2{font-size:clamp(19px,3.2vw,23px);line-height:1.3;letter-spacing:-.015em;margin:34px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+h3,h4{font-size:15px;font-weight:700;margin:22px 0 8px}
+h1:target,h2:target,h3:target,h4:target{scroll-margin-top:16px}
+p{margin:0 0 14px}
+ul,ol{margin:0 0 14px;padding-left:22px}
+li{margin-bottom:6px}
+a{color:var(--link)}
+code{font:13px ui-monospace,"SF Mono",Menlo,monospace;background:var(--raise);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+pre{background:var(--raise);border:1px solid var(--line);border-radius:8px;padding:14px 16px;overflow-x:auto;margin:0 0 16px}
+pre code{background:none;border:0;padding:0;font-size:13px;line-height:1.55}
+blockquote{margin:0 0 16px;padding:2px 16px;border-left:3px solid var(--line);color:var(--dim)}
+hr{border:0;border-top:1px solid var(--line);margin:28px 0}
+.twrap{overflow-x:auto;margin:0 0 18px}
+table{width:100%;border-collapse:collapse;font-size:14.5px}
+th{text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);padding:0 14px 8px 0;border-bottom:2px solid var(--line);white-space:nowrap}
+td{padding:10px 14px 10px 0;border-bottom:1px solid var(--line);vertical-align:top}
+footer{border-top:1px solid var(--line);padding:18px 0;font-size:12.5px;color:var(--faint)}
+footer a{color:var(--faint)}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+<a class="brand" href="index.html">LLM-Archive<small>Guide</small></a>
+<nav><a href="index.html">Guide home</a>
+<a href="for-researchers.html">For researchers</a>
+<a href="for-developers.html">For developers</a>
+<a href="reproducing.html">Reproducing</a>
+<a href="data-dictionary.html">Data dictionary</a>
+<a href="glossary.html">Glossary</a>
+<a href="faq.html">FAQ</a>
+<a class="on" href="timestamps.html">Time proofs</a></nav>
+</div></header>
+<main class="wrap">
+<h1 id="how-we-prove-we-decided-first">How we prove we decided first</h1>
+<p><strong>In one sentence:</strong> before we run a new protocol, we fix its fingerprint in a place nobody can edit, so that nobody — including us — can claim afterwards that we chose the protocol after seeing the result.</p>
+<h2 id="why-this-is-needed">Why this is needed</h2>
+<p>Imagine a teacher who writes the exam questions <em>after</em> seeing which ones the student can answer. The exam would look impressive and prove nothing.</p>
+<p>A benchmark has the same weak spot. If we could quietly change a protocol after seeing how a model did, the numbers would look good but mean little. The dates on our own files don't help: we write them ourselves, so we could write any date we liked.</p>
+<p>So we need a clock that <strong>we don't control</strong>.</p>
+<h2 id="the-idea-in-plain-words">The idea, in plain words</h2>
+<p>Every file has a <strong>fingerprint</strong>: a short code that changes completely if even one letter of the file changes (the <code>panel_sha256</code> and <code>protocol_sha256</code> you see in the data are fingerprints of this kind; see <a href="glossary.html"><code>glossary.md</code></a>). We collect the fingerprints of our protocols in one small file, the <strong>manifest</strong>, and send only the manifest's own fingerprint (never the protocols themselves) to a free public service called <a href="https://opentimestamps.org">OpenTimestamps</a>. It writes the code into the Bitcoin record, which is public and which nobody can rewrite.</p>
+<p>Later, anyone can check: <em>"this manifest already existed on this date."</em> Not "exactly when we made it", only "no later than". That is the direction that matters: we can't claim to have decided earlier than we really did.</p>
+<h2 id="how-we-do-it-four-steps">How we do it: four steps</h2>
+<ol>
+<li><strong>Write the manifest.</strong> A small file listing the fingerprints of every protocol that is ready.</li>
+<li><strong>Stamp it.</strong> One command sends the manifest's fingerprint to the free service. This takes seconds.</li>
+<li><strong>Wait a few hours.</strong> The service is grouping many stamps into one Bitcoin entry.</li>
+<li><strong>Finish the stamp.</strong> One more command collects the finished proof and saves it next to the manifest. From now on, the proof stands on its own.</li>
+</ol>
+<p>We run a new protocol for the first time only <strong>after step 2</strong>. Steps 3 and 4 finish the proof afterwards; the stamp already fixes the date the service received it.</p>
+<p>The first manifest was stamped on <strong>24 September 2026</strong>, before the <code>v1</code> protocols were run. The <code>v0</code> protocols had already been run by then, so for those the stamp shows only that they existed by that date, not that they were fixed before their first run.</p>
+<h2 id="what-you-can-check-yourself">What you can check yourself</h2>
+<p>Today, not yet: the manifest also contains fingerprints of protocols we keep private on purpose (the sealed lane, see <a href="glossary.html"><code>glossary.md</code></a>), so we haven't published it. The fingerprints of the public protocols are already published in <code>stability.csv</code>, so once the manifest is shown — in part or in full — anyone can match it against what has been public all along, and check the stamp with the free <code>ots verify</code> tool.</p>
+<h2 id="what-this-is-not">What this is not</h2>
+<p>It is one cheap, outside check on one thing: <em>when a protocol was fixed</em>. It doesn't prove the results weren't changed later, and it doesn't replace our other checks. We list wider ideas as future work rather than pretend they exist.</p>
+</main>
+<footer class="wrap">
+Written for people using LLM-Archive, not building it — see <a href="../README.md">../README.md</a>
+and <a href="../docs/spec.md">docs/spec.md</a> for the project itself.
+</footer>
+</body>
+</html>
