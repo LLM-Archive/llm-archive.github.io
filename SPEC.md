@@ -692,13 +692,14 @@ revalidation_daily:        10     # historical records, local, zero cost
 
 # Generations
 generation_bridge_protocols: 4    # one per type · n_per_scenario=1, not the frozen 2 · old AND
-                                   # new, same week · 480 calls ≈ $2.64, §4.3
+                                   # new, same week · 480 calls, §4.3
                                    # preempts that month's sweep (cause: generation_bridge)
 bridge_trigger:      any_new_model_id_in_family   # BRIDGE: automatic, immediate
 active_switch:       provider_declared_successor  # ACTIVE-MODEL SWITCH: only with an explicit
                                    # declaration, otherwise needs_review — one click in the monthly batch
-bridge_reserve_monthly: 2.80      # $ — never spent on anything else; drawn on its own, never
-                                   # subtracted from the general monthly pool (core/budget/budget.py)
+                                   # bridge reserve: a private budget setting (budget.json), never spent on
+                                   # anything else, drawn on its own, never subtracted from the general
+                                   # monthly pool (core/budget/budget.py)
 retirement_threshold:       4     # generations AND equivalence
 declassify_after:           4     # generations
 
