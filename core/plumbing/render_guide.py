@@ -243,6 +243,19 @@ a{color:var(--link)}
 code{font:13px ui-monospace,"SF Mono",Menlo,monospace;background:var(--raise);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
 pre{background:var(--raise);border:1px solid var(--line);border-radius:8px;padding:14px 16px;overflow-x:auto;margin:0 0 16px}
 pre code{background:none;border:0;padding:0;font-size:13px;line-height:1.55}
+html.theme-white{--ink:#15161a;--dim:#5a5c66;--faint:#8c8f99;--line:#e4e4e8;--bg:#fff;--raise:#fafafb;--link:#1a4fd6}
+html.theme-blue{--ink:#d9e7f5;--dim:#a9bed2;--faint:#7189a1;--line:#29435d;--bg:#071a2b;--raise:#0d263d;--link:#65c7f7}
+html.theme-dark{--ink:#e8edf3;--dim:#aeb9c7;--faint:#7f8b99;--line:#34404d;--bg:#14181d;--raise:#1d242c;--link:#79aef2}
+.themes{position:fixed;top:14px;right:18px;z-index:80;display:flex;gap:4px;padding:4px;border:1px solid var(--line);border-radius:9px;background:var(--bg);box-shadow:0 4px 16px rgba(20,20,24,.08)}
+html.theme-dark .themes{box-shadow:0 4px 16px rgba(0,0,0,.3)}
+@media(max-width:760px){.themes{position:static;width:fit-content;margin:8px 10px 0 auto}}
+.themes button{border:0;border-radius:6px;background:transparent;color:var(--dim);cursor:pointer;font:11px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif;padding:6px 8px}
+.themes button:hover,.themes button.on{background:var(--raise);color:var(--ink);font-weight:650}
+.codewrap{position:relative;margin:0 0 16px}
+.codewrap pre{margin:0}
+.copybtn{position:absolute;top:8px;right:8px;font:600 12px system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--dim);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:4px 10px;cursor:pointer;opacity:.85}
+.copybtn:hover,.copybtn:focus-visible{opacity:1;color:var(--ink);border-color:var(--faint)}
+.copybtn.done{color:var(--ink);border-color:var(--ink);opacity:1}
 blockquote{margin:0 0 16px;padding:2px 16px;border-left:3px solid var(--line);color:var(--dim)}
 hr{border:0;border-top:1px solid var(--line);margin:28px 0}
 .twrap{overflow-x:auto;margin:0 0 18px}
@@ -259,6 +272,63 @@ def _page_title(md_text: str, fallback: str) -> str:
     return m.group(1).strip() if m else fallback
 
 
+# Adds a "Copy" button to every fenced code block. Progressive enhancement only: the <pre><code>
+# markup render_markdown emits is unchanged, so without JavaScript the blocks read exactly as before.
+# No third-party code -- navigator.clipboard where available, a textarea + execCommand fallback
+# where it is not (plain http, file://, older browsers).
+COPY_SCRIPT = """<script>
+(function(){
+  function copyText(text){
+    if(navigator.clipboard&&window.isSecureContext){return navigator.clipboard.writeText(text);}
+    return new Promise(function(resolve,reject){
+      var t=document.createElement('textarea');t.value=text;t.setAttribute('readonly','');
+      t.style.position='fixed';t.style.opacity='0';document.body.appendChild(t);t.select();
+      try{document.execCommand('copy')?resolve():reject();}catch(e){reject(e);}
+      document.body.removeChild(t);
+    });
+  }
+  document.querySelectorAll('pre').forEach(function(pre){
+    var code=pre.querySelector('code');if(!code)return;
+    var wrap=document.createElement('div');wrap.className='codewrap';
+    pre.parentNode.insertBefore(wrap,pre);wrap.appendChild(pre);
+    var b=document.createElement('button');b.type='button';b.className='copybtn';
+    b.textContent='Copy';b.setAttribute('aria-label','Copy code to clipboard');
+    b.addEventListener('click',function(){
+      copyText(code.textContent).then(function(){b.textContent='Copied';b.classList.add('done');},
+        function(){b.textContent='Press Ctrl+C';});
+      setTimeout(function(){b.textContent='Copy';b.classList.remove('done');},1600);
+    });
+    wrap.appendChild(b);
+  });
+})();
+</script>"""
+
+
+# Theme picker, the same three themes and the same localStorage key as the main site
+# (website/template.html), so a choice made on either is kept on the other -- the guide is served
+# from the same origin. The early script runs in <head> and sets the class on <html> before the page
+# is painted, so there is no flash of the wrong theme. Default 'blue', like the main site. Without
+# JavaScript the page keeps following the system light/dark setting (PAGE_CSS's media query).
+THEME_HEAD_SCRIPT = """<script>
+(function(){var t='blue';try{t=localStorage.getItem('llm-archive-theme')||'blue';}catch(e){}
+if(t!=='white'&&t!=='dark'&&t!=='blue')t='blue';document.documentElement.classList.add('theme-'+t);})();
+</script>"""
+
+THEME_SCRIPT = """<script>
+(function(){
+  var buttons=document.querySelectorAll('.themes [data-theme]');
+  function apply(t){
+    var c=document.documentElement.classList;c.remove('theme-blue','theme-dark','theme-white');c.add('theme-'+t);
+    buttons.forEach(function(b){var on=b.dataset.theme===t;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));});
+    try{localStorage.setItem('llm-archive-theme',t);}catch(e){}
+  }
+  var cur='blue';['white','dark','blue'].forEach(function(t){if(document.documentElement.classList.contains('theme-'+t))cur=t;});
+  buttons.forEach(function(b){b.addEventListener('click',function(){apply(b.dataset.theme);});});
+  apply(cur);
+})();
+</script>"""
+
+
 def render_page(current_out_name: str, title: str, body_html: str) -> str:
     def _nav_link(out_name: str, label: str) -> str:
         cls = ' class="on"' if out_name == current_out_name else ""
@@ -272,6 +342,7 @@ def render_page(current_out_name: str, title: str, body_html: str) -> str:
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{html_lib.escape(title)}{suffix}</title>
+{THEME_HEAD_SCRIPT}
 <style>{PAGE_CSS}</style>
 </head>
 <body>
@@ -279,6 +350,11 @@ def render_page(current_out_name: str, title: str, body_html: str) -> str:
 <a class="brand" href="index.html">LLM-Archive<small>Guide</small></a>
 <nav>{nav}</nav>
 </div></header>
+<div class="themes" role="group" aria-label="Theme picker">
+<button type="button" data-theme="blue">Blue</button>
+<button type="button" data-theme="white">Light</button>
+<button type="button" data-theme="dark">Dark</button>
+</div>
 <main class="wrap">
 {body_html}
 </main>
@@ -286,6 +362,8 @@ def render_page(current_out_name: str, title: str, body_html: str) -> str:
 Written for people using LLM-Archive — see <a href="../README.md">../README.md</a>
 and <a href="../docs/spec.md">docs/spec.md</a> for the project itself.
 </footer>
+{THEME_SCRIPT}
+{COPY_SCRIPT}
 </body>
 </html>
 """
@@ -353,6 +431,18 @@ def _verify() -> list[str]:
     code_html = render_markdown("```bash\npython3 <file>.json\n```")
     if "<pre><code" not in code_html or "&lt;file&gt;" not in code_html or "python3 <file>" in code_html:
         errors.append(f"render_markdown: fenced code block not escaped verbatim, got {code_html!r}")
+
+    page_html = render_page("x.html", "T", "<pre><code>x</code></pre>")
+    if "copybtn" not in page_html or "clipboard" not in page_html or "</script>" not in page_html:
+        errors.append("render_page: the copy-button script is missing from the page")
+    for needle in ('data-theme="blue"', 'data-theme="white"', 'data-theme="dark"', "llm-archive-theme"):
+        if needle not in page_html:
+            errors.append(f"render_page: the theme picker is missing {needle}")
+    for name, blob in (("THEME_HEAD_SCRIPT", THEME_HEAD_SCRIPT), ("THEME_SCRIPT", THEME_SCRIPT)):
+        if "http://" in blob or "https://" in blob or "src=" in blob:
+            errors.append(f"render_page: {name} must not load anything external")
+    if "http://" in COPY_SCRIPT or "https://" in COPY_SCRIPT or "src=" in COPY_SCRIPT:
+        errors.append("render_page: the copy-button script must not load anything external")
 
     if not DEFAULT_GUIDE_DIR.exists():
         return errors

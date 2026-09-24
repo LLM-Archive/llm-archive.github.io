@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FAQ — LLM-Archive Guide</title>
+<script>
+(function(){var t='blue';try{t=localStorage.getItem('llm-archive-theme')||'blue';}catch(e){}
+if(t!=='white'&&t!=='dark'&&t!=='blue')t='blue';document.documentElement.classList.add('theme-'+t);})();
+</script>
 <style>
 :root{--ink:#15161a;--dim:#5a5c66;--faint:#8c8f99;--line:#e4e4e8;--bg:#fff;--raise:#fafafb;--link:#1a4fd6}
 @media(prefers-color-scheme:dark){
@@ -31,6 +35,19 @@ a{color:var(--link)}
 code{font:13px ui-monospace,"SF Mono",Menlo,monospace;background:var(--raise);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
 pre{background:var(--raise);border:1px solid var(--line);border-radius:8px;padding:14px 16px;overflow-x:auto;margin:0 0 16px}
 pre code{background:none;border:0;padding:0;font-size:13px;line-height:1.55}
+html.theme-white{--ink:#15161a;--dim:#5a5c66;--faint:#8c8f99;--line:#e4e4e8;--bg:#fff;--raise:#fafafb;--link:#1a4fd6}
+html.theme-blue{--ink:#d9e7f5;--dim:#a9bed2;--faint:#7189a1;--line:#29435d;--bg:#071a2b;--raise:#0d263d;--link:#65c7f7}
+html.theme-dark{--ink:#e8edf3;--dim:#aeb9c7;--faint:#7f8b99;--line:#34404d;--bg:#14181d;--raise:#1d242c;--link:#79aef2}
+.themes{position:fixed;top:14px;right:18px;z-index:80;display:flex;gap:4px;padding:4px;border:1px solid var(--line);border-radius:9px;background:var(--bg);box-shadow:0 4px 16px rgba(20,20,24,.08)}
+html.theme-dark .themes{box-shadow:0 4px 16px rgba(0,0,0,.3)}
+@media(max-width:760px){.themes{position:static;width:fit-content;margin:8px 10px 0 auto}}
+.themes button{border:0;border-radius:6px;background:transparent;color:var(--dim);cursor:pointer;font:11px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif;padding:6px 8px}
+.themes button:hover,.themes button.on{background:var(--raise);color:var(--ink);font-weight:650}
+.codewrap{position:relative;margin:0 0 16px}
+.codewrap pre{margin:0}
+.copybtn{position:absolute;top:8px;right:8px;font:600 12px system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--dim);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:4px 10px;cursor:pointer;opacity:.85}
+.copybtn:hover,.copybtn:focus-visible{opacity:1;color:var(--ink);border-color:var(--faint)}
+.copybtn.done{color:var(--ink);border-color:var(--ink);opacity:1}
 blockquote{margin:0 0 16px;padding:2px 16px;border-left:3px solid var(--line);color:var(--dim)}
 hr{border:0;border-top:1px solid var(--line);margin:28px 0}
 .twrap{overflow-x:auto;margin:0 0 18px}
@@ -53,6 +70,11 @@ footer a{color:var(--faint)}
 <a class="on" href="faq.html">FAQ</a>
 <a href="timestamps.html">Time proofs</a></nav>
 </div></header>
+<div class="themes" role="group" aria-label="Theme picker">
+<button type="button" data-theme="blue">Blue</button>
+<button type="button" data-theme="white">Light</button>
+<button type="button" data-theme="dark">Dark</button>
+</div>
 <main class="wrap">
 <h1 id="faq">FAQ</h1>
 <p>Quick answers. For the full reasoning behind any of these, follow the link to <a href="../docs/spec.md"><code>../docs/spec.md</code></a>, which is the governing document if anything here is unclear or seems to conflict with it.</p>
@@ -81,5 +103,44 @@ footer a{color:var(--faint)}
 Written for people using LLM-Archive — see <a href="../README.md">../README.md</a>
 and <a href="../docs/spec.md">docs/spec.md</a> for the project itself.
 </footer>
+<script>
+(function(){
+  var buttons=document.querySelectorAll('.themes [data-theme]');
+  function apply(t){
+    var c=document.documentElement.classList;c.remove('theme-blue','theme-dark','theme-white');c.add('theme-'+t);
+    buttons.forEach(function(b){var on=b.dataset.theme===t;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));});
+    try{localStorage.setItem('llm-archive-theme',t);}catch(e){}
+  }
+  var cur='blue';['white','dark','blue'].forEach(function(t){if(document.documentElement.classList.contains('theme-'+t))cur=t;});
+  buttons.forEach(function(b){b.addEventListener('click',function(){apply(b.dataset.theme);});});
+  apply(cur);
+})();
+</script>
+<script>
+(function(){
+  function copyText(text){
+    if(navigator.clipboard&&window.isSecureContext){return navigator.clipboard.writeText(text);}
+    return new Promise(function(resolve,reject){
+      var t=document.createElement('textarea');t.value=text;t.setAttribute('readonly','');
+      t.style.position='fixed';t.style.opacity='0';document.body.appendChild(t);t.select();
+      try{document.execCommand('copy')?resolve():reject();}catch(e){reject(e);}
+      document.body.removeChild(t);
+    });
+  }
+  document.querySelectorAll('pre').forEach(function(pre){
+    var code=pre.querySelector('code');if(!code)return;
+    var wrap=document.createElement('div');wrap.className='codewrap';
+    pre.parentNode.insertBefore(wrap,pre);wrap.appendChild(pre);
+    var b=document.createElement('button');b.type='button';b.className='copybtn';
+    b.textContent='Copy';b.setAttribute('aria-label','Copy code to clipboard');
+    b.addEventListener('click',function(){
+      copyText(code.textContent).then(function(){b.textContent='Copied';b.classList.add('done');},
+        function(){b.textContent='Press Ctrl+C';});
+      setTimeout(function(){b.textContent='Copy';b.classList.remove('done');},1600);
+    });
+    wrap.appendChild(b);
+  });
+})();
+</script>
 </body>
 </html>

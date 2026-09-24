@@ -69,10 +69,11 @@ body{margin:0;background:var(--bg);color:var(--ink);
 header{border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);
   backdrop-filter:blur(8px);z-index:50}
 header .wrap{max-width:1180px;display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding-block:10px;position:relative}
-.brand{position:relative;display:inline-flex;align-items:center;font-size:14px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
-  margin-right:14px;padding-right:20px;color:var(--ink);text-decoration:none;cursor:pointer}
+.brand{position:relative;display:inline-flex;flex-direction:column;align-items:flex-start;font-size:14px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  margin-right:14px;color:var(--ink);text-decoration:none;cursor:pointer}
 .brand:hover{background:none;opacity:.65}
-.ver{position:absolute;right:0;bottom:0;font-size:9px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--faint)}
+.hbreak{flex-basis:100%;height:0}
+.ver{display:block;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:none;color:var(--faint)}
 .brand.on{background:none;font-weight:700}
 header a{font-size:13px;color:var(--dim);text-decoration:none;padding:5px 10px;border-radius:6px;cursor:pointer}
 header a:hover{background:var(--raise);color:var(--ink)}
@@ -251,7 +252,8 @@ footer{border-top:1px solid var(--line);margin-top:70px;padding-top:22px;font-si
 </style>
 
 <header><div class="wrap">
-  <a href="#out" class="brand nav on" data-p="out" aria-current="page" aria-label="LLM-Archive home">LLM-Archive <span class="ver">@@SITE_VERSION@@</span></a>
+  <a href="#out" class="brand nav on" data-p="out" aria-current="page" aria-label="LLM-Archive home">LLM-Archive<span class="ver">@@SITE_VERSION@@</span></a>
+  <span class="hbreak" aria-hidden="true"></span>
   <a href="#results" class="nav" data-p="results">Results</a>
   <a href="#what" class="nav" data-p="what">Design</a>
   <a href="#does" class="nav" data-p="does">The metric</a>
