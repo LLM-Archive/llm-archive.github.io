@@ -10,6 +10,14 @@ shouldn't change the answer — measured as a distance between two response dist
 per-question "did it flip" count. See [`glossary.md`](glossary.md) for the exact terms and
 [`for-researchers.md`](for-researchers.md) for what the number does and doesn't prove.
 
+**What is LLM-Archive for?**
+Research. It keeps an open, dated, checkable record of one narrow property — whether a model keeps
+the same decision when a question is reworded without changing its meaning — so that other
+researchers can reproduce, cite and extend it. It is not a product evaluation or a ranking, it is not
+run to rate or promote any model, and no number is meant as a basis for deciding whether to buy, use
+or trust one. The scenarios are fictional dilemmas; no personal data is sent to or collected from a
+model. See [`../docs/spec.md`](../docs/spec.md) §1.2.
+
 **Why isn't a perfectly consistent model reported as 100% stable?**
 Because with a finite number of responses, two samples from the *identical* distribution still
 produce some measured gap by chance alone. This "noise floor" is published next to every

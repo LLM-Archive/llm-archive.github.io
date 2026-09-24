@@ -152,7 +152,8 @@ figure svg{min-width:660px}
 .sgw{display:flex;gap:3px;align-items:flex-end;height:120px;margin:6px 0 4px;
   padding:10px 12px;background:var(--raise);border:1px solid var(--line);border-radius:8px;overflow-x:auto}
 .sgb{flex:1;min-width:20px;display:flex;flex-direction:column;justify-content:flex-end;height:100%;text-align:center}
-.sgb i{display:block;background:var(--c2);border-radius:2px 2px 0 0;min-height:2px}
+.sgb i{display:block;background:rgba(5,0,0,0.65);border-radius:2px 2px 0 0;min-height:2px}
+body.theme-blue .sgb i,body.theme-dark .sgb i{background:rgba(168,219,255,0.65)}
 .sgb span{font-size:9.5px;color:var(--faint);padding-top:3px}
 .scale{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--faint);margin-bottom:20px}
 .scale i{width:26px;height:12px;border-radius:3px;display:inline-block}
@@ -167,7 +168,7 @@ tr.row td:last-child{color:var(--link);font-size:13px;white-space:nowrap}
 .t-dn{color:#180404}
 body.theme-dark .t-dn,body.theme-blue .t-dn{color:var(--ink)}
 .t-open{background:#e9eefc;color:#24408e}
-.t-guard{background:#f5f0fc;color:#6b24ae}
+.t-guard{background:rgba(0,0,0,0.68);color:rgba(242,243,250,0.94)}
 
 .status-pill{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:999px;
   border:1px solid rgba(21,128,61,.26);background:rgba(21,128,61,.08);color:var(--good);
@@ -350,7 +351,7 @@ downloaded exactly the same file. What each column inside each csv means is expl
 in the <a href="guide/data-dictionary.html">data dictionary</a>, part of the separate
 <a href="guide/index.html">guide</a>.</small></p>
 
-<h3>Compare your own model</h3>
+<h3>See if your model is easily influenced by wording.</h3>
 <a class="agentdl" href="@@AGENT_GUIDE_HREF@@" download="LLM-Archive-run-on-your-computer.md">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>
   <span><b>AI Assistant</b><small>An .md guide with instructions you can give to your AI agent to compare your model.</small></span>

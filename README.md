@@ -29,6 +29,7 @@ This repository *is* the public site and the public dataset — everything here 
 | `cadence.yaml`, `subject_models.yaml` | The measurement schedule and which model(s) are currently tracked |
 | `CITATION.cff` | How to cite a specific measurement (preferred) or the project |
 | `LICENSE.md` | Full license breakdown (see below) |
+| `NOTICE.md` | Purpose, disclaimer, what is sent to models and published, and privacy of the site |
 
 **What's actually measured:** 12 protocols — 3 scenario families (`risky_choice_framing`,
 `sunk_cost_fallacy`, `base_rate_neglect`) × 4 rewording types (`wording`, `anchoring`, `order`,

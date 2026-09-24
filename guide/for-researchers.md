@@ -5,6 +5,17 @@ responsibly in your own work. For column-level detail see [`data-dictionary.md`]
 for the full formal treatment, [`../docs/spec.md`](../docs/spec.md) §6 is the governing document —
 if anything here seems to disagree with it, the spec is right.
 
+## What this project is for
+
+LLM-Archive is a **research project**, and everything it does — the measurements, the calls made to
+models, the published data and code — is done for research purposes: to keep an open, dated,
+checkable record of one narrow property (does a model keep the same decision when a question is
+reworded without changing its meaning?) that other researchers can reproduce, cite and extend. It is
+not a product evaluation, a ranking or a certification, it is not run to rate or promote any provider
+or model, and no number here is meant as a basis for deciding whether to buy, use or trust one. The
+scenarios are fictional decision dilemmas; no personal data is sent to a model or collected from one.
+The formal statement is `../docs/spec.md` §1.2.
+
 ## What the metric is, precisely
 
 `stability_pct` answers one question: *on this frozen 15-scenario panel, did this model's decision

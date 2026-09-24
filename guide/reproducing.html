@@ -56,14 +56,67 @@ footer a{color:var(--faint)}
 <main class="wrap">
 <h1 id="reproducing-a-result-submitting-a-comparison-point">Reproducing a result / submitting a comparison point</h1>
 <p>LLM-Archive's panel, decision grammar, and extraction rule are all public by design — the point of the project isn't "trust us," it's "here is exactly what would have to be true for this number to be wrong, go check." This page covers the two things an outside party can actually do with that: reproduce an <code>open</code>-lane result, and run the same panel against a different model.</p>
+<h2 id="run-it-with-an-ai-agent-or-by-hand-reproduce-a-published-number">Run it with an AI agent (or by hand): reproduce a published number</h2>
+<p><strong>For you, or for an AI agent you hand this file to.</strong> Everything below uses only the public repository, <code>github.com/LLM-Archive/llm-archive.github.io</code>, and Python 3.10+ (standard library only — nothing to install). The specification is <code>SPEC.md</code> at the repository root.</p>
+<blockquote><p><strong>If you are an AI agent reading this:</strong> run the steps in order. After each step compare what you got with its <strong>"You should see"</strong> line, and <strong>stop at the first mismatch</strong>, reporting exactly what you saw instead of continuing. Every figure you report must come from a file or a command's output — never from memory and never estimated. Do not send anything to anyone (including the email address in "Submitting one") without the person you are working for asking you to.</p></blockquote>
+<h3 id="step-1-get-the-files">Step 1 — get the files</h3>
+<pre><code class="language-bash">git clone https://github.com/LLM-Archive/llm-archive.github.io llm-archive
+cd llm-archive</code></pre>
+<p><em>No git?</em> Use <strong>Code → Download ZIP</strong> on the repository page, or fetch each file from the site's <strong>Downloads</strong> page. <strong>You should see</strong> these files at the top level: <code>stability.csv</code>, <code>outcomes.csv</code>, <code>coverage.csv</code>, <code>SPEC.md</code>, and the folder <code>open-lane/</code> with one <code>&lt;year&gt;.jsonl</code> inside.</p>
+<h3 id="step-2-read-the-published-numbers">Step 2 — read the published numbers</h3>
+<pre><code class="language-bash">python3 - &lt;&lt;&#x27;PY&#x27;
+import csv
+rows = [r for r in csv.DictReader(open(&quot;stability.csv&quot;, encoding=&quot;utf-8&quot;)) if r[&quot;record_type&quot;] == &quot;measurement&quot;]
+print(f&#x27;{&quot;date&quot;:&lt;11}{&quot;model&quot;:&lt;34}{&quot;protocol&quot;:&lt;44}{&quot;stability&quot;:&gt;9}  n&#x27;)
+for r in sorted(rows, key=lambda r: (r[&quot;run_date&quot;], r[&quot;protocol_id&quot;])):
+    print(f&#x27;{r[&quot;run_date&quot;]:&lt;11}{r[&quot;subject_model_id&quot;]:&lt;34}{r[&quot;protocol_id&quot;]:&lt;44}{float(r[&quot;stability_pct&quot;]):&gt;8.1f}%  {r[&quot;n&quot;]}&#x27;)
+PY</code></pre>
+<p><strong>You should see</strong> one line per measurement. Read a line as: <em>"on this frozen set of 15 questions, on this model, on that day, it kept the same decision X % of the time when the wording changed."</em> Every column is explained in <code>guide/data-dictionary.md</code>.</p>
+<h3 id="step-3-recompute-the-numbers-we-published-from-the-raw-responses">Step 3 — recompute the numbers we published from the raw responses</h3>
+<p>The <code>open</code>-lane protocols publish every raw response (see below), so a published score can be re-derived from scratch instead of taken on trust. Stability = 100 − the gap between the A and B answer distributions, counting valid answers only.</p>
+<pre><code class="language-bash">python3 - &lt;&lt;&#x27;PY&#x27;
+import csv, json
+from collections import Counter
+
+def stability(trials):
+    c = {v: Counter(t[&quot;token&quot;] for t in trials if t[&quot;version&quot;] == v and t[&quot;outcome&quot;] == &quot;valid&quot;) for v in (&quot;A&quot;, &quot;B&quot;)}
+    n = {v: sum(c[v].values()) for v in c}
+    if not n[&quot;A&quot;] or not n[&quot;B&quot;]:
+        return None
+    tokens = set(c[&quot;A&quot;]) | set(c[&quot;B&quot;])
+    gap = sum(abs(c[&quot;A&quot;][k] / n[&quot;A&quot;] - c[&quot;B&quot;][k] / n[&quot;B&quot;]) for k in tokens) / 2
+    return 100 - 100 * gap
+
+published = {r[&quot;run_id&quot;]: float(r[&quot;stability_pct&quot;])
+             for r in csv.DictReader(open(&quot;stability.csv&quot;, encoding=&quot;utf-8&quot;)) if r[&quot;record_type&quot;] == &quot;measurement&quot;}
+trials = [json.loads(l) for l in open(&quot;open-lane/2026.jsonl&quot;, encoding=&quot;utf-8&quot;) if l.strip()]
+
+for run_id in sorted({t[&quot;run_id&quot;] for t in trials}):
+    mine = stability([t for t in trials if t[&quot;run_id&quot;] == run_id])
+    theirs = published.get(run_id)
+    ok = theirs is not None and mine is not None and abs(mine - theirs) &lt; 1e-3
+    print((&quot;OK  &quot; if ok else &quot;DIFF&quot;), run_id, f&quot;mine={mine:.3f}&quot;, f&quot;published={theirs}&quot;)
+PY</code></pre>
+<p><strong>You should see</strong> <code>OK</code> on every line — one per <code>open</code>-lane run, covering both the <code>v0</code> and the <code>v1</code> series. A <code>DIFF</code> means your recomputation disagrees with a published number: stop, do not "fix" either side, re-clone in case your copy is stale, and if it persists report exactly the <code>run_id</code> and both numbers (see "Submitting one"). A later year has its own file: change <code>2026</code> in the script.</p>
+<h3 id="step-4-optional-test-your-own-model">Step 4 — (optional) test your own model</h3>
+<p><code>guide/llm_archive_compare.py</code> is a single self-contained file that carries the 8 questions the archive publishes in full (2 dilemmas × 4 versions), checks each against its published <code>sha256</code>, and prints your model's answers next to the archive's own. Step-by-step, for Ollama, any OpenAI-compatible API, or a chat window, in <a href="ai-assistant.html"><code>ai-assistant.md</code></a>. This is a spot-check, not a score: two questions cannot support a stability number.</p>
+<h3 id="step-5-a-full-like-for-like-comparison-comparisonpoint">Step 5 — a full, like-for-like comparison (<code>comparison_point</code>)</h3>
+<p>Possible today only for someone who holds all 15 scenarios of a protocol; the published data gives you one (see "In plain words", step 4). If you do hold them, the submission must match, exactly: same <code>panel_sha256</code> · same <code>grammar_version</code> · same <code>n</code> per version (30 in <code>v0</code>, 120 in <code>v1</code>) · all four versions A, A′, B, C · the full outcome distribution per version · the exact, verifiable model id. <code>core/measure/client.py</code> defines the small interface a model has to implement, <code>core/plumbing/reference_client.py</code> is a worked example, and <code>core/measure/pilot.py</code> runs a whole protocol end to end. <strong>If any requirement cannot be met, say which one and stop</strong> — do not substitute a paraphrase of the scenarios; it is not the same panel.</p>
+<h3 id="what-an-agent-must-not-conclude">What an agent must not conclude</h3>
+<ul>
+<li><strong>Answering differently from the archive's models is not instability.</strong> Which option a model prefers is its own call; stability is only whether <em>that</em> model's answer moved between A and B.</li>
+<li><strong>One comparison is not a ranking.</strong> A <code>comparison_point</code> is one model, on one frozen panel, on one day (see "What a <code>comparison_point</code> is not", below).</li>
+<li><strong>A <code>DIFF</code> or a missing file is a finding to report, not something to work around.</strong></li>
+</ul>
+<hr>
 <h2 id="in-plain-words-how-to-download-our-results-and-compare-with-your-own-model">In plain words: how to download our results and compare with your own model</h2>
-<p><strong>1. Get our published numbers.</strong> On the site, go to <strong>Downloads</strong> and get <code>stability.csv</code>. It's a spreadsheet of every test we've run: which question, which model, how stable the answer was (0 to 100), and whether it passed our quality checks.</p>
-<p><strong>2. Get the real questions and answers — for 2 of the 12 tests.</strong> Only two tests publish their actual wording: <code>risky_choice_framing__wording</code> and <code>base_rate_neglect__wording</code> (marked <code>lane: open</code> — see <a href="glossary.html"><code>glossary.md</code></a>). For those, download <code>open-lane/&lt;year&gt;.jsonl</code> from Downloads: every real question the model was asked, its exact response, and which option it picked.</p>
+<p><strong>1. Get our published numbers.</strong> On the site, go to <strong>Downloads</strong> and get <code>stability.csv</code>. It's a spreadsheet of every measurement we've run: which question, which model, how stable the answer was (0 to 100), and whether it passed our quality checks.</p>
+<p><strong>2. Get the real questions and answers — for 2 of the 12 protocols.</strong> Only two protocols publish their actual wording: <code>risky_choice_framing__wording</code> and <code>base_rate_neglect__wording</code> (marked <code>lane: open</code> — see <a href="glossary.html"><code>glossary.md</code></a>). For those, download <code>open-lane/&lt;year&gt;.jsonl</code> from Downloads: every real question the model was asked, its exact response, and which option it picked.</p>
 <p><strong>3. What you can do with that today: check our math, for your own sake.</strong> Take the real responses from step 2 and recompute the published stability score yourself — the formula is public (<code>../docs/spec.md</code> §6, plain arithmetic, no special software needed). This is the difference between citing a number because a website says so and knowing it's right because you re-derived it yourself. If your number matches ours, you can now cite it with that confidence. If it doesn't, you've caught something worth not trusting yet — worth telling us too, since a wrong published number helps no one, but either way you now know before you relied on it (see <a href="../CONTRIBUTING.md"><code>../CONTRIBUTING.md</code></a> if you want to send it our way).</p>
-<p><strong>4. What you can't do yet: run your own model on our exact questions.</strong> To fairly compare a model of your own, you'd need the wording of all 15 questions in a test. Today, only the <strong>first</strong> question's wording is public (shown on the Results page when you open that row) — the other 14 aren't published anywhere yet. This is a known, disclosed gap, not an oversight — see <a href="../docs/spec.md"><code>../docs/spec.md</code></a> §1.1. Once it's closed, this page will say so, with step-by-step instructions for submitting your own comparison.</p>
+<p><strong>4. What you can't do yet: run your own model on our exact questions.</strong> To fairly compare a model of your own, you'd need the wording of all 15 questions in a protocol. Today, only the <strong>first</strong> question's wording is public (shown on the Results page when you open that row) — the other 14 aren't published anywhere yet. This is a known, disclosed gap, not an oversight — see <a href="../docs/spec.md"><code>../docs/spec.md</code></a> §1.1. Once it's closed, this page will say so, with step-by-step instructions for submitting your own comparison.</p>
 <p><strong>5. What a result would tell you, once this opens up.</strong> Not "is my model smarter." Only: does it change its answer when asked the exact same question worded differently, on this one day, on this one frozen set of 15 questions. It's never merged into the project's own chart or averaged with anything — see "What a <code>comparison_point</code> is not" below.</p>
 <h2 id="reproducing-an-open-lane-result">Reproducing an <code>open</code>-lane result</h2>
-<p>Two of the twelve v0 protocols publish their real trial-level data (every response, in full): <code>risky_choice_framing__wording__v0</code> and <code>base_rate_neglect__wording__v0</code> (see <a href="glossary.html"><code>glossary.md</code></a> for what <code>lane: open</code> means and why only these two). <strong>This is not the same as the full question wording</strong> — see "In plain words," step 4 above, for what's actually public today (14 of each test's 15 questions aren't yet).</p>
+<p>Two of the twelve protocols publish their real trial-level data (every response, in full), in both the <code>v0</code> and the <code>v1</code> series: <code>risky_choice_framing__wording</code> and <code>base_rate_neglect__wording</code> (see <a href="glossary.html"><code>glossary.md</code></a> for what <code>lane: open</code> means and why only these two). <strong>This is not the same as the full question wording</strong> — see "In plain words," step 4 above, for what's actually public today (14 of each protocol's 15 questions aren't yet).</p>
 <p><strong>Where the real trial data lives:</strong> not in a standalone protocol file — <code>protocols/*.json</code> stays in the private repo even for <code>open</code> protocols (<code>../docs/spec.md</code> §10). Every trial from an <code>open</code> run reaches the public only through <code>open-lane/&lt;year&gt;.jsonl</code>, copied through unchanged. Each line has <code>run_id</code> (the protocol id is embedded in it, as a substring — there is no separate <code>protocol_id</code> field), <code>scenario_id</code>, <code>version</code>, the model's real <code>response_text</code>, the extracted <code>token</code>, and <code>prompt_sha256</code> (a one-way hash — lets you confirm a prompt you already hold is the exact one used, but doesn't reveal it). See <a href="data-dictionary.html"><code>data-dictionary.md</code></a> for the exact field list.</p>
 <p>To check a specific published number:</p>
 <ol>
@@ -78,7 +131,7 @@ footer a{color:var(--faint)}
 <ul>
 <li>The same <code>panel_sha256</code> as the protocol you're comparing against (i.e., you used the real scenario content, not a paraphrase of it — for a <code>guard</code>-lane protocol this means you cannot submit a comparison point at all, since its wording isn't public).</li>
 <li>The same <code>grammar_version</code> — the identical <code>DECISION: &lt;token&gt;</code> extraction rule, applied the same way.</li>
-<li>The same <code>n</code> per version (30 in v0).</li>
+<li>The same <code>n</code> per version (30 in <code>v0</code>, 120 in <code>v1</code>).</li>
 <li><strong>All four versions</strong> (A, A′, B, C) — not just the headline A/B contrast. A submission missing the null-change or positive control can't be checked for the same validity issues every project measurement is checked for.</li>
 <li>The full outcome distribution per version (valid / unparseable / refused / etc.), not just a final score — so <code>u</code>, the drop bound, and the gates can be computed for your run exactly as they are for the project's own.</li>
 <li>The exact model id you ran, verifiably.</li>

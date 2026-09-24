@@ -104,6 +104,20 @@ history do not replace one point **with** history.
 (`multi_lab` or `meta_analysis`), always with the collection year. **Never aggregated, never a
 headline.**
 
+### 1.2 Purpose
+
+LLM-Archive is **a research project.** Everything specified here — the protocols, the calls made to
+models, and the data and code that are published — exists for research purposes: to build an open,
+dated, checkable record of one narrow property, whether a model keeps the same decision when a
+question is reworded without changing its meaning, that other researchers can reproduce, cite and
+extend.
+
+What that rules out is stated so it cannot be read the other way. The measurements are **not** a
+product evaluation, a ranking or a certification of any model; they are not run to rate, endorse or
+promote any provider or product; and no number is offered as a basis for deciding whether to buy,
+use or trust a model (see §4.2, "What NO ONE is allowed to conclude"). The scenarios sent to models
+are fictional decision dilemmas: no personal data is sent to a model or collected from one.
+
 ---
 
 ## 2. The unit of measurement
