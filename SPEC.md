@@ -354,13 +354,16 @@ snapshot of the provider's deprecation page that names the successor.
 `requires_human: false` **is revoked as an authorization to switch** — a fuzzy naming rule is not
 allowed to rewrite which series we are measuring. It survives **only** as a bridge trigger.
 
-**Bridge:** 4 protocols — **one per type** — **`n_per_scenario=1`, not the protocol's own frozen
-`n_per_scenario=2`** (a bridge check only needs to catch a gross discontinuity, not a fine-grained
-measurement — and repeats add no information without a client-controllable sampling parameter,
-§5) — four versions, **old and new**, same week.
-`4 × 60 × 2 = 480 calls` (measured rate, §9). Funded from `bridge_reserve_eur` in
-`budget.json` (private — §10 — sized with a small margin over this), never from the general
-monthly pool — see `core/budget/budget.py`'s `_general_ceiling`.
+**Bridge:** 4 protocols — **one per type** — at **each protocol's own frozen `n_per_scenario=2`**,
+four versions, **old and new**, same week. `2 × 4 × 120 = 960 calls` (measured rate, §9). *(This
+section originally sized the bridge at `n_per_scenario=1`, 480 calls, on the argument that a bridge
+only needs to catch a gross discontinuity. Corrected 2026-09-24: protocols are frozen at
+`n_per_scenario=2` (§13) and `core/measure/` cannot run a protocol at a different `n` without
+becoming a different protocol, so the bridge runs them as they are. The comment on
+`generation_bridge_protocols` in `cadence.yaml`, which is frozen, still says n=1 / 480 calls; the
+budget and this section are what apply.)* Funded from `bridge_reserve_eur` in `budget.json`
+(private — §10 — sized with a small margin over this), never from the general monthly pool — see
+`core/budget/budget.py`'s `_general_ceiling`.
 
 **Funding: the bridge preempts that month's sweep** — the sweep is skipped with cause
 `generation_bridge` in the coverage table. **A disclosed gap, not a hidden one.**
@@ -691,8 +694,8 @@ guard_margin_rotation:    1d     # ONE guard-lane protocol/day, rotating through
 revalidation_daily:        10     # historical records, local, zero cost
 
 # Generations
-generation_bridge_protocols: 4    # one per type · n_per_scenario=1, not the frozen 2 · old AND
-                                   # new, same week · 480 calls, §4.3
+generation_bridge_protocols: 4    # one per type · old AND new, same week · frozen n=2, 960 calls
+                                   # (the frozen cadence.yaml still says n=1 / 480; see §4.3)
                                    # preempts that month's sweep (cause: generation_bridge)
 bridge_trigger:      any_new_model_id_in_family   # BRIDGE: automatic, immediate
 active_switch:       provider_declared_successor  # ACTIVE-MODEL SWITCH: only with an explicit

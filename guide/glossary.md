@@ -180,8 +180,7 @@ pauses — the measurement is still recorded, flagged `instrument_suspect`, off 
 
 **`generation_bridge`** — a special, immediate measurement run comparing an outgoing model version
 against its explicitly declared successor, in the same week, on all 4 protocol types (one
-scenario repeat per item rather than the frozen panel's usual 2 — a bridge only needs to catch a
-gross discontinuity, not a fine-grained measurement), funded from its own dedicated reserve
+protocol per type, at each protocol's own frozen settings), funded from its own dedicated reserve
 (`bridge_reserve_eur` in `budget.json`) rather than the regular monthly sweep budget. Exists
 because a retired commercial model can never be measured again at any price — the handoff between
 two generations is the one moment that can't wait for the normal monthly schedule.

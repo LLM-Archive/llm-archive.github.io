@@ -60,6 +60,12 @@
   "subject_fingerprint"` follows `core/instrument/instrument.py`'s `"instrument_alarm"` precedent
   rather than touching `core/measure/schema.py`'s frozen `RECORD_TYPES`. Own build check:
   `python3 -m core.plumbing.subject_fingerprint verify`.
+- `model_watch.py` — notices a new model id in the commercial family (`GET /v1/models`, free), the
+  trigger spec.md §4.3 calls "automatic, immediate" for the generation bridge and that nothing else
+  in the code detected. Detects and prints the bridge plan + budget verdict; never spends money and
+  never switches the active model (a new id is `needs_review`). First run only records a baseline.
+  Append-only log: `state/model_registry.jsonl`. Exit status 10 = action needed. Own build check:
+  `python3 -m core.plumbing.model_watch verify`.
 - `render_guide.py` — turns `guide/*.md` into `guide/*.html`, a small standalone docs site sitting
   next to (not inside) the closed 8-page site spec.md §11 describes, per `guide/README.md`'s own
   plan to eventually lift it "alongside the main website." A hand-rolled markdown→HTML converter,
