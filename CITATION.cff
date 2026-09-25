@@ -7,6 +7,8 @@
 # https://zenodo.org/records/22881128 before being copied here, not guessed. The `doi` below is
 # the *concept* DOI (10.5281/zenodo.22881127, always resolves to the latest version), not that
 # version-specific record DOI — see its own `description`.
+# Bumped to v0.4 (zenodo.org/records/22947316, released 2026-09-24) on 2026-09-25 once the Zenodo API
+# listed that record; the concept DOI is unchanged.
 
 cff-version: 1.2.0
 message: >-
@@ -31,8 +33,8 @@ license:
   - CC-BY-SA-4.0   # published prose
 repository-code: "https://github.com/LLM-Archive/llm-archive.github.io"
 url: "https://llm-archive.github.io"
-version: "v0.2"
-date-released: "2026-09-21"
+version: "v0.4"
+date-released: "2026-09-24"
 identifiers:
   - type: doi
     value: "10.5281/zenodo.22881127"
