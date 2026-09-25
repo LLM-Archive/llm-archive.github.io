@@ -964,9 +964,45 @@ def render_file_rows(data_dir: Path, out_dir: Path, open_lane_years: list[str]) 
     return "\n".join(rows)
 
 
+def build_activity_events(data: dict, observations: list[dict], limit: int = 30) -> list[dict]:
+    """The rows of the "Recent activity" on the metric page: newest first, each
+    {"date", "kind", "what", "result", "tone"} (tone: on | off | gap | None, which only picks a tag
+    colour). Built only from records that are already public in some form -- the measurements shown
+    in the tables, the scheduler's own observation log (coverage.csv is built from it) and the tagged
+    release in CITATION.cff -- and only from their public fields, never spend, never wording. Plain
+    text throughout (the page sets it with textContent)."""
+    events = []
+    for row in data["rows"] + data["orows"]:
+        for m in row["history"]:
+            events.append({
+                "date": m["run_date"], "order": 2, "kind": "measured",
+                "what": f"{row['protocol_id']} · {row['subject_model_id']}",
+                "result": f"stability {m['stability_pct']:.1f}%", "tone": "on" if m["on_curve"] else "off",
+            })
+    by_date: dict[str, list[dict]] = {}
+    for o in observations:
+        by_date.setdefault(o["date"], []).append(o)
+    for day, obs in by_date.items():
+        ok = [o for o in obs if o["ran"]]
+        if ok:
+            events.append({"date": day, "order": 1, "kind": "checks", "what": "scheduled instrument checks",
+                           "result": f"{len(ok)} of {len(obs)} ran", "tone": None})
+        for o in obs:
+            if not o["ran"]:
+                events.append({"date": day, "order": 1, "kind": "gap", "what": o["job"],
+                               "result": f"cause: {o['cause']}", "tone": "gap"})
+    c = data.get("citation")
+    if c:
+        events.append({"date": c["date_released"], "order": 0, "kind": "release", "what": c["version"],
+                       "result": f"DOI {c['doi']}", "tone": None})
+    events.sort(key=lambda e: (e["date"], e["order"], e["what"]), reverse=True)
+    return [{k: e[k] for k in ("date", "kind", "what", "result", "tone")} for e in events[:limit]]
+
+
 def build_site_html(
     experiments_dir: Path, protocols_dir: Path, subject_models_path: Path, data_dir: Path, template_path: Path,
     out_dir: Path | None = None, version_path: Path = DEFAULT_VERSION_FILE, citation_path: Path = DEFAULT_CITATION_FILE,
+    coverage_log_path: Path | None = None,
 ) -> str:
     data = build_site_data(experiments_dir, protocols_dir, subject_models_path, citation_path)
     if data["protocol_count"] == 0:
@@ -994,6 +1030,9 @@ def build_site_html(
         "@@COPYRIGHT_YEAR@@": str(date.today().year),
         "/*@@ROWS_JSON@@*/[]": json.dumps(data["rows"], sort_keys=True, ensure_ascii=False),
         "/*@@OROWS_JSON@@*/[]": json.dumps(data["orows"], sort_keys=True, ensure_ascii=False),
+        "/*@@EVENTS_JSON@@*/[]": json.dumps(
+            build_activity_events(data, load_observations(coverage_log_path) if coverage_log_path else []),
+            sort_keys=True, ensure_ascii=False),
     }
     html = template_path.read_text(encoding="utf-8")
     for token, value in replacements.items():
@@ -1006,10 +1045,11 @@ def build_site_html(
 def write_site_html(
     experiments_dir: Path, protocols_dir: Path, subject_models_path: Path, data_dir: Path, out_path: Path, template_path: Path,
     version_path: Path = DEFAULT_VERSION_FILE, citation_path: Path = DEFAULT_CITATION_FILE,
+    coverage_log_path: Path | None = DEFAULT_COVERAGE_LOG,
 ) -> None:
     html = build_site_html(
         experiments_dir, protocols_dir, subject_models_path, data_dir, template_path, out_path.parent,
-        version_path, citation_path,
+        version_path, citation_path, coverage_log_path,
     )
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(html, encoding="utf-8")
@@ -1017,6 +1057,21 @@ def write_site_html(
 
 def _verify() -> list[str]:
     errors = []
+
+    hist = lambda d, sp, oc: {"run_date": d, "stability_pct": sp, "on_curve": oc}
+    ev = build_activity_events(
+        {"rows": [{"protocol_id": "p_v1", "subject_model_id": "m", "history": [hist("2026-01-02", 90.0, True), hist("2026-01-03", 50.0, False)]}],
+         "orows": [], "citation": {"version": "v0.1", "date_released": "2026-01-01", "doi": "10.1/x"}},
+        [{"job": "runtime_fingerprint", "date": "2026-01-03", "ran": True, "cause": None},
+         {"job": "full_sweep", "date": "2026-01-03", "ran": False, "cause": "budget_halted"}],
+        limit=10)
+    got = [(e["date"], e["kind"], e["result"], e["tone"]) for e in ev]
+    if got != [("2026-01-03", "measured", "stability 50.0%", "off"), ("2026-01-03", "checks", "1 of 2 ran", None),
+               ("2026-01-03", "gap", "cause: budget_halted", "gap"), ("2026-01-02", "measured", "stability 90.0%", "on"),
+               ("2026-01-01", "release", "DOI 10.1/x", None)]:
+        errors.append(f"build_activity_events: newest first, one row per event, got {got}")
+    if len(build_activity_events({"rows": [], "orows": [], "citation": None}, [], limit=3)) != 0:
+        errors.append("build_activity_events: no data should give no events")
 
     row = build_row({"record_type": "measurement", "run_id": "r0", "stability_pct": 82.2, "on_curve": False})
     if row["record_type"] != "measurement" or row["on_curve"] != "False":
@@ -1280,6 +1335,8 @@ def _verify() -> list[str]:
         html = build_site_html(exp_dir, proto_dir, tmp / "subject_models.yaml", tmp, DEFAULT_TEMPLATE, out_dir)
         if "@@" in html:
             errors.append("build_site_html: a template placeholder was left unresolved")
+        if "/*@@EVENTS_JSON@@*/" in html:
+            errors.append("build_site_html: the Recent activity events placeholder was not filled")
         for page_id in ("out", "results", "data", "what", "does", "how", "value", "glossary"):
             if f'id="{page_id}"' not in html:
                 errors.append(f"build_site_html: page id {page_id!r} missing from output")
