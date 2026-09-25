@@ -168,6 +168,7 @@ tr.row td:last-child{color:var(--link);font-size:13px;white-space:nowrap}
 .t-fl code{color:var(--dim)}
 .t-dn{color:#180404}
 body.theme-dark .t-dn,body.theme-blue .t-dn{color:var(--ink)}
+#vbadge.t-dn,.t-reg{background:rgba(185,28,28,.12);color:var(--bad)}
 .t-open{background:#e9eefc;color:#24408e}
 .t-guard{background:rgba(0,0,0,0.68);color:rgba(242,243,250,0.94)}
 
@@ -205,6 +206,7 @@ body.theme-dark .t-dn,body.theme-blue .t-dn{color:var(--ink)}
   z-index:100;overflow-y:auto;padding:22px var(--sp) 60px}
 #drawer.on{transform:none}
 #drawer h2{font-size:20px;margin-bottom:4px}
+#dt small{font-size:12px;font-weight:400;color:var(--faint)}
 #close{position:sticky;top:0;float:right;margin:-6px -4px 0 0;border:1px solid var(--line);background:var(--bg);
   width:32px;height:32px;border-radius:8px;font-size:17px;cursor:pointer;color:var(--dim);line-height:1}
 #close:hover{background:var(--raise);color:var(--ink)}
@@ -228,6 +230,7 @@ body.theme-dark .agentdl{background:#e8edf3;color:#14181d}
 body.theme-blue .agentdl{background:#d9e7f5;color:#071a2b}
 .filedl{color:var(--link);text-decoration:none}
 .filedl:hover{opacity:.7}
+.flagid{font-size:11px;color:var(--faint)}
 .hash{font:11.5px ui-monospace,Menlo,monospace;color:var(--faint);white-space:nowrap}
 .verdict-list{margin:0;padding:0;list-style:none;font-size:13px;color:var(--faint)}
 .verdict-list li{margin-bottom:6px}
@@ -311,7 +314,7 @@ active), then the score and its margin, and finally whether it passed the checks
 <p><span class="tag t-fl">model: <code>@@COMMERCIAL_MODEL_ID@@</code></span></p>
 <div class="vtabs" id="rows-tabs" role="tablist" aria-label="Protocol version" hidden></div>
 <div class="scroll"><table>
-<thead><tr><th title="The protocol, and which model answered it">Protocol</th><th title="What part of the question's wording was changed between versions">What changes</th><th title="Whether this protocol's questions and answers are public (open), or still kept private until the model retires">Lane</th><th title="The day this measurement ran">Date</th><th title="How often it kept the same decision when we changed the question">Stability</th><th><abbr title="how many times it was asked">n</abbr></th><th title="Whether this result passed our quality checks, and if not, which one it failed">Results</th><th title="Change vs. this protocol's previous run">vs. previous</th><th></th></tr></thead>
+<thead><tr><th title="The protocol, and which model answered it">Protocol</th><th title="What part of the question's wording was changed between versions">What changes</th><th title="Whether this protocol's questions and answers are public (open), or still kept private until the model retires">Lane</th><th title="The day this measurement ran">Date</th><th title="How often it kept the same decision when we changed the question">Stability</th><th><abbr title="how many times it was asked">n</abbr></th><th title="Whether this result passed our quality checks, and if not, which one it failed">Results</th><th></th></tr></thead>
 <tbody id="rows"></tbody>
 </table></div>
 <p><small>When we change how a protocol is measured, we release the change as a new version
@@ -324,7 +327,7 @@ the method itself can be shown to actually work · <a href="https://huggingface.
 <p><span class="tag t-fl">model: <code>@@REFERENCE_MODEL_ID@@</code></span></p>
 <div class="vtabs" id="orows-tabs" role="tablist" aria-label="Protocol version" hidden></div>
 <div class="scroll"><table>
-<thead><tr><th title="The protocol, and which model answered it">Protocol</th><th title="What part of the question's wording was changed between versions">What changes</th><th title="Whether this protocol's questions and answers are public (open), or still kept private until the model retires">Lane</th><th title="The day this measurement ran">Date</th><th title="How often it kept the same decision when we changed the question">Stability</th><th><abbr title="how many times it was asked">n</abbr></th><th title="Whether this result passed our quality checks, and if not, which one it failed">Results</th><th title="Change vs. this protocol's previous run">vs. previous</th><th></th></tr></thead>
+<thead><tr><th title="The protocol, and which model answered it">Protocol</th><th title="What part of the question's wording was changed between versions">What changes</th><th title="Whether this protocol's questions and answers are public (open), or still kept private until the model retires">Lane</th><th title="The day this measurement ran">Date</th><th title="How often it kept the same decision when we changed the question">Stability</th><th><abbr title="how many times it was asked">n</abbr></th><th title="Whether this result passed our quality checks, and if not, which one it failed">Results</th><th></th></tr></thead>
 <tbody id="orows"></tbody>
 </table></div>
 <p><small>When we change how a protocol is measured, we release the change as a new version
@@ -369,7 +372,7 @@ If they match, the file is authentic. <code>verify.py</code> does this check aut
 don't need to install anything else.</p>
 
 <h3>What isn't downloadable yet</h3>
-<p>The questions and answers for protocols that are still "closed" stay hidden — if we published them
+<p>The questions and answers for protocols that are still private stay hidden — if we published them
 now, the next model could "learn" them and the measurement would lose its meaning. They all open up
 once the corresponding model is retired. Their number and existence are always disclosed.</p>
 
@@ -747,12 +750,22 @@ code preserves the record's exact identity.</small></p>
   <h2 id="dt"></h2>
   <p><small id="dm"></small></p>
 
-  <div id="quar" hidden>
-    <div class="callout" style="border-color:var(--bad)">
-    <p><b>Off the main curve.</b> <small>The number above is still what was measured — this only
-    means at least one automatic check below couldn't rule out an alternative explanation, so the
-    run isn't counted in the aggregate curve. It doesn't by itself mean the measurement is wrong.</small></p>
-    <div id="qbody"></div></div>
+  <div id="locked" hidden>
+    <div class="callout"><div class="lock-badge" title="Contamination Shield Active">🔒 <span>Contamination Shield Active</span></div>
+    <div id="lock-commercial">
+    <p><b>The text is private.</b> If we published it now, the next
+    model would learn it and the measurement would die — permanently, for every generation after it.</p>
+    <p style="margin-bottom:0">It all opens up once the model is retired: all four versions,
+    every answer, code — <b>right next to the numbers you see now</b>. <span id="lockyr"></span>.</p>
+    </div>
+    <div id="lock-frozen" hidden>
+    <p><b>The text is private — but not because of this model.</b> This one is frozen and can't learn
+    anything. The same protocol also runs on the commercial model, and publishing it now would let a
+    future version of that model learn it and end the measurement.</p>
+    <p style="margin-bottom:0">It opens when the commercial model is retired: all four versions, every
+    answer, code — <b>right next to the numbers you see now</b>. This frozen model is never retired,
+    so it has no date of its own.</p>
+    </div></div>
   </div>
 
   <h3>The <span id="dnitems"></span> scenarios, individually</h3>
@@ -774,24 +787,6 @@ code preserves the record's exact identity.</small></p>
     <p><small>The measurement is the gap <b>A ↔ B</b>. Each version runs <span id="dn"></span> times in a
     <b>fresh session</b>. The decision is read <b>only</b> from the line
     <code>DECISION:</code> — nothing else is interpreted.</small></p>
-  </div>
-
-  <div id="locked" hidden>
-    <div class="callout"><div class="lock-badge" title="Contamination Shield Active">🔒 <span>Contamination Shield Active</span></div>
-    <div id="lock-commercial">
-    <p><b>The text is closed.</b> If we published it now, the next
-    model would learn it and the measurement would die — permanently, for every generation after it.</p>
-    <p style="margin-bottom:0">It all opens up once the model is retired: all four versions,
-    every answer, code — <b>right next to the numbers you see now</b>. <span id="lockyr"></span>.</p>
-    </div>
-    <div id="lock-frozen" hidden>
-    <p><b>The text is closed — but not because of this model.</b> This one is frozen and can't learn
-    anything. The same protocol also runs on the commercial model, and publishing it now would let a
-    future version of that model learn it and end the measurement.</p>
-    <p style="margin-bottom:0">It opens when the commercial model is retired: all four versions, every
-    answer, code — <b>right next to the numbers you see now</b>. This frozen model is never retired,
-    so it has no date of its own.</p>
-    </div></div>
   </div>
 
   <h3>The measurement</h3>
@@ -816,20 +811,29 @@ code preserves the record's exact identity.</small></p>
   </div>
 
   <h3>The checks</h3>
-  <p><small>Hover over a <span class="help-tip" aria-hidden="true">?</span> to see what each check means.</small></p>
+  <p><small>Hover over a <span class="help-tip" aria-hidden="true">?</span> to see what each check means. <b>[PASSED]</b> = the flag shown next to it is not raised; <b>[FAILED]</b> = it is raised.</small></p>
   <table><tbody>
-    <tr><td><span class="status-pill" id="pcgn"></span> Null change <small>(A&nbsp;↔&nbsp;A′)</small> <span class="help-tip" title="How much the answer moves when the question is changed in a meaningless way (formatting only). Should be close to zero.">?</span></td><td class="num" id="cgn"></td></tr>
-    <tr><td><span class="status-pill" id="pcgp"></span> Positive control <small>(A&nbsp;↔&nbsp;C)</small> <span class="help-tip" title="How much the answer moves when the question is changed on purpose so the right answer flips. Should be large: it shows the model is actually reading the question.">?</span></td><td class="num" id="cgp"></td></tr>
-    <tr><td><span class="status-pill" id="pcen"></span> Entropy A / B <span class="help-tip" title="How varied the answers were, from 0 (always the same answer) to 1 (evenly spread). Very low means the model may just repeat one answer.">?</span></td><td class="num" id="cen"></td></tr>
-    <tr><td><span class="status-pill" id="pcu"></span> Lost responses A / A′ / B / C <span class="help-tip" title="The share of responses in each version that could not be read as a decision (refused, cut off, unparseable). Should be small and similar across versions.">?</span></td><td class="num" id="cu"></td></tr>
-    <tr><td><span class="status-pill" id="pcb"></span> Drop bound A↔B <span class="help-tip" title="The most the A↔B gap could be wrong by, because some responses were lost. It has to stay small, or the result can't be trusted.">?</span></td><td class="num" id="cb"></td></tr>
-    <tr><td><span class="status-pill" id="pcbaa"></span> Drop bound A↔A′ <span class="help-tip" title="The most the A↔A′ gap could be wrong by, because some responses were lost. It has to stay small, or the result can't be trusted.">?</span></td><td class="num" id="cbaa"></td></tr>
-    <tr><td><span class="status-pill" id="pcbac"></span> Drop bound A↔C <span class="help-tip" title="The most the A↔C gap could be wrong by, because some responses were lost. It has to stay small, or the result can't be trusted.">?</span></td><td class="num" id="cbac"></td></tr>
-    <tr><td><span class="status-pill" id="pcsd"></span> Scenario concentration <span class="help-tip" title="How much of the total gap comes from just the two most affected scenarios out of fifteen. If it is high, the result rests on a couple of scenarios.">?</span></td><td class="num" id="csd"></td></tr>
+    <tr><td><span class="status-pill" id="pcgn"></span> Null change <small>(A&nbsp;↔&nbsp;A′)</small> <code class="flagid">below_surface_noise</code> <span class="help-tip" title="How much the answer moves when the question is changed in a meaningless way (formatting only). Should be close to zero.">?</span></td><td class="num" id="cgn"></td></tr>
+    <tr><td><span class="status-pill" id="pcgp"></span> Positive control <small>(A&nbsp;↔&nbsp;C)</small> <code class="flagid">not_reading</code> <span class="help-tip" title="How much the answer moves when the question is changed on purpose so the right answer flips. Should be large: it shows the model is actually reading the question.">?</span></td><td class="num" id="cgp"></td></tr>
+    <tr><td><span class="status-pill" id="pcen"></span> Entropy A / B <code class="flagid">degenerate_candidate</code> <span class="help-tip" title="How varied the answers were, from 0 (always the same answer) to 1 (evenly spread). Very low means the model may just repeat one answer.">?</span></td><td class="num" id="cen"></td></tr>
+    <tr><td><span class="status-pill" id="pcu"></span> Lost responses A / A′ / B / C <code class="flagid">asymmetric_missingness</code> <span class="help-tip" title="The share of responses in each version that could not be read as a decision (refused, cut off, unparseable). Should be small and similar across versions.">?</span></td><td class="num" id="cu"></td></tr>
+    <tr><td><span class="status-pill" id="pcb"></span> Drop bound A↔B <code class="flagid">drop_confounded</code> <span class="help-tip" title="The most the A↔B gap could be wrong by, because some responses were lost. It has to stay small, or the result can't be trusted.">?</span></td><td class="num" id="cb"></td></tr>
+    <tr><td><span class="status-pill" id="pcbaa"></span> Drop bound A↔A′ <code class="flagid">drop_confounded</code> <span class="help-tip" title="The most the A↔A′ gap could be wrong by, because some responses were lost. It has to stay small, or the result can't be trusted.">?</span></td><td class="num" id="cbaa"></td></tr>
+    <tr><td><span class="status-pill" id="pcbac"></span> Drop bound A↔C <code class="flagid">drop_confounded</code> <span class="help-tip" title="The most the A↔C gap could be wrong by, because some responses were lost. It has to stay small, or the result can't be trusted.">?</span></td><td class="num" id="cbac"></td></tr>
+    <tr><td><span class="status-pill" id="pcgb"></span> Below drop bound A↔B <code class="flagid">below_drop_bound</code> <span class="help-tip" title="Whether the A↔B gap is larger than the drop bound. If it is not, the gap cannot be told apart from what lost responses alone could explain.">?</span></td><td class="num" id="cgb"></td></tr>
+    <tr><td><span class="status-pill" id="pcsd"></span> Scenario concentration <code class="flagid">scenario_dominated</code> <span class="help-tip" title="How much of the total gap comes from just the two most affected scenarios out of fifteen. If it is high, the result rests on a couple of scenarios.">?</span></td><td class="num" id="csd"></td></tr>
   </tbody></table>
+
+  <div id="quar" hidden style="margin-top:28px">
+    <div class="callout" style="border-color:var(--bad)">
+    <p><b>Off the main curve.</b> <small>The number above is still what was measured — a flag below means an
+    automatic check couldn't rule out an alternative explanation, so this measurement isn't counted
+    on the main curve. It doesn't by itself mean the measurement is wrong.</small></p>
+    <div id="qbody"></div></div>
+  </div>
   <div id="verdict"></div>
   <p style="margin-top:16px"><small><a class="filedl" id="dlm" href="#">↓ Download this measurement</a> (all numbers shown above, as one JSON file)</small></p>
-  <p id="dlopen" hidden><small>Full questions and answers for this run: <a class="filedl" id="dlopenlink" href="#" download><code></code></a></small></p>
+  <p id="dlopen" hidden><small>Full questions and answers for this run: <a class="filedl" id="dlopenlink" href="#" download></a></small></p>
 </aside>
 
 <script>
@@ -877,11 +881,6 @@ function checksTag(d){
  if(d.flags.length) return d.flags.map(f=>'<span class="tag t-dn">'+f+'</span>').join(' ');
  return '<span class="tag t-fl">off curve</span>';
 }
-function trendCell(d){
- if(d.trend==='base'||d.trend_delta===null||d.trend_delta===undefined) return '—';
- const s=d.trend_delta>0?'+':'';
- return s+d.trend_delta.toFixed(1);
-}
 function rowHtml(d){const i=ALL.indexOf(d);
  return `<tr class="row" tabindex="0" data-i="${i}"><td><b>${panelName(d)}</b><br><small><code>${d.protocol_id}</code></small></td><td>${TYPE_LABELS[d.rewording_type]||d.rewording_type}</td>`+
  `<td><span class="tag ${d.lane==='open'?'t-open':'t-guard'}">${d.lane}</span></td>`+
@@ -889,14 +888,13 @@ function rowHtml(d){const i=ALL.indexOf(d);
  `<td class="num"><b>${d.stability_pct.toFixed(1)}%</b> <span style="color:var(--faint)">±${((d.ci_high_pct-d.ci_low_pct)/2).toFixed(1)}</span></td>`+
  `<td class="num">${d.n}×4</td>`+
  `<td>${checksTag(d)}</td>`+
- `<td class="num">${trendCell(d)}</td>`+
  `<td>view →</td></tr>`;}
 
 function versionOf(d){const m=/__(v\d+)$/.exec(d.protocol_id);return m?m[1]:'v0';}
 function bodyHtml(rows){
  return rows.length
    ? rows.map(rowHtml).join('')
-   : '<tr><td colspan="9"><small>No measurements yet.</small></td></tr>';
+   : '<tr><td colspan="8"><small>No measurements yet.</small></td></tr>';
 }
 // One tab per protocol version, so versions are not mixed in one list. Both tables show the same
 // set of versions (every version present in either table); a version with no measurements in a
@@ -923,11 +921,11 @@ const dr=document.getElementById('drawer'),sc=document.getElementById('scrim');
 const set=(id,t)=>{document.getElementById(id).textContent=t;};
 
 const FLAG_EXPLAIN={
- below_surface_noise:d=>'The equivalent rewording (A↔B) produced '+d.gap_pct.toFixed(1)+' points — not clearly more than the null change (A↔A′) alone, '+d.gap_null_pct.toFixed(1)+' points. For a stability check this is usually the result you want (both near zero); the flag only means the framework can’t statistically prove the two are different at this sample size, not that the measurement failed.',
+ below_surface_noise:d=>'The equivalent rewording (A↔B) produced '+d.gap_pct.toFixed(1)+' points — not clearly more than the null change (A↔A′) alone, '+d.gap_null_pct.toFixed(1)+' points. For a stability check this is usually the result you want (both near zero); the flag only means A↔B can’t be told apart from the null change at this n, not that the measurement failed.',
  not_reading:d=>'The change that should move the answer (A↔C) only produced '+d.gap_positive_pct.toFixed(1)+' points — the model may not be reading the scenario.',
  degenerate_candidate:d=>{
   const gAC=(d.gates&&d.gates['A-C'])||{}, moved=!!gAC.reading;
-  return 'Entropy stayed very low ('+d.entropy_a.toFixed(2)+' / '+d.entropy_b.toFixed(2)+') while stability was high — on its own that could mean the model just gives the same answer regardless of the question. Check the positive control (A↔C) below: '
+  return 'Entropy stayed very low ('+d.entropy_a.toFixed(2)+' / '+d.entropy_b.toFixed(2)+') while stability was high — on its own that could mean the model just gives the same answer regardless of the question. Check the positive control (A↔C) above: '
    +(moved
      ? 'it moved ('+d.gap_positive_pct.toFixed(1)+' points), which is evidence against that reading — the model does change its decision when the underlying problem actually changes.'
      : 'it did not clearly move either ('+d.gap_positive_pct.toFixed(1)+' points), which is consistent with a genuinely degenerate answer.');
@@ -937,19 +935,20 @@ const FLAG_EXPLAIN={
   if(g['A-B']&&g['A-B'].drop_bound_ok===false) bad.push('A↔B ('+d.drop_bound_pct_ab.toFixed(1)+' pts)');
   if(g['A-A_prime']&&g['A-A_prime'].drop_bound_ok===false) bad.push('A↔A′ ('+d.drop_bound_pct_aa.toFixed(1)+' pts)');
   if(g['A-C']&&g['A-C'].drop_bound_ok===false) bad.push('A↔C ('+d.drop_bound_pct_ac.toFixed(1)+' pts)');
-  return 'The worst-case error from lost responses is too large to trust on '+(bad.length?bad.join(', '):'at least one comparison')
+  return 'The drop bound is too large to trust on '+(bad.length?bad.join(', '):'at least one comparison')
    +'. This doesn’t automatically taint every comparison — the main A↔B result stays reliable as long as it isn’t the one listed here.';
  },
- asymmetric_missingness:d=>'One version lost noticeably more responses than another: A '+(100*d.u_a).toFixed(1)+'%, A′ '+(100*d.u_a_prime).toFixed(1)+'%, B '+(100*d.u_b).toFixed(1)+'%, C '+(100*d.u_c).toFixed(1)+'%. Same underlying numbers as the drop bound rows below — this just flags that the lost responses weren’t spread evenly across versions.',
- below_drop_bound:d=>'The measured gap ('+d.gap_pct.toFixed(1)+' points) is not larger than the worst-case error from lost responses alone ('+d.drop_bound_pct_ab.toFixed(1)+' points) — it cannot be told apart from that error. When both are 0 because nothing was lost on A or B, this is a mechanical consequence of a clean run, not a sign of unreliable data.',
+ asymmetric_missingness:d=>'One version had noticeably more lost responses than another: A '+(100*d.u_a).toFixed(1)+'%, A′ '+(100*d.u_a_prime).toFixed(1)+'%, B '+(100*d.u_b).toFixed(1)+'%, C '+(100*d.u_c).toFixed(1)+'%. Same underlying numbers as the drop bound rows above — this just flags that the lost responses weren’t spread evenly across versions.',
+ below_drop_bound:d=>'The gap ('+d.gap_pct.toFixed(1)+' points) is not larger than the drop bound ('+d.drop_bound_pct_ab.toFixed(1)+' points) — it cannot be told apart from what lost responses alone could explain. When both are 0 because no responses were lost on A or B, this is a mechanical consequence of a clean run, not a sign of unreliable data.',
  scenario_dominated:()=>'A couple of the fifteen scenarios account for most of the measured gap.',
  instrument_suspect:()=>'The daily reference-model self-check moved on this run’s date — the whole pipeline is suspect that day, not just this measurement.',
  exploratory:()=>'Outside the protocol’s one pre-declared comparison — informative only, never on the main curve.'
 };
 
 function openDetail(i){const d=ALL[i];
- set('dk',panelName(d)+' · '+d.protocol_id);
- set('dt',d.run_date+' · '+d.stability_pct.toFixed(1)+'%');
+ set('dk',panelName(d));
+ {const t=document.getElementById('dt');t.textContent='Stability '+d.stability_pct.toFixed(1)+'% ';
+  const s=document.createElement('small');s.textContent='– '+d.run_date;t.appendChild(s);}
  set('dm','The A↔B gap is '+d.gap_pct.toFixed(1)+' points. Null change: '+d.gap_null_pct.toFixed(1)
    +' · drop bound (A↔B): '+d.drop_bound_pct_ab.toFixed(1)+'.');
  const isOpen=d.lane==='open';
@@ -959,7 +958,7 @@ function openDetail(i){const d=ALL[i];
  if(!d.on_curve){
   document.getElementById('qbody').innerHTML = d.flags.length
     ? d.flags.map(f=>'<p><code>'+f+'</code> — '+(FLAG_EXPLAIN[f]?FLAG_EXPLAIN[f](d):'')+'</p>').join('')
-    : '<p>No check failed, but this run isn’t eligible for the main curve (the protocol wasn’t admitted yet when it ran, or this is a sealed-lane run).</p>';
+    : '<p>No flag is raised, but this measurement isn’t eligible for the main curve (the protocol wasn’t admitted yet when it ran, or this is a sealed-lane run).</p>';
  }
  if(isOpen){['qa','qn','qb','qg','aa','an','ab','ag'].forEach(k=>set(k,d[k]||''));}
  else{
@@ -974,7 +973,7 @@ function openDetail(i){const d=ALL[i];
  const valid=sg.map((g,j)=>({g,j})).filter(x=>x.g!=null);
  const worst=valid.slice().sort((a,b)=>b.g-a.g).slice(0,2);
  const total=valid.reduce((a,x)=>a+x.g,0);
- let note='Height = how much the decision changed on that scenario.';
+ let note='Height = how much the answer changed on that scenario.';
  if(worst.length===2 && total>0){
    const top2pct=100*(worst[0].g+worst[1].g)/total;
    // Reads d.flags directly rather than re-deriving the scenario_dominated threshold here --
@@ -994,7 +993,7 @@ function openDetail(i){const d=ALL[i];
   dl.href=dl.dataset.url;dl.download=(d.run_id||'measurement')+'.json';}
  {const o=document.getElementById('dlopen');o.hidden=d.lane!=='open';
   if(d.lane==='open'){const f=d.run_date.slice(0,4)+'.jsonl',a=document.getElementById('dlopenlink');
-   a.href='@@OPEN_LANE_DIR_HREF@@'+f;a.download=f;a.firstElementChild.textContent='↓ open-lane/'+f;}}
+   a.href='@@OPEN_LANE_DIR_HREF@@'+f;a.download=f;a.textContent='↓ open-lane/'+f;}}
  set('dn',String(d.n));
  set('ds',d.stability_pct.toFixed(1)+'% (±'+((d.ci_high_pct-d.ci_low_pct)/2).toFixed(1)+')');
  set('dnf',d.null_floor_pct.toFixed(1)+' points');
@@ -1018,31 +1017,39 @@ function openDetail(i){const d=ALL[i];
  };
  const cgpUnset=gAC.reading===null||gAC.reading===undefined;
  const scenDom=gates.scenario_dominated, scenDomUnset=scenDom===null||scenDom===undefined;
- setPill('pcgn',!!gAA.above_surface_noise,'PASSED','FAILED');
- setPill('pcgp',cgpUnset?'unset':!!gAC.reading,'VALID','INVALID');
- setPill('pcen',!d.flags.includes('degenerate_candidate'),'PASSED','FAILED');
- setPill('pcu',!d.flags.includes('asymmetric_missingness'),'VALID','INVALID');
+ // One rule for every row: [PASSED] = the flag for that row is not raised, [FAILED] = it is
+ // raised (drop bound rows: that pair's own drop_bound_ok). The pill and the ✓/⚠ come from the
+ // same boolean, and the flag ids are printed next to each row, so the rows and the flag list
+ // below can be matched one to one.
+ const hasFlag=f=>d.flags.includes(f);
+ const mark=ok=>ok?' ✓':' ⚠';
+ setPill('pcgn',!hasFlag('below_surface_noise'),'PASSED','FAILED');
+ setPill('pcgp',cgpUnset?'unset':!hasFlag('not_reading'),'PASSED','FAILED');
+ setPill('pcen',!hasFlag('degenerate_candidate'),'PASSED','FAILED');
+ setPill('pcu',!hasFlag('asymmetric_missingness'),'PASSED','FAILED');
  setPill('pcb',!!gAB.drop_bound_ok,'PASSED','FAILED');
  setPill('pcbaa',!!gAA.drop_bound_ok,'PASSED','FAILED');
  setPill('pcbac',!!gAC.drop_bound_ok,'PASSED','FAILED');
+ setPill('pcgb',!hasFlag('below_drop_bound'),'PASSED','FAILED');
  setPill('pcsd',scenDomUnset?'unset':!scenDom,'PASSED','FAILED');
- set('cgn',d.gap_null_pct.toFixed(1)+' points'+(gAA.above_surface_noise?' ✓':' ⚠'));
- set('cgp',cgpUnset?d.gap_positive_pct.toFixed(1)+' points (threshold not set)':d.gap_positive_pct.toFixed(1)+' points'+(gAC.reading?' ✓':' ⚠'));
- set('cen',d.entropy_a.toFixed(2)+' / '+d.entropy_b.toFixed(2)+(d.flags.includes('degenerate_candidate')?' ⚠':' ✓'));
- set('cu',(100*d.u_a).toFixed(1)+'% / '+(100*d.u_a_prime).toFixed(1)+'% / '+(100*d.u_b).toFixed(1)+'% / '+(100*d.u_c).toFixed(1)+'%'+(d.flags.includes('asymmetric_missingness')?' ⚠':' ✓'));
- set('cb',d.drop_bound_pct_ab.toFixed(1)+' points'+(gAB.drop_bound_ok?' ✓':' ⚠'));
- set('cbaa',d.drop_bound_pct_aa.toFixed(1)+' points'+(gAA.drop_bound_ok?' ✓':' ⚠'));
- set('cbac',d.drop_bound_pct_ac.toFixed(1)+' points'+(gAC.drop_bound_ok?' ✓':' ⚠'));
- set('csd',scenDomUnset?'threshold not set':(d.scenario_concentration_pct==null?'not computable':d.scenario_concentration_pct.toFixed(1)+'% (top 2 scenarios)')+(scenDom?' ⚠':' ✓'));
+ set('cgn',d.gap_null_pct.toFixed(1)+' points'+mark(!hasFlag('below_surface_noise')));
+ set('cgp',cgpUnset?d.gap_positive_pct.toFixed(1)+' points (threshold not set)':d.gap_positive_pct.toFixed(1)+' points'+mark(!hasFlag('not_reading')));
+ set('cen',d.entropy_a.toFixed(2)+' / '+d.entropy_b.toFixed(2)+mark(!hasFlag('degenerate_candidate')));
+ set('cu',(100*d.u_a).toFixed(1)+'% / '+(100*d.u_a_prime).toFixed(1)+'% / '+(100*d.u_b).toFixed(1)+'% / '+(100*d.u_c).toFixed(1)+'%'+mark(!hasFlag('asymmetric_missingness')));
+ set('cb',d.drop_bound_pct_ab.toFixed(1)+' points'+mark(gAB.drop_bound_ok));
+ set('cbaa',d.drop_bound_pct_aa.toFixed(1)+' points'+mark(gAA.drop_bound_ok));
+ set('cbac',d.drop_bound_pct_ac.toFixed(1)+' points'+mark(gAC.drop_bound_ok));
+ set('cgb',d.gap_pct.toFixed(1)+' vs '+d.drop_bound_pct_ab.toFixed(1)+' points'+mark(!hasFlag('below_drop_bound')));
+ set('csd',scenDomUnset?'threshold not set':(d.scenario_concentration_pct==null?'not computable':d.scenario_concentration_pct.toFixed(1)+'% (top 2 scenarios)'+mark(!scenDom)));
  // "Published" used to be said unconditionally here, regardless of lane -- true for an open-lane
  // measurement (the full text and every answer really are in open-lane/*.jsonl), but misleading
- // for guard, where only this row's aggregate numbers are public and the text stays sealed until
+ // for guard, where only this row's aggregate numbers are public and the text stays private until
  // this model generation retires (see the "locked" panel above, isOpen just above). Lane-aware now.
  const availability=isOpen
    ? 'Full text and answers are published even though it’s off the main curve.'
    : d.series==='open_weights'
-     ? 'Only the result is public. The questions and the model’s answers stay sealed until the commercial model running the same protocol is retired.'
-     : 'Only the result is public. The questions and the model’s answers stay sealed until this model generation is retired.';
+     ? 'Only the result is public. The questions and the model’s answers stay private until the commercial model running the same protocol is retired.'
+     : 'Only the result is public. The questions and the model’s answers stay private until this model generation is retired.';
  // A run can look "off curve" purely because zero A↔B/A↔A′ gap sits next to a working
  // positive control -- exactly the signature a stable, non-degenerate model should produce.
  // That combination shouldn't read as a defect, so it gets its own bullet below.
@@ -1052,7 +1059,7 @@ function openDetail(i){const d=ALL[i];
  const badge=document.getElementById('vbadge');
  badge.className=d.on_curve?'t-up':'t-dn';badge.textContent=d.on_curve?'passed':'failed';badge.hidden=false;
  if(d.on_curve){
-  verdictEl.innerHTML='<p><small>All checks pass. This measurement is on the main curve.</small></p>';
+  verdictEl.innerHTML='<p><small>No flag is raised. This measurement is on the main curve.</small></p>';
  }else{
   // "flag(s)", not "check(s)": d.flags.length counts entries in the closed FLAGS list
   // (core/measure/schema.py). Every flag this project actually publishes now has a matching row
