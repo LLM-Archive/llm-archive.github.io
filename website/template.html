@@ -818,10 +818,10 @@ code preserves the record's exact identity.</small></p>
     <tr><td><span class="status-pill" id="pcen"></span> Entropy A / B <code class="flagid">degenerate_candidate</code> <span class="help-tip" title="How varied the answers were, from 0 (always the same answer) to 1 (evenly spread). Very low means the model may just repeat one answer.">?</span></td><td class="num" id="cen"></td></tr>
     <tr><td><span class="status-pill" id="pcu"></span> Lost responses A / A′ / B / C <code class="flagid">asymmetric_missingness</code> <span class="help-tip" title="The share of responses in each version that could not be read as a decision (refused, cut off, unparseable). Should be small and similar across versions.">?</span></td><td class="num" id="cu"></td></tr>
     <tr><td><span class="status-pill" id="pcb"></span> Drop bound A↔B <code class="flagid">drop_confounded</code> <span class="help-tip" title="The most the A↔B gap could be wrong by, because some responses were lost. It has to stay small, or the result can't be trusted.">?</span></td><td class="num" id="cb"></td></tr>
-    <tr><td><span class="status-pill" id="pcbaa"></span> Drop bound A↔A′ <code class="flagid">drop_confounded</code> <span class="help-tip" title="The most the A↔A′ gap could be wrong by, because some responses were lost. It has to stay small, or the result can't be trusted.">?</span></td><td class="num" id="cbaa"></td></tr>
-    <tr><td><span class="status-pill" id="pcbac"></span> Drop bound A↔C <code class="flagid">drop_confounded</code> <span class="help-tip" title="The most the A↔C gap could be wrong by, because some responses were lost. It has to stay small, or the result can't be trusted.">?</span></td><td class="num" id="cbac"></td></tr>
+    <tr><td><span class="status-pill" id="pcbaa"></span> Drop bound A↔A′ <code class="flagid">(same flag)</code> <span class="help-tip" title="The most the A↔A′ gap could be wrong by, because some responses were lost. It has to stay small, or the result can't be trusted.">?</span></td><td class="num" id="cbaa"></td></tr>
+    <tr><td><span class="status-pill" id="pcbac"></span> Drop bound A↔C <code class="flagid">(same flag)</code> <span class="help-tip" title="The most the A↔C gap could be wrong by, because some responses were lost. It has to stay small, or the result can't be trusted.">?</span></td><td class="num" id="cbac"></td></tr>
     <tr><td><span class="status-pill" id="pcgb"></span> Below drop bound A↔B <code class="flagid">below_drop_bound</code> <span class="help-tip" title="Whether the A↔B gap is larger than the drop bound. If it is not, the gap cannot be told apart from what lost responses alone could explain.">?</span></td><td class="num" id="cgb"></td></tr>
-    <tr><td><span class="status-pill" id="pcsd"></span> Scenario concentration <code class="flagid">scenario_dominated</code> <span class="help-tip" title="How much of the total gap comes from just the two most affected scenarios out of fifteen. If it is high, the result rests on a couple of scenarios.">?</span></td><td class="num" id="csd"></td></tr>
+    <tr><td><span class="status-pill" id="pcsd"></span> Scenario concentration <code class="flagid">scenario_dominated</code> <span class="help-tip" title="How much of the total gap comes from just the two most affected scenarios out of fifteen (ties included). If it is high, the result rests on a couple of scenarios.">?</span></td><td class="num" id="csd"></td></tr>
   </tbody></table>
 
   <div id="quar" hidden style="margin-top:28px">
@@ -971,16 +971,22 @@ function openDetail(i){const d=ALL[i];
  document.getElementById('sgw').innerHTML=sg.map((g,j)=>
    `<div class="sgb" title="scenario ${j+1}: ${g==null?'not computable — no valid responses to compare':g.toFixed(1)+' points'}"><i style="height:${g!=null&&mx>0?(100*g/mx).toFixed(0):0}%"></i><span>${j+1}</span></div>`).join('');
  const valid=sg.map((g,j)=>({g,j})).filter(x=>x.g!=null);
- const worst=valid.slice().sort((a,b)=>b.g-a.g).slice(0,2);
  const total=valid.reduce((a,x)=>a+x.g,0);
+ // The two largest gaps, but never an arbitrary pick among equals: scenarios tied with the
+ // second-largest are all named, and a scenario with no gap at all is never named.
+ const ranked=valid.filter(x=>x.g>0).sort((a,b)=>b.g-a.g||a.j-b.j);
+ let cut=Math.min(2,ranked.length);
+ while(cut<ranked.length && ranked[cut].g===ranked[cut-1].g) cut++;
+ const worst=ranked.slice(0,cut);
  let note='Height = how much the answer changed on that scenario.';
- if(worst.length===2 && total>0){
-   const top2pct=100*(worst[0].g+worst[1].g)/total;
+ if(worst.length && total>0){
+   const topPct=100*worst.reduce((a,x)=>a+x.g,0)/total;
+   const names=worst.map(x=>x.j+1), list=names.length>1?names.slice(0,-1).join(', ')+' and '+names[names.length-1]:String(names[0]);
    // Reads d.flags directly rather than re-deriving the scenario_dominated threshold here --
    // the real cutoff (protocol.scenario_dominated_share_pct) isn't published per measurement,
    // and the flag is already the authoritative answer, computed once, backend-side.
-   note+=' Scenarios '+(worst[0].j+1)+' and '+(worst[1].j+1)+' produced '+top2pct.toFixed(0)
-     +'% of the gap between them'+(d.flags.includes('scenario_dominated')?' — flagged scenario_dominated.':'.');
+   note+=(names.length>1?' Scenarios ':' Scenario ')+list+' produced '+topPct.toFixed(0)
+     +'% of the gap'+(d.flags.includes('scenario_dominated')?' — flagged scenario_dominated.':'.');
  }
  set('sgnote',note);
  set('dnitems',String(d.n_items));

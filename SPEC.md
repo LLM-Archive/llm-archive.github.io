@@ -919,6 +919,15 @@ never a code change, and never a spec change.
 **Every flag takes the measurement off the main curve. No flag ever deletes a measurement** — the
 measurement is published flagged, with the reason.
 
+**`scenario_dominated` tests concentration, not size (noted 2026-09-25).** It compares the share
+of the gap that comes from the two worst scenarios with the threshold; nothing in it looks at how
+large the gap is. When the gap is one lone response, that response sits in one scenario and the
+share is 100% by construction. Real case: `sunk_cost_fallacy__order__v1` on `claude-sonnet-5`
+(gap 0.83 = 1 response in 120, scenario `s04`) carries `scenario_dominated` next to
+`below_surface_noise`. Read the flag together with `gap_pct` and `null_floor_pct`: at or near the
+noise floor it says nothing about the panel. The rule is unchanged; the results page only
+describes it (it names every scenario tied at the cutoff, never an arbitrary pick).
+
 ### Coverage — every missing day has a named cause
 
 `coverage.csv` reports, for every scheduled job, whether it ran — and if not, why. A gap is never
