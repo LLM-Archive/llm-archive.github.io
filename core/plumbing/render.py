@@ -63,6 +63,7 @@ from pathlib import Path
 from core.measure import stats
 from core.measure.chain import sha256_hex
 from core.measure.schema import MEASUREMENT_FIELDS, OUTCOMES, VERSIONS
+from core.plumbing import versions
 from core.schedule.coverage import DEFAULT_LOG as DEFAULT_COVERAGE_LOG
 from core.schedule.coverage import load_observations
 
@@ -778,7 +779,12 @@ def build_site_data(
         rows.append(row)
     _mark_other_models(rows)
 
-    admitted = {pid: p for pid, p in protocols.items() if p.get("status") == "admitted"}
+    # Latest admitted version per family only (core/plumbing/versions.py): a superseded series is
+    # no longer swept, so counting it would read "13 of 24 protocols measured" for what is really
+    # 12 protocols in rotation.
+    current_ids = {p["protocol_id"] for p in versions.latest_versions(
+        [p for p in protocols.values() if p.get("status") == "admitted"])}
+    admitted = {pid: p for pid, p in protocols.items() if pid in current_ids}
     # commercial only, and only the CURRENT model: the coverage bar names the active *commercial* model
     # (load_active_commercial_model above), so what it counts must match -- an open_weights-only
     # measurement (the daily reference-model self-check) must never inflate the count next to that

@@ -44,7 +44,7 @@ from pathlib import Path
 from core.budget import budget
 from core.measure import pilot
 from core.measure.schema import VERSIONS
-from core.plumbing import prereg, subject_fingerprint
+from core.plumbing import prereg, subject_fingerprint, versions
 from core.plumbing.anthropic_client import CircuitOpen, FundsExhausted
 
 from . import coverage, schedule
@@ -165,7 +165,8 @@ def run_full_sweep(
     model_family: str | None = None,
     manifests_dir: Path | None = prereg.DEFAULT_MANIFESTS_DIR,
 ) -> list[dict]:
-    """One call per admitted protocols/*.json (12 today), same shape as cadence.yaml's own
+    """One call per admitted protocols/*.json (the latest admitted version of each family only, see
+    `versions.latest_versions`), same shape as cadence.yaml's own
     description ("12 protocols x 4 versions x n=30"). Budget is re-checked before every single
     protocol, not once for the whole sweep -- same discipline core.measure.pilot's own CLI already
     uses at this call site, just looped instead of invoked 12 separate times by hand. A protocol
@@ -207,11 +208,11 @@ def run_full_sweep(
     protocols_run = 0
     projected_eur = Fraction(0)
 
-    admitted = []
-    for path in sorted(protocols_dir.glob("*.json")):
-        protocol = json.loads(path.read_text(encoding="utf-8"))
-        if protocol.get("status") == "admitted":
-            admitted.append(protocol)
+    admitted = versions.latest_versions([
+        protocol for protocol in (json.loads(path.read_text(encoding="utf-8"))
+                                  for path in sorted(protocols_dir.glob("*.json")))
+        if protocol.get("status") == "admitted"
+    ])
 
     mid = mfam = None
     if client_kind != "fake":

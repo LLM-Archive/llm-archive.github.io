@@ -19,7 +19,7 @@ from unittest import mock
 from core.budget import budget
 from core.plumbing.fake_client import FakeClient
 
-from core.plumbing import prereg
+from core.plumbing import prereg, versions
 from core.plumbing.anthropic_client import CircuitOpen, FundsExhausted, is_funds_error
 
 from . import coverage, run_due, schedule
@@ -111,6 +111,17 @@ def check_record_observation(data: dict) -> list[str]:
     return errors
 
 
+def _latest_real_protocol_files() -> list[Path]:
+    """The real protocols/ files a sweep would actually pick: latest admitted version per family."""
+    by_id = {}
+    for f in sorted(_REAL_PROTOCOLS_DIR.glob("*.json")):
+        proto = json.loads(f.read_text())
+        if proto.get("status") == "admitted":
+            by_id[proto["protocol_id"]] = f
+    keep = {p["protocol_id"] for p in versions.latest_versions([{"protocol_id": pid} for pid in by_id])}
+    return [f for pid, f in by_id.items() if pid in keep]
+
+
 def _write_ledger(path: Path, run_date: str, amount_eur: str) -> None:
     path.write_text(json.dumps([{
         "record_type": "spend", "run_id": "synthetic-for-verify",
@@ -149,7 +160,7 @@ def check_run_full_sweep_ladder(data) -> list[str]:
         # docstring) so the per-iteration spend projection can't confound it.
         protocols_dir = tmp / "protocols_count"
         protocols_dir.mkdir()
-        for f in sorted(_REAL_PROTOCOLS_DIR.glob("*.json")):
+        for f in sorted(_latest_real_protocol_files()):
             shutil.copy(f, protocols_dir / f.name)
         huge_ceiling_config = tmp / "budget_huge.json"
         real_rungs = json.loads(budget.DEFAULT_CONFIG.read_text())["rungs"]
@@ -182,8 +193,8 @@ def check_run_full_sweep_ladder(data) -> list[str]:
         # mixed sweep): the open-lane one alone (protocols_run stays 0, no projection confound)
         # must be lane-skipped; the two guard-lane ones alone must both run (well under the count
         # cap, and 2 * _EST_COST_PER_PROTOCOL_EUR is small enough to stay inside the 80-95% band).
-        open_lane = next(json.loads(f.read_text())["protocol_id"] for f in _REAL_PROTOCOLS_DIR.glob("*.json") if json.loads(f.read_text())["lane"] == "open")
-        guard_lane = [json.loads(f.read_text())["protocol_id"] for f in _REAL_PROTOCOLS_DIR.glob("*.json") if json.loads(f.read_text())["lane"] == "guard"][:2]
+        open_lane = next(json.loads(f.read_text())["protocol_id"] for f in _latest_real_protocol_files() if json.loads(f.read_text())["lane"] == "open")
+        guard_lane = [json.loads(f.read_text())["protocol_id"] for f in _latest_real_protocol_files() if json.loads(f.read_text())["lane"] == "guard"][:2]
 
         protocols_dir_open = tmp / "protocols_lane_open"
         protocols_dir_open.mkdir()
@@ -276,7 +287,7 @@ def check_already_run_this_month(data) -> list[str]:
         protocols_dir = tmp / "protocols"
         protocols_dir.mkdir()
         # two lane-open, unrelated-family protocols so both can run without lane/count capping
-        chosen = [json.loads(f.read_text()) for f in sorted(_REAL_PROTOCOLS_DIR.glob("*.json"))
+        chosen = [json.loads(f.read_text()) for f in sorted(_latest_real_protocol_files())
                   if json.loads(f.read_text())["lane"] == "open"][:2]
         for p in chosen:
             shutil.copy(_REAL_PROTOCOLS_DIR / f"{p['protocol_id']}.json", protocols_dir / f"{p['protocol_id']}.json")
@@ -326,7 +337,7 @@ def check_sweep_rotation(data) -> list[str]:
         tmp = Path(tmp)
         protocols_dir = tmp / "protocols"
         protocols_dir.mkdir()
-        chosen = [json.loads(f.read_text()) for f in sorted(_REAL_PROTOCOLS_DIR.glob("*.json"))
+        chosen = [json.loads(f.read_text()) for f in sorted(_latest_real_protocol_files())
                   if json.loads(f.read_text())["lane"] == "open"][:2]
         for p in chosen:
             shutil.copy(_REAL_PROTOCOLS_DIR / f"{p['protocol_id']}.json", protocols_dir / f"{p['protocol_id']}.json")
@@ -361,6 +372,34 @@ def check_sweep_rotation(data) -> list[str]:
         errors.append(f"cost estimate must scale with n: n=30 -> {est_small}, n=120 -> {est_large}")
     if est_small != Fraction("0.792"):
         errors.append(f"n=30 estimate drifted from the €0.79/protocol it replaced: {est_small}")
+    return errors
+
+
+def check_latest_version_only(data) -> list[str]:
+    """Only the highest admitted version of a protocol family is swept: once `__v1` is admitted,
+    `__v0` is never measured again. A newer version that is not admitted must not displace the
+    admitted one."""
+    del data
+    errors = []
+    admitted = lambda pid: {"protocol_id": pid, "status": "admitted"}
+    got = sorted(p["protocol_id"] for p in versions.latest_versions([
+        admitted("a__x__v0"), admitted("a__x__v1"), admitted("a__x__v10"), admitted("a__x__v2"),
+        admitted("b__y__v0"), admitted("solo"),
+    ]))
+    if got != ["a__x__v10", "b__y__v0", "solo"]:
+        errors.append(f"expected only the latest admitted version per family, got {got}")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = Path(tmp)
+        for pid, status in (("a__x__v0", "admitted"), ("a__x__v1", "candidate")):
+            (tmp / f"{pid}.json").write_text(json.dumps({"protocol_id": pid, "status": status, "lane": "open", "n": 30}))
+        with mock.patch("core.measure.pilot.run", side_effect=lambda protocol, *a, **k: {"run_id": protocol["protocol_id"], "n_valid": 0, "on_curve": False}), \
+                contextlib.redirect_stdout(io.StringIO()):
+            results = run_due.run_full_sweep(client_kind="fake", run_date="2026-06-15", protocols_dir=tmp,
+                                             out_root=tmp / "out", manifests_dir=None)
+        seen = [r["protocol_id"] for r in results]
+        if seen != ["a__x__v0"]:
+            errors.append(f"a candidate v1 must not displace the admitted v0, swept {seen}")
     return errors
 
 
@@ -748,6 +787,7 @@ def main() -> int:
         ("ladder_projection", lambda: check_ladder_projection(data)),
         ("already_run_this_month", lambda: check_already_run_this_month(data)),
         ("sweep_rotation", lambda: check_sweep_rotation(data)),
+        ("latest_version_only", lambda: check_latest_version_only(data)),
         ("prereg_guard", lambda: check_prereg_guard(data)),
         ("would_fit", lambda: check_would_fit(data)),
         ("measured_spend", lambda: check_measured_spend(data)),
