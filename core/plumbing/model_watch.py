@@ -214,6 +214,229 @@ def check(
     return result, _report(result, plan, decision, family, active_model_id, reserve)
 
 
+DEFAULT_EXPERIMENTS = ROOT / "experiments"
+BRIDGE_TITLE = "MICHALIS: YOU MUST RUN THE BRIDGE NOW!!!"
+
+
+def experiment_runs(experiments_dir: Path) -> list[dict]:
+    """The finished runs on disk, from directory names `<date>__<protocol_id>__<model_id>__r<N>`.
+    Staging directories (leading dot) and anything that does not parse are skipped."""
+    runs: list[dict] = []
+    if not experiments_dir.exists():
+        return runs
+    for d in sorted(experiments_dir.iterdir()):
+        if not d.is_dir() or d.name.startswith("."):
+            continue
+        parts = d.name.split("__")
+        if len(parts) < 5:
+            continue
+        try:
+            date.fromisoformat(parts[0])
+        except ValueError:
+            continue
+        runs.append({"date": parts[0], "protocol_id": "__".join(parts[1:-2]), "model_id": parts[-2]})
+    return runs
+
+
+def bridge_pending(
+    registry: list[dict], family: str, active_id: str | None, protocols_dir: Path, experiments_dir: Path, today: str,
+) -> list[dict]:
+    """The bridges that are owed. A model id that `appeared` in the family (and did not vanish or get
+    a `bridge_waived` event) owes a bridge until, for every one of the plan's protocols, a finished
+    run of the NEW model exists that was made on or after the day it appeared and that has a run of
+    the CURRENT model of the same protocol within 7 days (spec.md §4.3: the same week). Derived from
+    what is on disk, never from a flag somebody has to remember to set."""
+    appeared: dict[str, str] = {}
+    waived: set[str] = set()
+    for rec in registry:
+        if rec.get("family") != family:
+            continue
+        if rec["event"] == "appeared":
+            appeared[rec["model_id"]] = rec["observed_date"]
+        elif rec["event"] in ("gone", "baseline"):
+            appeared.pop(rec["model_id"], None)
+        elif rec["event"] == "bridge_waived":
+            waived.add(rec["model_id"])
+    runs = experiment_runs(experiments_dir)
+    pending: list[dict] = []
+    for new_id, since in sorted(appeared.items()):
+        if new_id in waived:
+            continue
+        plan = plan_bridge(protocols_dir, active_id or "", new_id)
+        missing = []
+        for pid in plan["protocol_ids"]:
+            done = False
+            for n in runs:
+                if n["protocol_id"] != pid or n["model_id"] != new_id or n["date"] < since:
+                    continue
+                for o in runs:
+                    if o["protocol_id"] == pid and o["model_id"] == active_id and abs(
+                        (date.fromisoformat(o["date"]) - date.fromisoformat(n["date"])).days
+                    ) <= 7:
+                        done = True
+            if not done:
+                missing.append(pid)
+        if missing:
+            pending.append({
+                "new_id": new_id, "old_id": active_id, "since": since, "family": family, "missing": missing,
+                "days": (date.fromisoformat(today) - date.fromisoformat(since)).days, "plan": plan,
+            })
+    return pending
+
+
+def log_bridge_gap(today: str, log_path: Path | None = None) -> str:
+    """spec.md §4.3: the bridge preempts that month's paid sweep, and that is a DISCLOSED gap (cause `generation_bridge`
+    in coverage.csv), never a silent one. Nothing else ever wrote that cause. Appends one `full_sweep` gap for `today`,
+    unless this month's sweep already ran (nothing was skipped, so nothing to disclose) or the gap is already logged."""
+    from core.schedule import coverage
+
+    log = log_path or coverage.DEFAULT_LOG
+    month = today[:7]
+    seen = [o for o in coverage.load_observations(log) if o["job"] == "full_sweep" and o["date"][:7] == month]
+    if any(o["ran"] for o in seen):
+        return f"this month's ({month}) full_sweep already ran: nothing was skipped, no gap logged"
+    if any(o["cause"] == "generation_bridge" for o in seen):
+        return f"the generation_bridge gap for {month} is already logged"
+    coverage.record_observation("full_sweep", today, ran=False, cause="generation_bridge", log_path=log)
+    return f"logged: full_sweep skipped on {today}, cause generation_bridge"
+
+
+def _yaml_snippet(new_id: str, family: str) -> str:
+    return (f"      - model_id: {new_id}\n        model_family: {family}\n"
+            "        status: bridge_pending\n        declared_successor: null")
+
+
+FOLLOWUP_TITLE = "MICHALIS: BRIDGE RUNS FOUND"
+
+
+def bridge_followup(
+    registry: list[dict], family: str, active_id: str | None, protocols_dir: Path, experiments_dir: Path, today: str,
+    subject_models_path: Path, ledger_path: Path, coverage_log: Path,
+) -> list[dict]:
+    """After the bridge RUNS are in the repository, what is still left to do by hand -- derived from what is on
+    disk, like `bridge_pending`, never from a flag somebody has to remember. One item per new model whose bridge
+    is complete but whose bookkeeping is not. `steps` are {key, text, done, required}; an item exists only while a
+    REQUIRED step is open (the model is listed in subject_models.yaml; the real bill is in the ledger). The other two are
+    reminders that no file can prove done: the active-model switch (a decision) and the sweep gap (only the owner knows
+    whether the paid sweep was held back)."""
+    from core.budget import budget
+    from core.plumbing.render import load_commercial_generations
+    from core.schedule import coverage
+
+    still_owed = {p["new_id"] for p in bridge_pending(registry, family, active_id, protocols_dir, experiments_dir, today)}
+    appeared: dict[str, str] = {}
+    waived: set[str] = set()
+    for rec in registry:
+        if rec.get("family") != family:
+            continue
+        if rec["event"] == "appeared":
+            appeared[rec["model_id"]] = rec["observed_date"]
+        elif rec["event"] in ("gone", "baseline"):
+            appeared.pop(rec["model_id"], None)
+        elif rec["event"] == "bridge_waived":
+            waived.add(rec["model_id"])
+    runs = experiment_runs(experiments_dir)
+    generations = {g["model_id"]: g.get("status") for g in load_commercial_generations(subject_models_path)}
+    items: list[dict] = []
+    for new_id, since in sorted(appeared.items()):
+        if new_id in waived or new_id in still_owed:
+            continue
+        plan_pids = set(plan_bridge(protocols_dir, active_id or "", new_id)["protocol_ids"])
+        mine = [r for r in runs if r["model_id"] == new_id and r["protocol_id"] in plan_pids and r["date"] >= since]
+        if not mine:
+            continue
+        month = max(r["date"] for r in mine)[:7]
+        sweep_seen = [o for o in coverage.load_observations(coverage_log) if o["job"] == "full_sweep" and o["date"][:7] == month]
+        billed = budget.spent_this_month(budget.load_ledger(ledger_path), month, category="generation_bridge") > 0
+        status = generations.get(new_id)
+        steps = [
+            {"key": "yaml", "required": True, "done": new_id in generations,
+             "text": f"Add `{new_id}` to `subject_models.yaml`, under `commercial:` `generations:`, so the website can label its rows:\n"
+                     f"```\n{_yaml_snippet(new_id, family)}\n```"},
+            {"key": "bill", "required": True, "done": billed,
+             "text": f"Log the real bridge bill for {month}: `python3 -m core.budget.budget record generation_bridge <EUR> --run-id bridge__{new_id} --date <YYYY-MM-DD>` "
+                     "(only an amount a bill has confirmed, never an estimate)."},
+            {"key": "gap", "required": False, "done": bool(sweep_seen),
+             "text": f"Only if you held back {month}'s paid sweep for the bridge (spec.md §4.3): `python3 -m core.plumbing.model_watch bridge-gap`. "
+                     "Nothing is logged for that month yet; if the sweep ran or you did not hold it back, ignore this."},
+            {"key": "switch", "required": False, "done": status == "active",
+             "text": f"Decide the switch (yours, never automatic): `{new_id}` is `{status or 'not listed'}`. Only if Anthropic has EXPLICITLY named it the successor, "
+                     f"set it to `status: active`, and the current model to `status: retired` with `declared_successor: {new_id}`."},
+        ]
+        open_required = sum(1 for st in steps if st["required"] and not st["done"])
+        if open_required:
+            items.append({"new_id": new_id, "family": family, "month": month, "steps": steps, "open_required": open_required})
+    return items
+
+
+def followup_message(item: dict) -> tuple[str, str]:
+    """(title, body) of the ONE issue that lists what is left after the bridge runs. The title carries the count, so a
+    change in it is what makes the workflow notify; the body is rewritten every day from the current state."""
+    n = item["open_required"]
+    title = f"{FOLLOWUP_TITLE} - {n} STEP(S) LEFT (new model: {item['new_id']})"
+    lines = [f"# THE BRIDGE RUNS FOR `{item['new_id']}` ARE IN THE REPOSITORY. WELL DONE.", "",
+             f"Still to do by hand: **{n} required step(s)**. This list is re-read from the repository every day; "
+             "this issue closes itself once the required steps are done.", ""]
+    for st in item["steps"]:
+        mark = "x" if st["done"] else " "
+        tag = "" if st["required"] else " _(reminder, not counted)_"
+        first, _, rest = st["text"].partition("\n")
+        lines.append(f"- [{mark}] {first}{tag}")
+        if rest:
+            lines.extend("      " + l if l else "" for l in rest.splitlines())
+    lines += ["", "The active model is NOT switched automatically (spec.md §4.3)."]
+    return title, "\n".join(lines) + "\n"
+
+
+def loud_message(item: dict) -> tuple[str, str]:
+    """(title, body) of the notification that must not be missed. Deliberately loud: this is the one
+    job in the project whose delay cannot be repaired later."""
+    plan = item["plan"]
+    cost = _EST_COST_PER_CALL_EUR * plan["calls_total"]
+    commands = "\n".join(
+        f"python3 -m core.measure.pilot protocols/{pid}.json --client anthropic --model-id {mid} --model-family {item['family']}"
+        for mid in (item["old_id"], item["new_id"]) for pid in item["missing"]
+    )
+    title = f"\U0001F6A8 {BRIDGE_TITLE} \U0001F6A8 (new model: {item['new_id']})"
+    body = f"""# MICHALIS: YOU MUST RUN THE BRIDGE NOW!!!
+
+## NEW MODEL: `{item['new_id']}`  (first seen {item['since']}, {item['days']} day(s) ago)
+## THE MODEL WE MEASURE TODAY: `{item['old_id']}`
+
+### WHY THIS CANNOT WAIT
+The bridge measures the OLD and the NEW model in the SAME WEEK. When Anthropic retires the old model,
+it can NEVER be measured again, at any price. **NOTHING CAN FIX A MISSED BRIDGE LATER.**
+
+### WHAT TO DO (about 10 minutes of your time, about EUR {float(cost):.1f} of real money)
+Run these commands one by one, in the repository (they need `ANTHROPIC_API_KEY` in your shell):
+
+```
+{commands}
+```
+
+Still to do: {len(item['missing'])} protocol(s): {', '.join(item['missing'])}
+
+### WHEN YOU ARE DONE
+1. Add the new model to `subject_models.yaml`, under `commercial:` `generations:`, so the website can label its rows:
+```
+{_yaml_snippet(item['new_id'], item['family'])}
+```
+   The active model is NOT switched by this. Only if Anthropic has EXPLICITLY named it the successor: set the new one
+   to `status: active`, and the old one to `status: retired` with `declared_successor: {item['new_id']}`.
+2. Only if you held back this month's paid sweep for the bridge (spec.md §4.3), disclose that gap:
+   `python3 -m core.plumbing.model_watch bridge-gap` (it says so and writes nothing if the sweep already ran this month).
+3. Commit the new folders in `experiments/` and log the real bill (`python3 -m core.budget.budget record ...`).
+
+This issue closes itself the next morning, once the runs are found. Until then it comments EVERY DAY.
+
+### IF NO BRIDGE IS NEEDED FOR THIS MODEL
+`python3 -m core.plumbing.model_watch waive {item['new_id']} --reason "why"`
+
+The active model is NOT switched automatically (spec.md §4.3): that stays your decision.
+"""
+    return title, body
+
+
 def _verify() -> list[str]:
     errors: list[str] = []
     fam = "claude-sonnet"
@@ -298,6 +521,118 @@ def _verify() -> list[str]:
     return errors
 
 
+def _verify_pending() -> list[str]:
+    errors: list[str] = []
+    fam = "claude-sonnet"
+
+    def expect(cond: bool, msg: str) -> None:
+        if not cond:
+            errors.append(msg)
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        pdir = tmp_path / "protocols"
+        pdir.mkdir()
+        for fam_name in ("base_rate_neglect", "risky_choice_framing"):
+            for t in REWORDING_TYPES:
+                pid = f"{fam_name}__{t}__v0"
+                (pdir / f"{pid}.json").write_text(json.dumps({"protocol_id": pid, "status": "admitted", "n": 30}))
+        plan = plan_bridge(pdir, "claude-sonnet-5", "claude-sonnet-6")
+        exp = tmp_path / "experiments"
+        exp.mkdir()
+        reg = [
+            {"family": fam, "event": "baseline", "model_id": "claude-sonnet-5", "observed_date": "2026-09-24"},
+            {"family": fam, "event": "appeared", "model_id": "claude-sonnet-6", "observed_date": "2026-10-01"},
+        ]
+        kw = dict(family=fam, active_id="claude-sonnet-5", protocols_dir=pdir, experiments_dir=exp)
+
+        p = bridge_pending(reg, today="2026-10-04", **kw)
+        expect(len(p) == 1 and p[0]["new_id"] == "claude-sonnet-6" and p[0]["days"] == 3
+               and p[0]["missing"] == plan["protocol_ids"], "a new id with no runs must owe all four protocols")
+
+        def make(day, pid, model):
+            (exp / f"{day}__{pid}__{model}__r0").mkdir()
+
+        # only the new model measured: still owed (the old model must be in the same week)
+        for pid in plan["protocol_ids"]:
+            make("2026-10-03", pid, "claude-sonnet-6")
+        expect(len(bridge_pending(reg, today="2026-10-04", **kw)) == 1, "new-model runs alone must not clear the bridge")
+        # old model 20 days away: not the same week
+        make("2026-09-13", plan["protocol_ids"][0], "claude-sonnet-5")
+        expect(plan["protocol_ids"][0] in bridge_pending(reg, today="2026-10-04", **kw)[0]["missing"],
+               "an old-model run outside the 7-day window must not count")
+        # old model within the week for all four: done
+        for pid in plan["protocol_ids"]:
+            make("2026-10-02", pid, "claude-sonnet-5")
+        expect(bridge_pending(reg, today="2026-10-04", **kw) == [], "both models in the same week clears the bridge")
+        # the follow-up: the runs are in, what is still open is read from disk (yaml entry, real bill)
+        from core.budget import budget
+        from core.schedule import coverage
+
+        fu = dict(registry=reg, family=fam, active_id="claude-sonnet-5", protocols_dir=pdir, experiments_dir=exp, today="2026-10-04",
+                  subject_models_path=tmp_path / "sm.yaml", ledger_path=tmp_path / "spend.json", coverage_log=tmp_path / "cov.jsonl")
+        items = bridge_followup(**fu)
+        expect(len(items) == 1 and items[0]["open_required"] == 2 and items[0]["month"] == "2026-10",
+               f"a finished bridge with no bookkeeping must leave 2 required steps: {items!r}")
+        ftitle, fbody = followup_message(items[0])
+        expect("MICHALIS: BRIDGE RUNS FOUND" in ftitle and "2 STEP(S) LEFT" in ftitle and "claude-sonnet-6" in ftitle,
+               "the follow-up title must be recognisable and carry the count")
+        expect(fbody.count("- [ ]") == 4 and "status: bridge_pending" in fbody and "core.budget.budget record generation_bridge" in fbody,
+               "the follow-up body must list the open steps with the yaml snippet and the ledger command")
+        (tmp_path / "sm.yaml").write_text(
+            "series:\n  commercial:\n    generations:\n      - model_id: claude-sonnet-5\n        status: active\n"
+            "      - model_id: claude-sonnet-6\n        status: bridge_pending\n", encoding="utf-8")
+        items = bridge_followup(**fu)
+        expect(len(items) == 1 and items[0]["open_required"] == 1 and "- [x]" in followup_message(items[0])[1],
+               "listing the model in subject_models.yaml must tick that step")
+        coverage.record_observation("full_sweep", "2026-10-02", ran=True, log_path=tmp_path / "cov.jsonl")
+        expect(next(st for st in bridge_followup(**fu)[0]["steps"] if st["key"] == "gap")["done"],
+               "a full_sweep observation in the bridge month must tick the gap reminder")
+        budget.record_spend(tmp_path / "spend.json", run_id="bridge__x", run_date="2026-10-03", category="generation_bridge", amount_eur="6.3")
+        expect(bridge_followup(**fu) == [], "yaml entry + real bill logged: nothing left, the follow-up issue may close")
+        expect(bridge_followup(**{**fu, "experiments_dir": tmp_path / "nothing"}) == [], "no runs at all is a pending bridge, not a follow-up")
+        # a staging directory is never a finished run
+        (exp / f".2026-10-05__{plan['protocol_ids'][0]}__claude-sonnet-7__r0.partial-x").mkdir()
+        expect(all(r["model_id"] != "claude-sonnet-7" for r in experiment_runs(exp)), "staging dirs must be skipped")
+        # waived, or gone again: nothing owed
+        fresh = tmp_path / "empty"
+        fresh.mkdir()
+        kw2 = {**kw, "experiments_dir": fresh}
+        expect(bridge_pending(reg + [{"family": fam, "event": "bridge_waived", "model_id": "claude-sonnet-6",
+                                      "observed_date": "2026-10-02"}], today="2026-10-04", **kw2) == [],
+               "a waived model owes no bridge")
+        expect(bridge_pending(reg + [{"family": fam, "event": "gone", "model_id": "claude-sonnet-6",
+                                      "observed_date": "2026-10-02"}], today="2026-10-04", **kw2) == [],
+               "a model that vanished again owes no bridge")
+        # runs made BEFORE the model appeared cannot satisfy it, even with the old model beside them
+        early = tmp_path / "early"
+        early.mkdir()
+        for pid in plan["protocol_ids"]:
+            (early / f"2026-09-30__{pid}__claude-sonnet-6__r0").mkdir()
+            (early / f"2026-09-30__{pid}__claude-sonnet-5__r0").mkdir()
+        early_pending = bridge_pending(reg, today="2026-10-04", **{**kw, "experiments_dir": early})
+        expect(len(early_pending) == 1 and len(early_pending[0]["missing"]) == 4,
+               "runs dated before the model appeared must not clear the bridge")
+        title, body = loud_message(bridge_pending(reg, today="2026-10-04", **kw2)[0])
+        expect("MICHALIS: YOU MUST RUN THE BRIDGE NOW!!!" in title and "claude-sonnet-6" in title, "the title must be loud and name the model")
+        expect(body.count("core.measure.pilot") == 8, "the body must carry all 8 commands (4 protocols x 2 models)")
+        expect("NOTHING CAN FIX A MISSED BRIDGE LATER" in body and "waive claude-sonnet-6" in body, "the body must say why, and how to waive")
+        expect("model_id: claude-sonnet-6" in body and "status: bridge_pending" in body and "model_watch bridge-gap" in body,
+               "the body must say how to add the new model to subject_models.yaml and how to disclose the gap")
+        # bridge-gap: writes once, never when the month's sweep already ran
+        from core.schedule import coverage
+        log = Path(tmp) / "coverage.jsonl"
+        expect("logged" in log_bridge_gap("2026-10-12", log) and coverage.load_observations(log)[0]["cause"] == "generation_bridge",
+               "bridge-gap must log a full_sweep gap with cause generation_bridge")
+        expect("already logged" in log_bridge_gap("2026-10-13", log) and len(coverage.load_observations(log)) == 1,
+               "bridge-gap must not log the same month twice")
+        ran_log = Path(tmp) / "coverage_ran.jsonl"
+        coverage.record_observation("full_sweep", "2026-11-02", ran=True, log_path=ran_log)
+        expect("already ran" in log_bridge_gap("2026-11-10", ran_log) and len(coverage.load_observations(ran_log)) == 1,
+               "bridge-gap must write nothing when this month's sweep already ran")
+    return errors
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="command", required=True)
@@ -307,11 +642,40 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--subject-models", type=Path, default=DEFAULT_SUBJECT_MODELS)
     p.add_argument("--protocols-dir", type=Path, default=DEFAULT_PROTOCOLS_DIR)
     p.add_argument("--dry-run", action="store_true", help="report only; don't append to the log")
+    pp = sub.add_parser("pending", help="which bridges are owed, from what is on disk; exit 10 if any (free, offline)")
+    pp.add_argument("--date", default=date.today().isoformat())
+    pp.add_argument("--registry", type=Path, default=DEFAULT_REGISTRY)
+    pp.add_argument("--subject-models", type=Path, default=DEFAULT_SUBJECT_MODELS)
+    pp.add_argument("--protocols-dir", type=Path, default=DEFAULT_PROTOCOLS_DIR)
+    pp.add_argument("--experiments", type=Path, default=DEFAULT_EXPERIMENTS)
+    pp.add_argument("--json", action="store_true", help="print [{title, body, new_id, ...}] for the workflow")
+    pp.add_argument("--pretend-new", default=None, help="TEST ONLY: act as if this model id had just appeared; writes nothing")
+    wp = sub.add_parser("waive", help="record that no bridge is needed for a model id (appends to the log)")
+    wp.add_argument("model_id")
+    wp.add_argument("--reason", required=True)
+    wp.add_argument("--date", default=date.today().isoformat())
+    wp.add_argument("--registry", type=Path, default=DEFAULT_REGISTRY)
+    wp.add_argument("--subject-models", type=Path, default=DEFAULT_SUBJECT_MODELS)
+    fp = sub.add_parser("followup", help="what is left to do by hand once the bridge runs are in the repository; exit 10 if anything is (free, offline)")
+    fp.add_argument("--date", default=date.today().isoformat())
+    fp.add_argument("--registry", type=Path, default=DEFAULT_REGISTRY)
+    fp.add_argument("--subject-models", type=Path, default=DEFAULT_SUBJECT_MODELS)
+    fp.add_argument("--protocols-dir", type=Path, default=DEFAULT_PROTOCOLS_DIR)
+    fp.add_argument("--experiments", type=Path, default=DEFAULT_EXPERIMENTS)
+    fp.add_argument("--ledger", type=Path, default=None)
+    fp.add_argument("--coverage-log", type=Path, default=None)
+    fp.add_argument("--json", action="store_true", help="print [{title, body, new_id, open_required}] for the workflow")
+    gp = sub.add_parser("bridge-gap", help="disclose that this month's paid sweep was held back for the bridge (coverage.csv gap)")
+    gp.add_argument("--date", default=date.today().isoformat())
     sub.add_parser("verify", help="run this module's own hand-worked cases")
     args = ap.parse_args(argv)
 
+    if args.command == "bridge-gap":
+        print(log_bridge_gap(args.date))
+        return 0
+
     if args.command == "verify":
-        errors = _verify()
+        errors = _verify() + _verify_pending()
         print(f"[{'FAIL' if errors else 'PASS'}] core/plumbing/model_watch.py")
         for e in errors:
             print(f"    {e}")
@@ -323,6 +687,54 @@ def main(argv: list[str] | None = None) -> int:
     if active is None:
         ap.error(f"{args.subject_models} has no active commercial generation")
     family = active["model_family"]
+
+    if args.command == "waive":
+        rec = {"record_type": "model_observed", "observed_date": args.date, "family": family,
+               "event": "bridge_waived", "model_id": args.model_id, "reason": args.reason}
+        args.registry.parent.mkdir(parents=True, exist_ok=True)
+        with args.registry.open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps(rec, ensure_ascii=False, sort_keys=True) + "\n")
+        print(f"recorded: no bridge needed for {args.model_id} ({args.reason})")
+        return 0
+
+    if args.command == "followup":
+        from core.budget import budget
+        from core.schedule import coverage
+
+        items = bridge_followup(load_registry(args.registry), family, active["model_id"], args.protocols_dir, args.experiments, args.date,
+                                args.subject_models, args.ledger or budget.DEFAULT_LEDGER, args.coverage_log or coverage.DEFAULT_LOG)
+        out = []
+        for item in items:
+            title, body = followup_message(item)
+            out.append({"title": title, "body": body, "new_id": item["new_id"], "open_required": item["open_required"]})
+        if args.json:
+            print(json.dumps(out, ensure_ascii=False))
+        elif out:
+            for o in out:
+                print(f"BRIDGE FOLLOW-UP: {o['new_id']}: {o['open_required']} required step(s) left")
+        else:
+            print("no bridge follow-up owed")
+        return EXIT_ACTION_NEEDED if out else 0
+
+    if args.command == "pending":
+        registry = load_registry(args.registry)
+        if args.pretend_new:
+            registry = registry + [{"family": family, "event": "appeared", "model_id": args.pretend_new,
+                                    "observed_date": args.date, "record_type": "model_observed"}]
+        items = bridge_pending(registry, family, active["model_id"], args.protocols_dir, args.experiments, args.date)
+        out = []
+        for item in items:
+            title, body = loud_message(item)
+            out.append({"title": title, "body": body, "new_id": item["new_id"], "days": item["days"], "missing": item["missing"]})
+        if args.json:
+            print(json.dumps(out, ensure_ascii=False))
+        elif out:
+            for o in out:
+                print(f"BRIDGE OWED: {o['new_id']} ({o['days']} day(s)); still to run: {', '.join(o['missing'])}")
+        else:
+            print("no bridge owed")
+        return EXIT_ACTION_NEEDED if out else 0
+
     listed = list_family_models(family)
     result, lines = check(
         listed=listed, family=family, active_model_id=active["model_id"],

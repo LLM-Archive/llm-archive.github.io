@@ -160,8 +160,20 @@ body.theme-blue .sgb i,body.theme-dark .sgb i{background:rgba(168,219,255,0.65)}
 .scale i{width:26px;height:12px;border-radius:3px;display:inline-block}
 
 tr.row{cursor:pointer}
+table.cmp{table-layout:fixed;width:100%}
+table.cmp th,table.cmp td{padding:9px 10px 9px 0;font-size:13px;overflow-wrap:anywhere;vertical-align:top}
+table.cmp th{text-align:left;text-transform:none;letter-spacing:0;font-size:12.5px;line-height:1.35}
+table.cmp th small{display:block;font-weight:400;color:var(--faint)}
+table.cmp th:first-child,table.cmp td:first-child{width:22%}
+table.cmp .diff{font-weight:700}
+table.cmp.hist{table-layout:auto}
+table.cmp.hist td,table.cmp.hist th{overflow-wrap:break-word;width:auto}
+table.cmp.hist td:nth-child(-n+2){white-space:nowrap}
 tr.row:hover td{background:var(--raise)}
 tr.row td:last-child{color:var(--link);font-size:13px;white-space:nowrap}
+tr.row td{padding-top:17px;padding-bottom:17px}
+tr.row td:first-child{line-height:1.75}
+tr.row td:first-child .tag{display:inline-block;margin-top:5px;line-height:1.5}
 .tag{font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap}
 .t-up{background:#e8f5ec;color:var(--good)}
 .t-fl{background:#f1f1f4;color:#15161a}
@@ -311,7 +323,7 @@ score or a guarantee that the model will behave the same way in your own product
 <p><small><b>How to read a row:</b> first look at the <b>What changes</b> column (the literal
 question is only visible for the 2 open-lane protocols — the rest stay guarded while their model is
 active), then the score and its margin, and finally whether it passed the checks.</small></p>
-<p><span class="tag t-fl">model: <code>@@COMMERCIAL_MODEL_ID@@</code></span></p>
+<p><span class="tag t-fl"><span id="rows-model-label">model:</span> <code>@@COMMERCIAL_MODEL_ID@@</code></span> <small id="rows-earlier"></small></p>
 <div class="vtabs" id="rows-tabs" role="tablist" aria-label="Protocol version" hidden></div>
 <div class="scroll"><table>
 <thead><tr><th title="The protocol, and which model answered it">Protocol</th><th title="What part of the question's wording was changed between versions">What changes</th><th title="Whether this protocol's questions and answers are public (open), or still kept private until the model retires">Lane</th><th title="The day this measurement ran">Date</th><th title="How often it kept the same decision when we changed the question">Stability</th><th><abbr title="how many times it was asked">n</abbr></th><th title="Whether this result passed our quality checks, and if not, which one it failed">Results</th><th></th></tr></thead>
@@ -374,7 +386,7 @@ don't need to install anything else.</p>
 <h3>What isn't downloadable yet</h3>
 <p>The questions and answers for protocols that are still private stay hidden — if we published them
 now, the next model could "learn" them and the measurement would lose its meaning. They all open up
-once the corresponding model is retired. Their number and existence are always disclosed.</p>
+once the corresponding model is four generations old (four newer model generations have been measured after it). Their number and existence are always disclosed.</p>
 
 <h3>License</h3>
 <div class="scroll"><table>
@@ -530,7 +542,7 @@ measurement itself.</p>
 <div class="callout">
 <p><b>Most questions stay hidden while the model is still in use.</b> Otherwise the next model
 could "learn" them and the measurement would lose its meaning. They all open up once the model is
-retired: questions, answers, code.</p>
+four generations old: questions, answers, code.</p>
 </div>
 
 <h3>No answer is judged by a human or another AI</h3>
@@ -755,14 +767,14 @@ code preserves the record's exact identity.</small></p>
     <div id="lock-commercial">
     <p><b>The text is private.</b> If we published it now, the next
     model would learn it and the measurement would die — permanently, for every generation after it.</p>
-    <p style="margin-bottom:0">It all opens up once the model is retired: all four versions,
+    <p style="margin-bottom:0">It all opens up once this model is four generations old: all four versions,
     every answer, code — <b>right next to the numbers you see now</b>. <span id="lockyr"></span>.</p>
     </div>
     <div id="lock-frozen" hidden>
     <p><b>The text is private — but not because of this model.</b> This one is frozen and can't learn
     anything. The same protocol also runs on the commercial model, and publishing it now would let a
     future version of that model learn it and end the measurement.</p>
-    <p style="margin-bottom:0">It opens when the commercial model is retired: all four versions, every
+    <p style="margin-bottom:0">It opens when the commercial model is four generations old: all four versions, every
     answer, code — <b>right next to the numbers you see now</b>. This frozen model is never retired,
     so it has no date of its own.</p>
     </div></div>
@@ -799,6 +811,17 @@ code preserves the record's exact identity.</small></p>
     <tr><td>Series</td><td id="dsr"></td></tr>
     <tr><td>Date</td><td class="num" id="ddate"></td></tr>
   </tbody></table>
+
+  <div id="dbridge"></div>
+
+  <div id="dhist" hidden>
+    <h3>History with this model</h3>
+    <p><small><b>Vertical axis:</b> stability in % — how often the model kept the same decision when the question was reworded (higher is more stable).
+    <b>Horizontal axis:</b> date of each measurement. Each dot is one measurement, its bar the margin of error, a ringed dot a bridge week, the large dot the latest.</small></p>
+    <div id="dhist-chart"></div>
+    <div class="scroll"><table class="cmp hist"><thead><tr><th>Date</th><th>Stability</th><th>Checks</th><th></th></tr></thead><tbody id="dhist-body"></tbody></table></div>
+    <p><small>Every measurement of this protocol by this model, oldest first; the table above shows the latest one.</small></p>
+  </div>
 
   <h3>Provenance</h3>
   <div class="audit-panel">
@@ -881,8 +904,22 @@ function checksTag(d){
  if(d.flags.length) return d.flags.map(f=>'<span class="tag t-dn">'+f+'</span>').join(' ');
  return '<span class="tag t-fl">off curve</span>';
 }
+// Once a second commercial model exists (a new generation, after the bridge), a row must say which
+// model it is: the table then holds one row per protocol PER MODEL. With one model nothing is added.
+// Lifecycle status of a model as subject_models.yaml states it; a model the file does not list yet (a bridge was
+// run, the file not edited) is just "other model" rather than a guess.
+const STATUS_LABEL={active:'current',retired:'retired',bridge_pending:'being bridged',pending:'not measured yet'};
+const statusOf=m=>STATUS_LABEL[m]||'other model';
+const MODELS=[...new Set(ROWS.map(d=>d.subject_model_id))];
+const MULTI=MODELS.length>1;
+function modelTag(d){
+ if(!MULTI) return '';
+ const cur=d.model_status==='active';
+ return '<br><span class="tag '+(cur?'t-up':'t-fl')+'">'+d.subject_model_id+' · '+statusOf(d.model_status)+'</span>'
+  +(d.bridge?' <span class="tag t-open" title="The old and the new model were measured on this protocol in the same week (a bridge), so the two rows can be compared directly.">bridge</span>':'');
+}
 function rowHtml(d){const i=ALL.indexOf(d);
- return `<tr class="row" tabindex="0" data-i="${i}"><td><b>${panelName(d)}</b><br><small><code>${d.protocol_id}</code></small></td><td>${TYPE_LABELS[d.rewording_type]||d.rewording_type}</td>`+
+ return `<tr class="row" tabindex="0" data-i="${i}"><td><b>${panelName(d)}</b><br><small><code>${d.protocol_id}</code></small>${modelTag(d)}</td><td>${TYPE_LABELS[d.rewording_type]||d.rewording_type}</td>`+
  `<td><span class="tag ${d.lane==='open'?'t-open':'t-guard'}">${d.lane}</span></td>`+
  `<td class="num">${d.run_date||'—'}</td>`+
  `<td class="num"><b>${d.stability_pct.toFixed(1)}%</b> <span style="color:var(--faint)">±${((d.ci_high_pct-d.ci_low_pct)/2).toFixed(1)}</span></td>`+
@@ -915,6 +952,12 @@ function renderTable(id,rows){
 }
 renderTable('rows',ROWS);
 renderTable('orows',OROWS);
+if(MULTI){
+ document.getElementById('rows-model-label').textContent='current model:';
+ const others=MODELS.filter(m=>ROWS.some(d=>d.subject_model_id===m&&d.model_status!=='active'));
+ document.getElementById('rows-earlier').textContent='Also in this table: '+others.map(m=>m+' ('+statusOf((ROWS.find(d=>d.subject_model_id===m)||{}).model_status)+')').join(', ')
+  +'. Rows marked bridge were measured for the old and the new model in the same week.';
+}
 
 
 const dr=document.getElementById('drawer'),sc=document.getElementById('scrim');
@@ -945,6 +988,87 @@ const FLAG_EXPLAIN={
  exploratory:()=>'Outside the protocol’s one pre-declared comparison — informative only, never on the main curve.'
 };
 
+// Bridge and history, drawn in the drawer. Built with textContent/SVG only; every number comes from the row data.
+const marginOf=m=>'±'+((m.ci_high_pct-m.ci_low_pct)/2).toFixed(1);
+const signed=x=>(x>=0?'+':'−')+Math.abs(x).toFixed(1);
+const checksOf=m=>m.on_curve?'✓ PASS':((m.flags&&m.flags.length)?m.flags.join(', '):'off curve');
+function el(tag,text,cls){const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;}
+
+// One two-column table: `mine` against `theirs` (either can be a bridge-week measurement or a latest one).
+function compareTable(mine,theirs,mineHead,theirsHead,verdict){
+ const wrap=el('div',undefined,'scroll'), t=el('table',undefined,'cmp'), head=t.createTHead().insertRow(), body=t.createTBody();
+ const th=(a,b)=>{const c=el('th',a);if(b)c.appendChild(el('small',b));return c;};
+ head.appendChild(th(''));head.appendChild(th(mineHead[0],mineHead[1]));head.appendChild(th(theirsHead[0],theirsHead[1]));
+ const rows=[
+  ['Stability (A ↔ B)',m=>m.stability_pct.toFixed(1)+'% '+marginOf(m),o=>o.stability_pct-mine.stability_pct,true],
+  ['Gap A ↔ B',m=>m.gap_pct.toFixed(1)+' points',o=>o.gap_pct-mine.gap_pct,false],
+  ['Noise floor',m=>m.null_floor_pct.toFixed(1)+' points',o=>o.null_floor_pct-mine.null_floor_pct,false],
+  ['Checks',checksOf,null,false],
+  ['Sample',m=>m.n+' per version × 4',null,false],
+  ['Date',m=>m.run_date,null,false],
+ ];
+ rows.forEach(([label,fmt,delta,isStab])=>{
+  const r=body.insertRow();r.insertCell().textContent=label;
+  r.insertCell().textContent=fmt(mine);
+  const c=r.insertCell();c.textContent=fmt(theirs);
+  if(delta){c.appendChild(el('small','  '+signed(delta(theirs)))).style.color='var(--faint)';}
+  if(isStab&&verdict){const g=el('span',verdict==='flat'?'within margin':'beyond margin','tag '+(verdict==='flat'?'t-fl':'t-open'));g.style.marginLeft='8px';c.appendChild(g);}
+  if(label==='Checks'&&checksOf(mine)!==checksOf(theirs)){r.cells[1].classList.add('diff');c.classList.add('diff');}
+ });
+ wrap.appendChild(t);return wrap;
+}
+
+function renderBridge(d){
+ const box=document.getElementById('dbridge');box.textContent='';
+ (d.other_models||[]).forEach(o=>{
+  const pair=o.bridge_pair, sec=el('div');
+  if(pair){
+   sec.appendChild(el('h3','Bridge with '+o.model_id+' — measured the same week'));
+   const diff=pair.this.stability_pct-pair.other.stability_pct, p=el('p'), b=el('b',Math.abs(diff).toFixed(1)+' points '+(diff>=0?'higher':'lower'));
+   p.append('In the bridge week ('+pair.this.run_date+') this model scored ',b,' than '+o.model_id+' ('+statusOf(o.model_status)+') — ',
+    pair.verdict==='flat'||!pair.verdict?'but that is within the margins of error, so it is not a clear difference.'
+     :'a difference larger than the margins of error and the lost-response bound.');
+   sec.appendChild(p);
+   if(pair.this.run_id!==d.run_id){const n=el('p');n.appendChild(el('small','This protocol has been measured again since ('+d.run_date+', '+d.stability_pct.toFixed(1)+'%); the bridge week stays as it was measured.'));sec.appendChild(n);}
+   sec.appendChild(compareTable(pair.this,pair.other,[d.subject_model_id,statusOf(d.model_status)+' · bridge week'],[o.model_id,statusOf(o.model_status)+' · bridge week'],pair.verdict));
+  }else{
+   sec.appendChild(el('h3','Same protocol, '+o.model_id+' — not a bridge'));
+   const p=el('p');p.appendChild(el('small','Latest measurements of this protocol by the two models, '+o.days_apart+' days apart: a difference here can come from the model or from time passing, so it is not compared as a bridge.'));sec.appendChild(p);
+   sec.appendChild(compareTable(d,o.latest,[d.subject_model_id,statusOf(d.model_status)+' · this row'],[o.model_id,statusOf(o.model_status)],null));
+  }
+  box.appendChild(sec);
+ });
+}
+
+// Stability over time for this row's model: x = date, y = stability in % (higher = the model kept the same decision more often),
+// each dot one measurement, the bar its margin of error, a ringed dot a bridge week, the big dot the latest one; the table follows.
+function renderHistory(d){
+ const h=d.history||[], box=document.getElementById('dhist');
+ box.hidden=h.length<2;if(h.length<2) return;
+ const day=x=>Date.parse(x.run_date)/86400000, t0=day(h[0]), span=Math.max(1,day(h[h.length-1])-t0);
+ const W=320,H=110,L=34,R=10,T=8,B=22, px=x=>L+(W-L-R)*((day(x)-t0)/span), py=v=>T+(H-T-B)*(1-v/100), NS='http://www.w3.org/2000/svg';
+ const svg=document.createElementNS(NS,'svg');svg.setAttribute('viewBox','0 0 '+W+' '+H);svg.setAttribute('role','img');
+ svg.setAttribute('aria-label','Stability in percent of this protocol over time, '+h.length+' measurements');svg.style.width='100%';svg.style.maxHeight='190px';
+ const add=(tag,attrs,text)=>{const e=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));if(text!==undefined)e.textContent=text;svg.appendChild(e);return e;};
+ [0,50,100].forEach(v=>{add('line',{x1:L,x2:W-R,y1:py(v),y2:py(v),stroke:'currentColor','stroke-opacity':.15});
+  add('text',{x:L-5,y:py(v)+3,'text-anchor':'end','font-size':9,fill:'currentColor','fill-opacity':.65},v+'%');});
+ add('text',{x:L,y:H-6,'text-anchor':'start','font-size':9,fill:'currentColor','fill-opacity':.65},h[0].run_date);
+ add('text',{x:W-R,y:H-6,'text-anchor':'end','font-size':9,fill:'currentColor','fill-opacity':.65},h[h.length-1].run_date);
+ h.forEach(x=>add('line',{x1:px(x),x2:px(x),y1:py(Math.min(100,x.ci_high_pct)),y2:py(Math.max(0,x.ci_low_pct)),stroke:'currentColor','stroke-opacity':.3,'stroke-width':3}));
+ add('polyline',{points:h.map(x=>px(x)+','+py(x.stability_pct)).join(' '),fill:'none',stroke:'currentColor','stroke-width':1.5});
+ h.forEach(x=>{add('circle',{cx:px(x),cy:py(x.stability_pct),r:x.run_id===d.run_id?4:2.6,fill:'currentColor'});
+  if((d.bridge_run_ids||[]).includes(x.run_id)) add('circle',{cx:px(x),cy:py(x.stability_pct),r:7,fill:'none',stroke:'currentColor','stroke-width':1.3});});
+ const chart=document.getElementById('dhist-chart');chart.textContent='';chart.appendChild(svg);
+ const body=document.getElementById('dhist-body');body.textContent='';
+ h.slice().reverse().forEach(x=>{const r=body.insertRow();
+  r.insertCell().textContent=x.run_date;
+  r.insertCell().textContent=x.stability_pct.toFixed(1)+'% '+marginOf(x);
+  r.insertCell().textContent=checksOf(x);
+  const c=r.insertCell();
+  if(x.run_id===d.run_id)c.appendChild(el('span','latest','tag t-fl'));
+  if((d.bridge_run_ids||[]).includes(x.run_id)){c.append(' ');c.appendChild(el('span','bridge','tag t-open'));}});
+}
+
 function openDetail(i){const d=ALL[i];
  set('dk',panelName(d));
  {const t=document.getElementById('dt');t.textContent='Stability '+d.stability_pct.toFixed(1)+'% ';
@@ -965,7 +1089,7 @@ function openDetail(i){const d=ALL[i];
   const frozen=d.series==='open_weights';
   document.getElementById('lock-commercial').hidden=frozen;
   document.getElementById('lock-frozen').hidden=!frozen;
-  if(!frozen)set('lockyr','disclosed once this model generation is retired');
+  if(!frozen)set('lockyr','disclosed once four newer model generations have been measured');
  }
  const sg=d.scenario_gaps_pct||[], mx=sg.length?Math.max.apply(null,sg):0;
  document.getElementById('sgw').innerHTML=sg.map((g,j)=>
@@ -1005,6 +1129,7 @@ function openDetail(i){const d=ALL[i];
  set('dnf',d.null_floor_pct.toFixed(1)+' points');
  set('dsamp',d.n+' per version × 4 · '+d.n_items+' scenarios');
  set('dp',d.protocol_id);set('di',d.subject_model_id);
+ renderBridge(d);renderHistory(d);
  set('dpsha',d.panel_sha256.slice(0,12)+'…');set('ddate',d.run_date);
  const sh=(id,v)=>{set(id,(v||'').slice(0,8));document.getElementById(id).title=v||'';};
  sh('dxsha',d.extractor_sha);sh('dprh',d.protocol_sha256);sh('dan',d.analysis_code_sha);
@@ -1054,8 +1179,8 @@ function openDetail(i){const d=ALL[i];
  const availability=isOpen
    ? 'Full text and answers are published even though it’s off the main curve.'
    : d.series==='open_weights'
-     ? 'Only the result is public. The questions and the model’s answers stay private until the commercial model running the same protocol is retired.'
-     : 'Only the result is public. The questions and the model’s answers stay private until this model generation is retired.';
+     ? 'Only the result is public. The questions and the model’s answers stay private until the commercial model running the same protocol is four generations old.'
+     : 'Only the result is public. The questions and the model’s answers stay private until this model is four generations old.';
  // A run can look "off curve" purely because zero A↔B/A↔A′ gap sits next to a working
  // positive control -- exactly the signature a stable, non-degenerate model should produce.
  // That combination shouldn't read as a defect, so it gets its own bullet below.

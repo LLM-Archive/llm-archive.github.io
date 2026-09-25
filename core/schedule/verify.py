@@ -20,7 +20,7 @@ from core.budget import budget
 from core.plumbing.fake_client import FakeClient
 
 from core.plumbing import prereg
-from core.plumbing.anthropic_client import CircuitOpen
+from core.plumbing.anthropic_client import CircuitOpen, FundsExhausted, is_funds_error
 
 from . import coverage, run_due, schedule
 
@@ -460,6 +460,7 @@ class _MeteredStub(_StubClient):
     raise CircuitOpen on that call number, as the real client's breaker would."""
 
     break_after: int | None = None
+    funds_after: int | None = None  # raise FundsExhausted once this many calls have been made
 
     def __init__(self, model_id: str, model_family: str) -> None:
         super().__init__(model_id, model_family)
@@ -469,6 +470,8 @@ class _MeteredStub(_StubClient):
 
     def complete(self, prompt, *, meta):
         self._calls += 1
+        if self.funds_after is not None and self._calls > self.funds_after:
+            raise FundsExhausted("stub: no funds")
         if self.break_after is not None and self._calls > self.break_after:
             raise CircuitOpen("stub breaker")
         self.input_tokens += 1000
@@ -627,6 +630,110 @@ def check_anthropic_client_metering(data) -> list[str]:
     return errors
 
 
+def check_funds_exhausted(data) -> list[str]:
+    """When the money at Anthropic runs out, the paid runs must stop quietly and pick up again on
+    their own: the client recognises the refusal at once (and only that refusal), a sweep stops
+    without writing zero-cost ledger rows or leaving a finished run, and run_due exits 20 ("paused"),
+    never 1 ("failed") -- while a real breaker still exits 1. Nothing here is billed."""
+    del data
+    import os
+    import sys
+    import types
+
+    errors = []
+
+    for status, text, want in (
+        (400, "Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing", True),
+        (400, "You have reached your specified workspace API usage limits. You will regain access on 2026-11-01", True),
+        (429, "rate limit exceeded, slow down", False),
+        (400, "messages: text content blocks must be non-empty", False),
+        (500, "credit balance is too low", False),
+        (401, "invalid x-api-key", False),
+    ):
+        if is_funds_error(status, text) is not want:
+            errors.append(f"is_funds_error({status}, {text[:40]!r}) must be {want}")
+
+    class _APIError(Exception):
+        def __init__(self, status, message):
+            super().__init__(message)
+            self.status_code = status
+
+    script: list = []
+
+    class _Messages:
+        def create(self, **kw):
+            raise script.pop(0)
+
+    class _Anthropic:
+        def __init__(self, **kw):
+            self.messages = _Messages()
+
+    fake = types.SimpleNamespace(Anthropic=_Anthropic, APIError=_APIError)
+    from core.plumbing.anthropic_client import AnthropicClient
+
+    with mock.patch.dict(sys.modules, {"anthropic": fake}):
+        c = AnthropicClient("claude-sonnet-5", "claude-sonnet", api_key="k")
+        script[:] = [_APIError(400, "Your credit balance is too low to access the Anthropic API.")]
+        try:
+            c.complete("p", meta={})
+            errors.append("a zero credit balance must stop the run at the very first call")
+        except FundsExhausted:
+            pass
+        if c._consecutive_errors != 0:
+            errors.append("running out of funds is not a failed call and must not count towards the breaker")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = Path(tmp)
+        pdir = tmp / "protocols"
+        _one_v0_protocol(pdir)
+        ledger = tmp / "ledger.json"
+        _write_ledger(ledger, "2026-06-01", "0")
+
+        class _NoFunds(_MeteredStub):
+            funds_after = 0
+
+        with mock.patch("core.plumbing.anthropic_client.AnthropicClient", _NoFunds), contextlib.redirect_stdout(io.StringIO()):
+            results = run_due.run_full_sweep(
+                client_kind="anthropic", run_date="2026-06-15", protocols_dir=pdir, out_root=tmp / "exp",
+                subject_models_path=_REAL_SUBJECT_MODELS, budget_ledger=ledger, budget_config=budget.DEFAULT_CONFIG,
+                model_id="stub-model", model_family="stub-family", manifests_dir=None,
+            )
+        if [r.get("skipped") for r in results] != ["budget_halted"] or not results[0].get("funds_exhausted"):
+            errors.append(f"no funds: the sweep must stop with budget_halted + funds_exhausted, got {results}")
+        rows = json.loads(ledger.read_text())
+        if any("aborted" in e["run_id"] for e in rows):
+            errors.append("no funds: nothing was billed, so no aborted ledger row may be written")
+        if any(not d.name.startswith(".") for d in (tmp / "exp").glob("*")):
+            errors.append("no funds: an abandoned run must not leave a finished run directory")
+
+        # end to end through main(): exit 20 when paused for funds, 1 for a real breaker, still due after both
+        def _main_exit(stub_cls) -> tuple[int, bool]:
+            last_run = tmp / f"last_run_{stub_cls.__name__}.json"
+            argv = [
+                "--client", "anthropic", "--only", "subject_fingerprint", "--date", "2026-06-15",
+                "--last-run", str(last_run), "--coverage-log", str(tmp / "cov.jsonl"),
+                "--experiments-out", str(tmp / "exp_main"), "--budget-ledger", str(ledger),
+                "--subject-models", str(_REAL_SUBJECT_MODELS),
+                "--model-id", "stub-model", "--model-family", "stub-family",
+            ]
+            with mock.patch("core.plumbing.anthropic_client.AnthropicClient", stub_cls), contextlib.redirect_stdout(io.StringIO()):
+                code = run_due.main(argv)
+            return code, last_run.exists() and "subject_fingerprint" in last_run.read_text()
+
+        code, recorded = _main_exit(_NoFunds)
+        # the literal 20 is the contract with the workflows (which read it as "paused"), not a constant to import
+        if code != 20 or recorded:
+            errors.append(f"no funds through main(): must exit 20 and leave the job due, got exit {code}, recorded={recorded}")
+
+        class _Broken(_MeteredStub):
+            break_after = 0
+
+        code, recorded = _main_exit(_Broken)
+        if code != 1 or recorded:
+            errors.append(f"a real breaker through main() must still exit 1 and leave the job due, got exit {code}, recorded={recorded}")
+    return errors
+
+
 def main() -> int:
     data = json.loads(_VECTORS.read_text(encoding="utf-8"))
 
@@ -645,6 +752,7 @@ def main() -> int:
         ("would_fit", lambda: check_would_fit(data)),
         ("measured_spend", lambda: check_measured_spend(data)),
         ("anthropic_client_metering", lambda: check_anthropic_client_metering(data)),
+        ("funds_exhausted", lambda: check_funds_exhausted(data)),
     )
 
     all_errors: list[str] = []

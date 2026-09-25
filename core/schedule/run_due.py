@@ -45,7 +45,7 @@ from core.budget import budget
 from core.measure import pilot
 from core.measure.schema import VERSIONS
 from core.plumbing import prereg, subject_fingerprint
-from core.plumbing.anthropic_client import CircuitOpen
+from core.plumbing.anthropic_client import CircuitOpen, FundsExhausted
 
 from . import coverage, schedule
 
@@ -116,6 +116,8 @@ def _record_measured_spend(client, *, run_id: str, run_date: str, category: str,
     cost = client.cost_usd() if hasattr(client, "cost_usd") else None
     if cost is None:
         return None
+    if cost == 0:
+        return cost  # nothing was billed (e.g. the very first call was refused): no ledger row to write
     budget.record_spend(
         ledger_path, run_id=run_id, run_date=run_date, category=category, amount_eur=cost,
         note=f"{label}; tokens x list price ({client.input_tokens} in / {client.output_tokens} out), "
@@ -293,6 +295,18 @@ def run_full_sweep(
         except FileExistsError:
             results.append({"protocol_id": pid, "skipped": "already_ran_today"})
             continue
+        except FundsExhausted as e:
+            # Out of money at Anthropic: not a fault. Whatever was billed before it is logged, the
+            # protocol is left unrecorded (its staging dir is discarded like any abandoned run), and
+            # the sweep stops without an alarm. The job stays due, so it runs again by itself once
+            # funds are back. `budget_halted` is the existing skip reason (and gap cause) for a
+            # budget that stopped a run; `funds_exhausted` only tells main() to exit "paused".
+            _record_measured_spend(
+                client, run_id=f"{run_date}__{pid}__{mid}__r0__aborted", run_date=run_date,
+                category="full_sweep", ledger_path=budget_ledger, label=f"full_sweep/{pid} ABORTED, no funds",
+            )
+            results.append({"protocol_id": pid, "skipped": "budget_halted", "funds_exhausted": True, "detail": str(e)})
+            break
         except CircuitOpen as e:
             # The run was abandoned (its staging dir is left behind, never a finished run), but the
             # calls made before the breaker opened were real and billed. Log them, then stop the
@@ -352,6 +366,14 @@ def run_subject_fingerprint(
 
     try:
         record = subject_fingerprint.run(client, run_date=run_date)
+    except FundsExhausted as e:
+        # Same rule as the sweep: no money is not a fault. Nothing is recorded, the job stays due,
+        # and tomorrow's run tries again -- the day funds are back, it simply works.
+        _record_measured_spend(
+            client, run_id=f"subject_fingerprint__{run_date}__{client.subject_model_id}__aborted", run_date=run_date,
+            category="subject_fingerprint", ledger_path=budget_ledger, label="subject_fingerprint ABORTED, no funds",
+        )
+        return {"skipped": "budget_halted", "funds_exhausted": True, "detail": str(e)}
     except CircuitOpen as e:
         _record_measured_spend(
             client, run_id=f"subject_fingerprint__{run_date}__{client.subject_model_id}__aborted", run_date=run_date,
@@ -390,6 +412,7 @@ def run_reference_model(*, run_date: str) -> dict:
     guard protocol already ran (pilot.run()'s own append-only refusal) -- reported as
     "already_ran_today", which the caller treats as done, same as core.measure.pilot's own
     FileExistsError handling elsewhere in this module."""
+    from core.plumbing import alarm_log
     from core.plumbing.reference_model_runner import run as run_reference
 
     try:
@@ -398,6 +421,7 @@ def run_reference_model(*, run_date: str) -> dict:
         return {"skipped": "environment_unavailable", "detail": str(e)}
     except FileExistsError:
         return {"skipped": "already_ran_today"}
+    alarm_log.append(record, run_date)
     return {"ok": record["ok"], "guard_protocol_id": record["guard_protocol_id"]}
 
 
@@ -430,6 +454,17 @@ def _ran_something(runner: str, outcome: dict | list[dict]) -> bool:
     if runner == "full_sweep":
         return any(r.get("skipped") not in _STILL_DUE_SKIPS for r in outcome)
     return outcome.get("skipped") not in _STILL_DUE_SKIPS
+
+
+def _funds_exhausted(outcome: dict | list[dict]) -> bool:
+    items = outcome if isinstance(outcome, list) else [outcome]
+    return any(r.get("funds_exhausted") for r in items)
+
+
+# Exit status 20: nothing failed, but a paid run stopped because the account has no funds left. The
+# workflows read it as "paused, tell the owner once" -- not as a failure -- and the next run carries
+# on by itself. 0 = fine, 1 = something actually went wrong.
+EXIT_PAUSED = 20
 
 
 def _skip_reasons(runner: str, outcome: dict | list[dict]) -> set[str]:
@@ -488,6 +523,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     exit_code = 0
+    paused_for_funds = False
     for runner in sorted(grouped, key=RUNNER_ORDER.index):
         jobs = grouped[runner]
         print(f"\n=== {runner} (covers: {', '.join(jobs)}) ===")
@@ -497,6 +533,7 @@ def main(argv: list[str] | None = None) -> int:
 
         outcome = _dispatch(runner, args)
         print(json.dumps(outcome, indent=2, ensure_ascii=False))
+        paused_for_funds = paused_for_funds or _funds_exhausted(outcome)
         if runner == "full_sweep" and any(r.get("skipped") == "circuit_open" for r in outcome):
             # A sweep the breaker cut short may still have finished protocols, which are recorded
             # below like any other run -- but it must never look like a clean success.
@@ -507,7 +544,10 @@ def main(argv: list[str] | None = None) -> int:
                 schedule.record_run(args.last_run, job, args.date)
                 coverage.record_observation(job, args.date, ran=True, log_path=args.coverage_log)
         else:
-            exit_code = 1
+            # A budget halt (the ladder's, or no funds left) is an expected state that leaves the job
+            # due and resolves itself, not a failure; any other still-due skip is one.
+            if _skip_reasons(runner, outcome) != {"budget_halted"}:
+                exit_code = 1
             print(f"{runner}: nothing actually ran -- {', '.join(jobs)} left due, not recorded.")
             cause = coverage.gap_cause_for(runner, _skip_reasons(runner, outcome))
             if cause is None:
@@ -519,6 +559,8 @@ def main(argv: list[str] | None = None) -> int:
                 for job in jobs:
                     coverage.record_observation(job, args.date, ran=False, cause=cause, log_path=args.coverage_log)
 
+    if exit_code == 0 and paused_for_funds:
+        return EXIT_PAUSED
     return exit_code
 
 
