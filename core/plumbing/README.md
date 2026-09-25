@@ -10,6 +10,11 @@
   `temperature`/`top_p`/`top_k` are not sent — the current API no longer accepts them; confirmed
   live across 4 protocol families that repeated identical prompts still come back deterministic
   without them, so nothing about this project's measurement depends on that knob existing.
+  Since 2026-09-25 it also counts the tokens the API returns per call (`input_tokens`,
+  `output_tokens`) and prices them (`cost_usd()`, Sonnet 5 = $2 / $10 per 1M; an unlisted model has
+  no cost), and it has a circuit breaker: `CircuitOpen` on the first 401/403/404 or after 5 failed
+  calls in a row. `core/schedule/run_due.py` uses both; see `core/schedule/README.md`. Checked by
+  `python3 -m core.schedule.verify` (`anthropic_client_metering`, against a stand-in `anthropic`).
   `model_id`/`model_family` are constructor arguments, never hardcoded, because unlike the
   reference model this one changes across generations (spec.md §4.3). Needs `pip install anthropic`
   and `ANTHROPIC_API_KEY` set in the environment to actually run; importing the module doesn't
@@ -64,8 +69,27 @@
   trigger spec.md §4.3 calls "automatic, immediate" for the generation bridge and that nothing else
   in the code detected. Detects and prints the bridge plan + budget verdict; never spends money and
   never switches the active model (a new id is `needs_review`). First run only records a baseline.
-  Append-only log: `state/model_registry.jsonl`. Exit status 10 = action needed. Own build check:
+  Append-only log: `state/model_registry.jsonl`. Exit status 10 = action needed. Runs daily in
+  `.github/workflows/model-watch.yml` (06:30 UTC; opens a GitHub issue with the bridge plan on exit 10;
+  needs the `ANTHROPIC_API_KEY` repo secret, a workspace-scoped key). Own build check:
   `python3 -m core.plumbing.model_watch verify`.
+- `budget_watch.py` — two readers of `state/spend.json` + `budget.json` that tell a person what the ledger already
+  knows: `rung` (exit 10 as soon as the month leaves the `full` rung, naming the rung and the percentage --
+  the ladder cuts the sweep silently otherwise) and `reconcile` (the previous month's ledger split into entries
+  computed from tokens vs. entries logged by hand, to compare with the Console bill, plus the command to record
+  a difference). Never records or spends. Daily in `.github/workflows/budget-watch.yml`: one issue per
+  (month, rung), and on the 6th one reconciliation issue per month. Own build check:
+  `python3 -m core.plumbing.budget_watch verify`.
+- `deadman.py` — cadence.yaml's `deadman_alert: 36h`, which nothing read before: exit 10 when the newest
+  commit by `github-actions[bot]` is older than that threshold (a person's commit doesn't count -- it says
+  nothing about whether the automation is alive). Catches the one failure no workflow reports itself: a
+  workflow that never starts. Detects only; runs every 6 hours in `.github/workflows/deadman.yml`, which
+  opens one issue and not another while it is open. Own build check: `python3 -m core.plumbing.deadman verify`.
+- `ots_upgrade.py` — turns a pending OpenTimestamps proof into a Bitcoin proof (the by-hand `ots upgrade` of
+  `state/timestamps/README.md`). Decides "already has a Bitcoin attestation" from the file's bytes, so
+  `status` needs no `ots` install, and never touches a file that has one. Weekly in
+  `.github/workflows/ots-upgrade.yml`; with nothing pending (the normal state) it does and commits nothing.
+  Own build check: `python3 -m core.plumbing.ots_upgrade verify`.
 - `prereg.py` — the pre-registration guard: a protocol counts as pre-registered only if a manifest in
   `state/timestamps/` lists its current `panel_sha256`/`protocol_sha256` and that manifest has a matching
   OpenTimestamps `.ots` (checked by comparing the `.ots` header digest to the manifest's sha256, stdlib

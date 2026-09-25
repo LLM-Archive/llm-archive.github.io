@@ -50,13 +50,35 @@ least the response-parsing shape can be checked by hand against a real `Message`
 
 from __future__ import annotations
 
+import math
 import os
+from fractions import Fraction
 
 from core.measure.client import Response
 
 MAX_TOKENS = 4096
 TIMEOUT_S = 120.0
 MAX_RETRIES = 3
+
+# List price, USD per 1M tokens (input, output), first-party API. Used only to turn the token counts
+# the API itself returns (`message.usage`) into a spend figure for the ledger -- measured usage x
+# published price, not a guess about how many tokens a call "usually" takes. A model missing from
+# this table has NO cost (`cost_usd()` returns None) and the caller falls back to logging the real
+# bill by hand, so a new model can never be silently priced at the wrong rate. Sonnet 5: $2 / $10
+# (Anthropic price list, checked 2026-09-25). The Console shows dollars and the ledger has always
+# held that same number in its `amount_eur` field (see the 2026-09-25 spend.json entry's note).
+PRICES_USD_PER_MTOK = {"claude-sonnet-5": (Fraction(2), Fraction(10))}
+
+# Circuit breaker: a run that cannot get answers must stop spending, not run to the end. A
+# credentials/permission/model-not-found error (401/403/404) will repeat on every remaining call,
+# so the first one opens the breaker. Anything else (network, 429/5xx after the SDK's own retries)
+# opens it after this many failures in a row.
+BREAKER_CONSECUTIVE_ERRORS = 5
+
+
+class CircuitOpen(RuntimeError):
+    """Raised by AnthropicClient.complete() when the run should stop. Never raised for a single
+    failed call -- that is still a `blocked_upstream` trial, scored and disclosed like any other."""
 
 
 def _extract_text(content_blocks) -> str | None:
@@ -101,6 +123,9 @@ class AnthropicClient:
                 "never write it into a file in this repo (spec.md §10: secrets are a never-commit rule)."
             )
         self._anthropic = anthropic
+        self.input_tokens = 0
+        self.output_tokens = 0
+        self._consecutive_errors = 0
         self._client = anthropic.Anthropic(api_key=key, timeout=TIMEOUT_S, max_retries=MAX_RETRIES)
 
     def complete(self, prompt: str, *, meta: dict) -> Response:
@@ -119,6 +144,27 @@ class AnthropicClient:
             # to outcome "blocked_upstream", never scored as a valid or invalid decision. The SDK
             # itself already retried (max_retries=3) on connection errors and 429/5xx before this
             # was raised, so nothing is retried again here.
+            self._consecutive_errors += 1
+            status = getattr(e, "status_code", None)
+            if status in (401, 403, 404) or self._consecutive_errors >= BREAKER_CONSECUTIVE_ERRORS:
+                raise CircuitOpen(
+                    f"stopping the run: {'HTTP ' + str(status) if status else 'connection error'}, "
+                    f"{self._consecutive_errors} failed call(s) in a row -- {e}"
+                ) from e
             return Response(None, None, None, error=str(e))
 
+        self._consecutive_errors = 0
+        usage = getattr(message, "usage", None)
+        self.input_tokens += getattr(usage, "input_tokens", 0) or 0
+        self.output_tokens += getattr(usage, "output_tokens", 0) or 0
+
         return Response(_extract_text(message.content), message.stop_reason, message.model)
+
+    def cost_usd(self) -> Fraction | None:
+        """What this client's calls have cost so far, in USD, rounded UP to the cent's tenth so the
+        ledger errs a hair high, never low. None when the model has no listed price."""
+        price = PRICES_USD_PER_MTOK.get(self.subject_model_id)
+        if price is None:
+            return None
+        raw = (self.input_tokens * price[0] + self.output_tokens * price[1]) / 1_000_000
+        return Fraction(math.ceil(raw * 10_000), 10_000)

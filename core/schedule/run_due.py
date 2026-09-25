@@ -45,6 +45,7 @@ from core.budget import budget
 from core.measure import pilot
 from core.measure.schema import VERSIONS
 from core.plumbing import prereg, subject_fingerprint
+from core.plumbing.anthropic_client import CircuitOpen
 
 from . import coverage, schedule
 
@@ -103,6 +104,24 @@ _SPEND_REMINDER = (
     "  python3 -m core.budget.budget record {category} <amount_eur> --run-id {run_id} "
     "--date {date} --ledger {ledger} --config {config}"
 )
+
+
+def _record_measured_spend(client, *, run_id: str, run_date: str, category: str, ledger_path: Path, label: str) -> Fraction | None:
+    """Writes what a finished (or aborted) run cost into the ledger, from the token counts the API
+    returned -- measured usage x list price, see anthropic_client.PRICES_USD_PER_MTOK. Returns the
+    amount, or None when the client cannot say (a test double, or a model with no listed price); the
+    caller then prints the manual "log the real bill" reminder instead, as before. Never a guess:
+    the entry's note says how it was derived, so a monthly check against the Console bill can tell
+    it from a hand-logged bill."""
+    cost = client.cost_usd() if hasattr(client, "cost_usd") else None
+    if cost is None:
+        return None
+    budget.record_spend(
+        ledger_path, run_id=run_id, run_date=run_date, category=category, amount_eur=cost,
+        note=f"{label}; tokens x list price ({client.input_tokens} in / {client.output_tokens} out), "
+             "not yet reconciled against the Console bill",
+    )
+    return cost
 
 
 def plan(due: dict[str, dict]) -> dict[str, list[str]]:
@@ -251,6 +270,20 @@ def run_full_sweep(
                     f"{pid} is lane {protocol.get('lane')!r}",
                 })
                 continue
+            # Would THIS protocol fit? The rung above only looks at what is already spent, so
+            # without this a protocol could start at 79% and end at 106%. The estimate is the
+            # deliberately pessimistic per-call ceiling, so it errs toward not starting one. Once
+            # spend is logged from measured usage (`_record_measured_spend`), `projected_eur` is
+            # empty and `spent` is the true month-to-date figure.
+            spent = budget.spent_this_month(ledger, run_date[:7]) + projected_eur
+            est = _est_protocol_cost_eur(protocol)
+            if spent + est > config["monthly_ceiling_eur"]:
+                results.append({
+                    "protocol_id": pid, "skipped": "budget_halted",
+                    "detail": f"would not fit the monthly ceiling: spent so far {float(spent):.2f} + "
+                    f"projected {float(est):.2f} for this protocol > {float(config['monthly_ceiling_eur']):.2f}",
+                })
+                continue
             from core.plumbing.anthropic_client import AnthropicClient
 
             client = AnthropicClient(mid, mfam)
@@ -260,11 +293,30 @@ def run_full_sweep(
         except FileExistsError:
             results.append({"protocol_id": pid, "skipped": "already_ran_today"})
             continue
+        except CircuitOpen as e:
+            # The run was abandoned (its staging dir is left behind, never a finished run), but the
+            # calls made before the breaker opened were real and billed. Log them, then stop the
+            # whole sweep: whatever broke this protocol breaks the next one the same way.
+            _record_measured_spend(
+                client, run_id=f"{run_date}__{pid}__{mid}__r0__aborted", run_date=run_date,
+                category="full_sweep", ledger_path=budget_ledger, label=f"full_sweep/{pid} ABORTED by circuit breaker",
+            )
+            results.append({"protocol_id": pid, "skipped": "circuit_open", "detail": str(e)})
+            break
 
         protocols_run += 1
-        projected_eur += _est_protocol_cost_eur(protocol)
+        if client_kind != "anthropic":
+            projected_eur += _est_protocol_cost_eur(protocol)
         results.append({"protocol_id": pid, "run_id": record["run_id"], "n_valid": record["n_valid"], "on_curve": record["on_curve"]})
         if client_kind == "anthropic":
+            recorded = _record_measured_spend(
+                client, run_id=record["run_id"], run_date=run_date, category="full_sweep",
+                ledger_path=budget_ledger, label=f"full_sweep/{pid}, n_valid {record['n_valid']}",
+            )
+            if recorded is not None:
+                results[-1]["spend_recorded"] = format(float(recorded), ".4f")
+                continue  # the ledger now holds the real amount, so no projection on top of it
+            projected_eur += _est_protocol_cost_eur(protocol)
             print(_SPEND_REMINDER.format(
                 label=f"full_sweep/{pid}, n_valid {record['n_valid']}", category="full_sweep",
                 run_id=record["run_id"], date=run_date, ledger=budget_ledger, config=budget_config,
@@ -298,7 +350,14 @@ def run_subject_fingerprint(
         mid, mfam = _active_model(subject_models_path, model_id, model_family)
         client = AnthropicClient(mid, mfam)
 
-    record = subject_fingerprint.run(client, run_date=run_date)
+    try:
+        record = subject_fingerprint.run(client, run_date=run_date)
+    except CircuitOpen as e:
+        _record_measured_spend(
+            client, run_id=f"subject_fingerprint__{run_date}__{client.subject_model_id}__aborted", run_date=run_date,
+            category="subject_fingerprint", ledger_path=budget_ledger, label="subject_fingerprint ABORTED by circuit breaker",
+        )
+        return {"skipped": "environment_unavailable", "detail": str(e)}
     try:
         out_path = subject_fingerprint.write_record(record, out_dir)
     except FileExistsError:
@@ -306,11 +365,18 @@ def run_subject_fingerprint(
 
     result = {"run_date": run_date, "n_correct": record["n_correct"], "n_items": record["n_items"], "out_path": str(out_path)}
     if client_kind == "anthropic":
-        print(_SPEND_REMINDER.format(
-            label=f"subject_fingerprint, {record['n_items']} calls", category="subject_fingerprint",
-            run_id=f"subject_fingerprint__{run_date}__{record['subject_model_id']}", date=run_date,
-            ledger=budget_ledger, config=budget_config,
-        ))
+        run_id = f"subject_fingerprint__{run_date}__{record['subject_model_id']}"
+        recorded = _record_measured_spend(
+            client, run_id=run_id, run_date=run_date, category="subject_fingerprint",
+            ledger_path=budget_ledger, label=f"subject_fingerprint, {record['n_items']} calls",
+        )
+        if recorded is not None:
+            result["spend_recorded"] = format(float(recorded), ".4f")
+        else:
+            print(_SPEND_REMINDER.format(
+                label=f"subject_fingerprint, {record['n_items']} calls", category="subject_fingerprint",
+                run_id=run_id, date=run_date, ledger=budget_ledger, config=budget_config,
+            ))
     return result
 
 
@@ -357,7 +423,7 @@ def _dispatch(runner: str, args: argparse.Namespace) -> dict | list[dict]:
 # Skip reasons meaning nothing happened today -- the cadence entry stays due. Any other skip
 # reason (e.g. "already_ran_today") means today's job is done, just not through this exact call,
 # and should be recorded like a real run so tomorrow's due_jobs() check stays accurate.
-_STILL_DUE_SKIPS = {"budget_halted", "environment_unavailable"}
+_STILL_DUE_SKIPS = {"budget_halted", "environment_unavailable", "circuit_open"}
 
 
 def _ran_something(runner: str, outcome: dict | list[dict]) -> bool:
@@ -431,6 +497,10 @@ def main(argv: list[str] | None = None) -> int:
 
         outcome = _dispatch(runner, args)
         print(json.dumps(outcome, indent=2, ensure_ascii=False))
+        if runner == "full_sweep" and any(r.get("skipped") == "circuit_open" for r in outcome):
+            # A sweep the breaker cut short may still have finished protocols, which are recorded
+            # below like any other run -- but it must never look like a clean success.
+            exit_code = 1
 
         if _ran_something(runner, outcome):
             for job in jobs:
