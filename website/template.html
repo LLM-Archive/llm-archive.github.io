@@ -98,6 +98,7 @@ h1{font-size:clamp(21px,3.4vw,27px);line-height:1.3;font-weight:660;letter-spaci
 h2{font-size:clamp(20px,4vw,25px);line-height:1.2;letter-spacing:-.015em;margin:0 0 8px}
 h3{font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);
   margin:32px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+h4{font-size:16px;font-weight:700;margin:26px 0 6px;letter-spacing:-.005em}
 p{margin:0 0 14px;max-width:66ch}
 .lede{font-size:clamp(17px,2.4vw,19px);line-height:1.5;color:var(--dim);margin-bottom:22px;max-width:60ch}
 .eyebrow{font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);margin-bottom:10px}
@@ -475,27 +476,27 @@ didn't make it onto the main curve — no measurement ever disappears silently.<
 <p class="lede">It measures <b>Stability</b>: a number from 0 to 100. 100 means "the AI never
 changed its mind when only the wording changed." The higher, the more stable.</p>
 
-<h3>Think of it like a recipe</h3>
-<p>A <b>family</b> (e.g. sunk-cost fallacy) is one dish, the
-<b>scenarios</b> are 15 different variations of that dish, and the <b>versions</b> (A/A′/B/C) are
-four ways of serving the same dish, to see whether the answer changes just because the serving
-did.</p>
+<h3>How we calculate it</h3>
+<p>Every number on this site is built from the same three parts. A <b>family</b> (e.g. sunk-cost
+fallacy) is one kind of decision problem, the <b>scenarios</b> are 15 different variations of it,
+and the <b>versions</b> (A/A′/B/C) are four ways of wording the same scenario, to see whether the
+answer changes just because the wording did.</p>
 <ul>
-<li><b>12 protocols = 3 families × 4 rewording types.</b> Each protocol is one recipe, tested one
+<li><b>12 protocols = 3 families × 4 rewording types.</b> Each protocol is one family, tested one
 way (wording, an anchor number, order, or which option is marked "default"). Not 12 different
-dishes — 3 dishes, each tested 4 different ways.</li>
+problems — 3 problems, each tested 4 different ways.</li>
 <li><b>45 scenarios = 15 × 3, not 15 × 4 × 3.</b> The 15 Questions in each family are written once
 and reused across all 4 rewording types, never duplicated.</li>
 <li><b>720 version-texts = 12 × 15 × 4.</b> The total number of written prompts, ready to send to
 a model: one for every protocol, scenario, and version.</li>
-<li><b>v0: 30 trials per version, 120 per full measurement. v1: 120 and 480.</b> Asking a model once
-isn't enough — it can answer differently by chance. In the <code>v0</code> series each scenario is asked
-2 times per version (2 × 15 = 30), and with 4 versions that's 120 calls for one measurement. The
-<code>v1</code> series asks 8 times per scenario (8 × 15 = 120), so 480 calls.</li>
+<li><b><span data-lv="n">120</span> trials per version, <span data-lv="total">480</span> per full measurement.</b> Asking a model once
+isn't enough — it can answer differently by chance. So each scenario is asked <span data-lv="per">8</span> times per
+version (<span data-lv="per">8</span> × <span data-lv="items">15</span> = <span data-lv="n">120</span>), and with 4 versions that's
+<span data-lv="total">480</span> calls for one measurement.</li>
 </ul>
-<p><small>In one sentence: 3 dishes × 4 rewording types = 12 protocols per series; each <code>v0</code> protocol asks
-the model 120 times (15 scenarios × 4 versions × 2 repeats) and each <code>v1</code> protocol 480 times
-(× 8 repeats) to produce one measurement.</small></p>
+<p><small>In one sentence: 3 families × 4 rewording types = 12 protocols; each protocol asks the model
+<span data-lv="total">480</span> times (<span data-lv="items">15</span> scenarios × 4 versions × <span data-lv="per">8</span> repeats)
+to produce one measurement.</small></p>
 
 <h3>In plain words</h3>
 <ol class="steps">
@@ -585,7 +586,7 @@ wording." That's why we publish everything, so that anyone can judge for themsel
 </tbody></table></div>
 
 <h3>The 12 protocols, one by one</h3>
-<p>3 dishes (<a href="#" onclick="go('does');return false">see "The Recipe"</a>) × 4 rewording types =
+<p>3 families (<a href="#" onclick="go('does');return false">see "How we calculate it"</a>) × 4 rewording types =
 12 protocols. Each row below is one protocol: the family it belongs to, and the one thing that
 particular protocol changes. <small>Each of the 12 exists in two series. <code>v0</code> is the
 first, measured on both models. <code>v1</code> asks the same scenarios with more repeats per
@@ -646,12 +647,28 @@ public counterpart checking them — only the <code>anchoring</code> type (along
 from twin pairing by design, since pairing a headline number with a type that doesn't even enter
 the same aggregate wouldn't be a real comparison.</small></p>
 
+<h3>How we get to the result</h3>
+<p>From the model's raw answers to the number in the results table, in order:</p>
+<div class="scroll"><table>
+<thead><tr><th>#</th><th>Step</th><th>What happens</th></tr></thead>
+<tbody>
+<tr><td class="num">1</td><td><b>Ask</b></td><td>Every scenario is written in four versions (A, A′, B, C). Each version is asked many times, every time in a fresh session, so one answer can never influence the next.</td></tr>
+<tr><td class="num">2</td><td><b>Read the decision</b></td><td>A program reads only the <code>DECISION:</code> line and maps it to one of the listed options. An answer with no readable decision is not guessed at: it is counted as a lost response.</td></tr>
+<tr><td class="num">3</td><td><b>Count</b></td><td>For each version we count how often each option was chosen, e.g. 70% "continue" and 30% "stop".</td></tr>
+<tr><td class="num">4</td><td><b>Compare A with B</b></td><td>The <b>gap</b> is how far apart those two shares are: half the sum of the differences between them, from 0 (identical) to 100 (no overlap at all). For a yes/no decision that is simply the difference between the two percentages, the same number used in published framing-effect research. <b>Stability = 100 − gap.</b></td></tr>
+<tr><td class="num">5</td><td><b>Compare with two controls</b></td><td>A against A′ (only spacing and punctuation changed) shows how much the answers move by chance alone: the honest zero. A against C (one number changed so the right answer flips) should move a lot; if it doesn't, the model is not reading the question.</td></tr>
+<tr><td class="num">6</td><td><b>Margin of error</b></td><td>We resample the responses 10,000 times and take the middle 95% of the results. That is the <b>±</b> in the table. It describes this panel of scenarios, not wording effects in general.</td></tr>
+<tr><td class="num">7</td><td><b>Run the checks</b></td><td>Did too many responses get lost? Did the model give the same answer to everything? Does the result rest on just two scenarios? Did the controls behave? If every check passes, the measurement is <b>on curve</b>. If not, it is published in full, marked <b>off curve</b> with the reason.</td></tr>
+<tr><td class="num">8</td><td><b>Publish</b></td><td>The number, its checks, the raw counts and the fingerprints (hashes) of the protocol and the code are published together, next to the same-day check of the reference model that never changes.</td></tr>
+</tbody></table></div>
+
 </section>
 
 <section class="page" id="value">
 <h2>Why it matters</h2>
 <p class="lede">The archive doesn't answer "how smart is an AI." It answers <b>"did something
 change, when, and for whom."</b></p>
+<p class="lede">Models are updated without notice and retired without a trace. Here, how they decide stays on the record.</p>
 
 <h3>A few words about the system behind it</h3>
 <p><b>A scientific approach.</b> This isn't an attempt at a general "intelligence score," the way
@@ -660,10 +677,11 @@ cognitive bias and decision stability in LLMs.</p>
 <p><b>Transparency.</b> Failed runs and data gaps are published too, not hidden — alongside a full
 explanation of the methodology and the quality checks behind every number.</p>
 
+<h3>How you can use it</h3>
 <p>You can use LLM-Archive according to your own role — researcher, developer, or someone simply
 evaluating AI solutions. Here are the main ways to put the site and its data to use.</p>
 
-<h3>1. As a benchmarking tool</h3>
+<h4>1. As a benchmarking tool</h4>
 <p>Choosing which AI model to build into an application, product or company process?</p>
 <ul>
 <li><b>Check the stability score.</b> See which model is least affected by framing — how a
@@ -673,7 +691,7 @@ model that doesn't change its mind just because a user phrased the question diff
 version) became less stable after its maker shipped an update.</li>
 </ul>
 
-<h3>2. Data analysis and research</h3>
+<h4>2. Data analysis and research</h4>
 <p>All of the project's data is open and downloadable directly from
 <a href="#" onclick="go('data');return false">Downloads</a>:</p>
 <ul>
@@ -685,7 +703,7 @@ wordings and answers each model gave.</li>
 <p>Download the CSV/JSONL files and load them into Python (pandas, Jupyter), R or Excel to run
 your own statistical analysis of LLM bias — framing effects, anchoring bias, and so on.</p>
 
-<h3>3. Replication and control experiments</h3>
+<h4>3. Replication and control experiments</h4>
 <p>Researcher or AI engineer who wants to run the same protocols on your own models?</p>
 <ul>
 <li><b>Verify the files.</b> Download <code>verify.py</code> from the site and confirm the data's
@@ -695,7 +713,7 @@ LLM-Archive's own methodology — 12 protocols, 4 versions (A/A′/B/C) — to r
 your own machine or server.</li>
 </ul>
 
-<h3>4. Academic citation</h3>
+<h4>4. Academic citation</h4>
 <p>Writing a paper, article or study about LLM reliability and behavior? Cite LLM-Archive directly
 using the BibTeX citation on the <a href="#" onclick="go('data');return false">Downloads</a>
 page.</p>
@@ -1310,5 +1328,12 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')shutDetail();});
   const io=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting)){io.disconnect();reveal();}},{threshold:.4});
   io.observe(box.parentNode);
  }else reveal();
+})();
+
+// Sample-size numbers on "How we calculate it" follow the newest protocol version's own data, so they never go stale.
+(function(){
+ const d=ALL.find(x=>versionOf(x)===VERSIONS[0]);if(!d)return;
+ const v={n:d.n,items:d.n_items,per:Math.round(d.n/d.n_items),total:4*d.n};
+ document.querySelectorAll('[data-lv]').forEach(e=>{e.textContent=String(v[e.dataset.lv]);});
 })();
 </script>
