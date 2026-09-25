@@ -433,31 +433,35 @@ def load_protocols(protocols_dir: Path) -> dict[str, dict]:
     return protocols
 
 
-def _history_per_protocol(measurements: list[dict]) -> dict[tuple[str, str], list[dict]]:
-    """(protocol_id, series) -> its measurements, oldest first (by run_date, then run_id to break
-    ties). Keyed by series too, not just protocol_id: the commercial and open_weights series both
-    measure the same protocol_ids independently (spec.md's two-series design), so a protocol_id
-    that has been measured by both must keep both lines -- keying by protocol_id alone would let
-    whichever series has the later run_date silently evict the other's most recent measurement
-    from `latest_measurement_per_protocol` below (found 2026-09-22: a real, already-run
+def _history_per_protocol(measurements: list[dict]) -> dict[tuple[str, str, str | None], list[dict]]:
+    """(protocol_id, series, subject_model_id) -> its measurements, oldest first (by run_date, then
+    run_id to break ties). Keyed by series too, not just protocol_id: the commercial and open_weights
+    series both measure the same protocol_ids independently (spec.md's two-series design), so a
+    protocol_id that has been measured by both must keep both lines -- keying by protocol_id alone
+    would let whichever series has the later run_date silently evict the other's most recent
+    measurement from `latest_measurement_per_protocol` below (found 2026-09-22: a real, already-run
     open_weights measurement of `risky_choice_framing__anchoring__v0` was missing from the public
     site's open-weights table because a later commercial measurement of the same protocol_id had
-    taken its slot)."""
-    by_protocol: dict[tuple[str, str], list[dict]] = {}
+    taken its slot).
+    Keyed by subject_model_id for the same reason, one level down (found 2026-09-25 with hypothetical
+    data: once a second commercial model exists, the bridge measures the same protocol_id with the old
+    AND the new model in the same week, and (protocol_id, series) alone let the later run silently
+    evict the other model's row -- and made a trend compare two different models as if one line)."""
+    by_protocol: dict[tuple[str, str, str | None], list[dict]] = {}
     for m in measurements:
         pid = m.get("protocol_id")
         series = m.get("series")
         if pid is None or series is None:
             continue
-        by_protocol.setdefault((pid, series), []).append(m)
+        by_protocol.setdefault((pid, series, m.get("subject_model_id")), []).append(m)
     for ms in by_protocol.values():
         ms.sort(key=lambda m: (m.get("run_date") or "", m.get("run_id") or ""))
     return by_protocol
 
 
-def latest_measurement_per_protocol(measurements: list[dict]) -> dict[tuple[str, str], dict]:
-    """(protocol_id, series) -> its most recent measurement -- the Results page's main table shows
-    exactly one row per protocol per series, not the mockup's hardcoded "the 2030 rows"."""
+def latest_measurement_per_protocol(measurements: list[dict]) -> dict[tuple[str, str, str | None], dict]:
+    """(protocol_id, series, subject_model_id) -> its most recent measurement -- the Results page's
+    main table shows exactly one row per protocol per model, not the mockup's hardcoded "the 2030 rows"."""
     return {key: ms[-1] for key, ms in _history_per_protocol(measurements).items()}
 
 
@@ -579,37 +583,47 @@ def _indented_block(lines: list[str], header: str) -> list[str]:
     return block
 
 
-def _load_active_series_model(path: Path, series_key: str) -> dict | None:
-    """Hand-parses subject_models.yaml for one series ('commercial:' or 'open_weights:') for a
-    generation with status "active" -- same "extract only the one shape this needs" approach as
-    core/schedule/schedule.py's cadence.yaml reader, so this module doesn't need a YAML dependency
-    for one field. Returns None if the file is missing or no generation of that series is active."""
+def _parse_generations(path: Path, series_key: str) -> list[dict[str, str]]:
+    """Every generation of one series ('commercial:' or 'open_weights:') in subject_models.yaml, in file
+    order, as {model_id, model_family, status, declared_successor} with quotes stripped. Hand-parsed --
+    same "extract only the one shape this needs" approach as core/schedule/schedule.py's cadence.yaml
+    reader, so this module doesn't need a YAML dependency. [] if the file or the series is missing."""
     if not path.exists():
-        return None
+        return []
     block = _indented_block(path.read_text(encoding="utf-8").splitlines(), series_key)
-    if not block:
-        return None
-
-    def finish(gen: dict[str, str]) -> dict[str, str] | None:
-        model_id = gen.get("model_id", "").strip("\"'")
-        if gen.get("status") != "active" or not model_id or model_id == "null":
-            return None
-        return {"model_id": model_id, "model_family": gen.get("model_family", "").strip("\"'")}
-
+    generations: list[dict[str, str]] = []
     current: dict[str, str] = {}
-    result: dict[str, str] | None = None
     for line in block:
         stripped = line.strip()
         if stripped.startswith("- model_id:"):
-            result = finish(current) or result
+            if current:
+                generations.append(current)
             current = {}
         if ":" not in stripped:
             continue
         key, _, value = stripped.partition(":")
         key = key.lstrip("- ").strip()
         if key in ("model_id", "model_family", "status", "declared_successor"):
-            current[key] = value.strip()
-    return finish(current) or result
+            current[key] = value.strip().strip("\"'")
+    if current:
+        generations.append(current)
+    return [g for g in generations if g.get("model_id") and g["model_id"] != "null"]
+
+
+def _load_active_series_model(path: Path, series_key: str) -> dict | None:
+    """The generation with status "active" (the last one, if a file ever says so twice). Returns None if
+    the file is missing or no generation of that series is active."""
+    active = [g for g in _parse_generations(path, series_key) if g.get("status") == "active"]
+    if not active:
+        return None
+    return {"model_id": active[-1]["model_id"], "model_family": active[-1].get("model_family", "")}
+
+
+def load_commercial_generations(path: Path) -> list[dict[str, str]]:
+    """Every commercial model this project has measured or is measuring, with its lifecycle status
+    (active / retired / bridge_pending / pending) -- what lets the Results page say which rows belong to
+    the current model and which to an earlier one."""
+    return _parse_generations(path, "commercial:")
 
 
 def load_active_commercial_model(path: Path) -> dict | None:
@@ -665,6 +679,77 @@ def load_citation(path: Path) -> dict | None:
     return result
 
 
+def _days_apart(a: str | None, b: str | None) -> int | None:
+    try:
+        return abs((date.fromisoformat(a) - date.fromisoformat(b)).days)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return None
+
+
+BRIDGE_WINDOW_DAYS = 7  # spec.md §4.3: old and new model, "same week"
+
+
+def _verdict(earlier: dict, later: dict) -> str | None:
+    try:
+        return stats.compare(earlier, later)
+    except (KeyError, TypeError):
+        return None
+
+
+# What the drawer needs of every past measurement: the history table, the sparkline, the bridge comparison.
+_HISTORY_FIELDS = ("run_id", "run_date", "stability_pct", "ci_low_pct", "ci_high_pct", "gap_pct", "null_floor_pct",
+                   "drop_bound_pct_ab", "n", "flags", "on_curve")
+
+
+def _compact(measurement: dict) -> dict:
+    return {k: measurement.get(k) for k in _HISTORY_FIELDS}
+
+
+def _bridge_pair(mine: list[dict], theirs: list[dict]) -> tuple[dict, dict] | None:
+    """The closest pair (one measurement of each model) taken within BRIDGE_WINDOW_DAYS of each other, the
+    later one on a tie -- that pair IS the generation bridge (spec.md §4.3), and it stays findable for good:
+    a protocol re-measured months later must not lose its bridge because its latest row moved on."""
+    best: tuple[tuple[int, int], tuple[dict, dict]] | None = None
+    for a in mine:
+        for b in theirs:
+            gap = _days_apart(a["run_date"], b["run_date"])
+            if gap is None or gap > BRIDGE_WINDOW_DAYS:
+                continue
+            rank = (gap, -date.fromisoformat(a["run_date"]).toordinal())  # smaller gap first, then the later date
+            if best is None or rank < best[0]:
+                best = (rank, (a, b))
+    return best[1] if best else None
+
+
+def _mark_other_models(rows: list[dict]) -> None:
+    """For each row, `other_models`: for every other model of the same series that measured the same protocol,
+    its latest measurement (`latest`, `days_apart` from this row's own latest) and, when the two models were
+    ever measured within a week of each other, that `bridge_pair` (both measurements, whichever runs they were,
+    plus the project's own verdict, core.measure.stats.compare: "improved" = the row's model is above the
+    other's beyond both margins of error and the lost-response bound, "regressed" = below, "flat" = no clear
+    difference). `bridge` is True when any such pair exists. Nothing is averaged or smoothed; a jump between
+    two models is shown as it is. `history` is every measurement of this protocol by this row's model."""
+    groups: dict[tuple[str, str], list[dict]] = {}
+    for row in rows:
+        groups.setdefault((row["series"], row["protocol_id"]), []).append(row)
+    for group in groups.values():
+        for row in group:
+            row["other_models"] = []
+            for o in group:
+                if o is row:
+                    continue
+                pair = _bridge_pair(row["history"], o["history"])
+                row["other_models"].append({
+                    "model_id": o["subject_model_id"], "model_status": o.get("model_status"),
+                    "latest": o["history"][-1],
+                    "days_apart": _days_apart(row["run_date"], o["run_date"]),
+                    "bridge_pair": None if pair is None else {"this": pair[0], "other": pair[1], "verdict": _verdict(pair[1], pair[0])},
+                })
+            row["bridge"] = any(x["bridge_pair"] for x in row["other_models"])
+            bridged = {x["bridge_pair"]["this"]["run_id"] for x in row["other_models"] if x["bridge_pair"]}
+            row["bridge_run_ids"] = sorted(bridged)
+
+
 def build_site_data(
     experiments_dir: Path, protocols_dir: Path, subject_models_path: Path,
     citation_path: Path = DEFAULT_CITATION_FILE,
@@ -674,18 +759,37 @@ def build_site_data(
     history = _history_per_protocol(measurements)
     latest = latest_measurement_per_protocol(measurements)
 
+    active_model = load_active_commercial_model(subject_models_path)
+    active_id = active_model["model_id"] if active_model else None
+    status_by_model = {g["model_id"]: g.get("status") for g in load_commercial_generations(subject_models_path)}
+
+    # The current model's row first within a protocol, earlier models after it.
+    def order(item: tuple) -> tuple:
+        (pid, series, model), _ = item
+        return (pid, series, 0 if model == active_id else 1, model or "")
+
     rows = []
-    for key, m in sorted(latest.items()):
-        pid, _series = key
+    for key, m in sorted(latest.items(), key=order):
+        pid, _series, _model = key
         trend, delta = _trend_for(history[key], m)
-        rows.append(build_site_row(m, protocols.get(pid), trend, delta, experiments_dir))
+        row = build_site_row(m, protocols.get(pid), trend, delta, experiments_dir)
+        row["model_status"] = status_by_model.get(row["subject_model_id"])
+        row["history"] = [_compact(x) for x in history[key]]
+        rows.append(row)
+    _mark_other_models(rows)
 
     admitted = {pid: p for pid, p in protocols.items() if p.get("status") == "admitted"}
-    # commercial only: the coverage bar names the active *commercial* model (load_active_commercial_model
-    # below), so what it counts must match -- an open_weights-only measurement (the daily reference-model
-    # self-check) must never inflate the count next to that model's name. spec.md's commercial/open_weights
-    # split is never supposed to mix into one number; this is that rule applied to the coverage bar itself.
-    measured_protocol_ids = {m.get("protocol_id") for m in measurements if m.get("series") == "commercial"} & set(admitted)
+    # commercial only, and only the CURRENT model: the coverage bar names the active *commercial* model
+    # (load_active_commercial_model above), so what it counts must match -- an open_weights-only
+    # measurement (the daily reference-model self-check) must never inflate the count next to that
+    # model's name, and neither may a protocol only an earlier model has been measured on (those are
+    # counted separately, in measured_earlier_count). spec.md's commercial/open_weights split is never
+    # supposed to mix into one number; this is that rule applied to the coverage bar itself. With no
+    # active model yet, every commercial measurement counts, as before.
+    commercial = [m for m in measurements if m.get("series") == "commercial"]
+    current = [m for m in commercial if active_id is None or m.get("subject_model_id") == active_id]
+    measured_protocol_ids = {m.get("protocol_id") for m in current} & set(admitted)
+    measured_earlier = ({m.get("protocol_id") for m in commercial} & set(admitted)) - measured_protocol_ids
 
     return {
         "rows": [r for r in rows if r["series"] == "commercial"],
@@ -701,7 +805,8 @@ def build_site_data(
         # "9 of 24 panels measured" instead of "9 of 12" (decisions.md §49).
         "protocol_count": len(admitted),
         "measured_count": len(measured_protocol_ids),
-        "active_model": load_active_commercial_model(subject_models_path),
+        "measured_earlier_count": len(measured_earlier),
+        "active_model": active_model,
         "reference_model": load_active_open_weights_model(subject_models_path),
         "citation": load_citation(citation_path),
         "last_run_date": max((m.get("run_date") for m in measurements if m.get("run_date")), default=None),
@@ -770,6 +875,7 @@ def render_coverage_bar(data: dict) -> str:
     renders *some* bar, but never presents test-fixture data as if it were a real tracked model --
     see load_active_commercial_model's docstring for why that distinction matters here."""
     admitted, total, measured = data["admitted_count"], data["protocol_count"], data["measured_count"]
+    earlier = data.get("measured_earlier_count", 0)
     active = data["active_model"]
     if active is None:
         return (
@@ -785,7 +891,9 @@ def render_coverage_bar(data: dict) -> str:
     return (
         '<div class="cov"><span class="dot" aria-hidden="true"></span><b>Currently measuring:</b> '
         f'<code>{active["model_id"]}</code> · last full scan <b>{last}</b> · '
-        f"<b>{measured} of {total}</b> protocols measured</div>"
+        f"<b>{measured} of {total}</b> protocols measured"
+        + (f" · <b>{earlier}</b> more only by earlier models" if earlier else "")
+        + "</div>"
     )
 
 
@@ -1232,6 +1340,92 @@ def _verify() -> list[str]:
                 "build_site_data: the open_weights measurement of a protocol_id already measured "
                 "by the commercial series is missing from 'orows'"
             )
+
+        # A second commercial model (a generation bridge, spec.md §4.3): the same protocol measured by the
+        # old AND the new model in the same week. Both rows must survive, a trend must never cross a model
+        # boundary, the coverage bar must count only the current model's protocols, and -- the case that only
+        # shows up months later -- a protocol the new model has been RE-measured on must keep its bridge.
+        exp_b, proto_b = tmp / "exp_bridge", tmp / "proto_bridge"
+        proto_b.mkdir()
+        wording, anchoring, default = ("risky_choice_framing__wording__v0", "risky_choice_framing__anchoring__v0",
+                                       "risky_choice_framing__default__v0")
+        for pid in (wording, anchoring, default):
+            (proto_b / f"{pid}.json").write_text(json.dumps(dict(protocol, protocol_id=pid)), encoding="utf-8")
+        (tmp / "two_models.yaml").write_text(
+            "series:\n  commercial:\n    generations:\n"
+            "      - model_id: claude-old\n        model_family: claude-sonnet\n        status: retired\n"
+            "        declared_successor: claude-new\n"
+            "      - model_id: claude-new\n        model_family: claude-sonnet\n        status: active\n"
+            "        declared_successor: null\n", encoding="utf-8",
+        )
+        for run_id, pid, model, day, stab in [
+            ("b0", wording, "claude-old", "2026-09-22", 95.0),
+            ("b1", wording, "claude-old", "2026-09-30", 97.0),
+            ("b2", wording, "claude-new", "2026-09-30", 80.0),
+            ("b3", anchoring, "claude-old", "2026-09-22", 90.0),
+            ("b4", default, "claude-old", "2026-09-30", 90.0),
+            ("b5", default, "claude-new", "2026-09-30", 70.0),
+            ("b6", default, "claude-new", "2027-05-03", 72.0),  # months later: the new model is measured again
+        ]:
+            (exp_b / run_id).mkdir(parents=True)
+            (exp_b / run_id / "measurement.json").write_text(json.dumps(dict(
+                multi_flag_measurement, protocol_id=pid, lane="guard", flags=[], on_curve=True, run_id=run_id,
+                series="commercial", subject_model_id=model, run_date=day, stability_pct=stab,
+                ci_low_pct=stab - 5.0, ci_high_pct=stab + 5.0, drop_bound_pct_ab=0.5,
+            )), encoding="utf-8")
+            (exp_b / run_id / "trials.jsonl").write_text("", encoding="utf-8")
+        data = build_site_data(exp_b, proto_b, tmp / "two_models.yaml")
+        by_key = {(r["protocol_id"], r["subject_model_id"]): r for r in data["rows"]}
+        if len(data["rows"]) != 5:
+            errors.append(f"build_site_data: expected 5 commercial rows (old+new for two protocols, old only for one), got {len(data['rows'])}")
+        new_row, old_row = by_key.get((wording, "claude-new")), by_key.get((wording, "claude-old"))
+        if not new_row or not old_row:
+            errors.append("build_site_data: the bridge's new-model row or old-model row is missing (one evicted the other)")
+        else:
+            wording_rows = [r for r in data["rows"] if r["protocol_id"] == wording]
+            if [r["subject_model_id"] for r in wording_rows] != ["claude-new", "claude-old"]:
+                errors.append("build_site_data: within a protocol the current model's row must come first")
+            if new_row["trend"] != "base" or new_row["trend_delta"] is not None:
+                errors.append(f"build_site_data: the new model's first row must be a base, not a trend across models: {new_row['trend']!r}")
+            if old_row["trend"] == "base" or old_row["trend_delta"] != 2.0:
+                errors.append(f"build_site_data: the old model's trend must compare its own two runs (+2.0), got {old_row['trend_delta']!r}")
+            pair_new = new_row["other_models"][0]["bridge_pair"]
+            pair_old = old_row["other_models"][0]["bridge_pair"]
+            if not pair_new or pair_new["this"]["run_id"] != "b2" or pair_new["other"]["run_id"] != "b1":
+                errors.append(f"build_site_data: the bridge pair must be the same-week runs (b2 new, b1 old; b0 is 8 days away): {pair_new!r}")
+            if not pair_old or pair_old["this"]["run_id"] != "b1" or pair_old["other"]["run_id"] != "b2":
+                errors.append("build_site_data: the old model's row must see the same pair from its side")
+            if pair_new and pair_new["verdict"] != "regressed" or pair_old and pair_old["verdict"] != "improved":
+                errors.append("build_site_data: the verdict must say the new run (80) is lower than the old (97) beyond the margins, and the reverse")
+            if new_row["other_models"][0]["latest"]["stability_pct"] != 97.0 or new_row["other_models"][0]["days_apart"] != 0:
+                errors.append(f"build_site_data: `latest` must be the other model's newest measurement: {new_row['other_models'][0]!r}")
+            if new_row["model_status"] != "active" or old_row["model_status"] != "retired":
+                errors.append("build_site_data: rows must carry their model's lifecycle status")
+            if not (new_row["bridge"] and old_row["bridge"]) or new_row["bridge_run_ids"] != ["b2"]:
+                errors.append("build_site_data: two models measured the same week must both be marked as a bridge")
+            if [h["run_id"] for h in old_row["history"]] != ["b0", "b1"]:
+                errors.append("build_site_data: `history` must list every measurement of this model on this protocol, oldest first")
+        later = by_key.get((default, "claude-new"))
+        if not later or later["run_date"] != "2027-05-03":
+            errors.append("build_site_data: the row of a re-measured protocol must be its latest measurement")
+        else:
+            other = later["other_models"][0]
+            if not later["bridge"] or later["bridge_run_ids"] != ["b5"]:
+                errors.append("build_site_data: months later the protocol must still be marked as a bridge (the pair is b5/b4, not the latest run)")
+            if not other["bridge_pair"] or other["bridge_pair"]["this"]["stability_pct"] != 70.0 or other["bridge_pair"]["other"]["stability_pct"] != 90.0:
+                errors.append(f"build_site_data: the bridge pair must keep the bridge-week values, not the latest: {other['bridge_pair']!r}")
+            if other["days_apart"] != 215:
+                errors.append(f"build_site_data: days_apart must say how far the two LATEST runs are, got {other['days_apart']!r}")
+        lone = by_key.get((anchoring, "claude-old"))
+        if not lone or lone["bridge"] or lone["other_models"]:
+            errors.append("build_site_data: a protocol only the old model measured has no other model and is no bridge")
+        if data["measured_count"] != 2 or data["measured_earlier_count"] != 1:
+            errors.append(
+                f"build_site_data: coverage must count the current model's protocols (2) apart from those only an earlier "
+                f"model measured (1), got {data['measured_count']!r} / {data['measured_earlier_count']!r}"
+            )
+        if "1</b> more only by earlier models" not in render_coverage_bar(data):
+            errors.append("render_coverage_bar: protocols measured only by earlier models must be stated")
 
     return errors
 

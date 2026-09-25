@@ -90,6 +90,11 @@
   `status` needs no `ots` install, and never touches a file that has one. Weekly in
   `.github/workflows/ots-upgrade.yml`; with nothing pending (the normal state) it does and commits nothing.
   Own build check: `python3 -m core.plumbing.ots_upgrade verify`.
+- `alarm_log.py` — a durable trace of the reference-model self-check. `run_due.py` used to print the
+  `instrument_alarm` verdict and forget it; now each run appends one line to `state/instrument/alarm_log.jsonl`
+  (date, verdict, which half moved), which the daily workflow already commits. `recent` exits 10 when an
+  alarm falls in the last N days; `tools/auto_merge_gate.py` reads it. Records only, changes no exit status.
+  Own build check: `python3 -m core.plumbing.alarm_log verify`.
 - `prereg.py` — the pre-registration guard: a protocol counts as pre-registered only if a manifest in
   `state/timestamps/` lists its current `panel_sha256`/`protocol_sha256` and that manifest has a matching
   OpenTimestamps `.ots` (checked by comparing the `.ots` header digest to the manifest's sha256, stdlib

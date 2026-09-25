@@ -81,6 +81,27 @@ class CircuitOpen(RuntimeError):
     failed call -- that is still a `blocked_upstream` trial, scored and disclosed like any other."""
 
 
+class FundsExhausted(CircuitOpen):
+    """The account has no money left to spend: the credit balance is zero, or a spend limit was
+    reached. Not a fault, and not a reason to raise an alarm every day -- the run stops at the very
+    first such answer (nothing was billed for it), the job stays due, and it runs again by itself
+    once funds are back. A CircuitOpen subclass, so every handler that already stops on a breaker
+    stops on this too."""
+
+
+# What Anthropic's API says when the money is gone (a 400 today). The wording comes from Anthropic's
+# published error text, not from a live call made here, so the match is deliberately narrow: a
+# rate limit (429 "rate limit") or any other 400 must NOT be mistaken for it, and an unrecognised
+# message falls through to the ordinary failure path, which still stops after 5 in a row.
+_FUNDS_STATUSES = (400, 402, 403, 429)
+_FUNDS_MARKERS = ("credit balance is too low", "api usage limits", "reached your specified")
+
+
+def is_funds_error(status: int | None, message: str) -> bool:
+    text = (message or "").lower()
+    return status in _FUNDS_STATUSES and any(marker in text for marker in _FUNDS_MARKERS)
+
+
 def _extract_text(content_blocks) -> str | None:
     """A Messages API response's `content` is a list of typed blocks; only `text` blocks count
     here (no `tools`/`thinking` are requested, so none should appear, but a response with zero
@@ -144,8 +165,10 @@ class AnthropicClient:
             # to outcome "blocked_upstream", never scored as a valid or invalid decision. The SDK
             # itself already retried (max_retries=3) on connection errors and 429/5xx before this
             # was raised, so nothing is retried again here.
-            self._consecutive_errors += 1
             status = getattr(e, "status_code", None)
+            if is_funds_error(status, str(e)):
+                raise FundsExhausted(f"no funds left at Anthropic (HTTP {status}) -- {e}") from e
+            self._consecutive_errors += 1
             if status in (401, 403, 404) or self._consecutive_errors >= BREAKER_CONSECUTIVE_ERRORS:
                 raise CircuitOpen(
                     f"stopping the run: {'HTTP ' + str(status) if status else 'connection error'}, "
