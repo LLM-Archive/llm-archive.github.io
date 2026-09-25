@@ -108,6 +108,8 @@ code{font:13px ui-monospace,"SF Mono",Menlo,monospace;background:var(--raise);
   padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
 
 .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:20px}
+.histbox{max-height:420px;overflow-y:auto}
+.histbox thead th{position:sticky;top:0;background:var(--bg)}
 table{width:100%;border-collapse:collapse;font-size:14.5px}
 th{text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
   color:var(--faint);padding:0 14px 8px 0;border-bottom:2px solid var(--line);white-space:nowrap}
@@ -195,6 +197,10 @@ body.theme-dark .t-dn,body.theme-blue .t-dn{color:var(--ink)}
   border-radius:50%;border:1px solid var(--line);background:var(--raise);color:var(--dim);
   font-size:11px;font-weight:700;cursor:help;vertical-align:middle;margin-left:5px}
 .help-tip:hover{border-color:var(--ink);color:var(--ink)}
+#tip{position:fixed;z-index:9999;max-width:min(320px,calc(100vw - 24px));padding:9px 11px;border:1px solid var(--line);
+  border-radius:8px;background:var(--bg);color:var(--ink);font-size:12.5px;line-height:1.45;font-weight:400;
+  box-shadow:0 4px 16px rgba(20,20,24,.18);pointer-events:none}
+#tip[hidden]{display:none}
 .lock-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;
   background:rgba(17,24,39,.04);border:1px solid var(--line);font-size:12px;font-weight:700;
   color:var(--ink);margin:0 0 10px}
@@ -222,7 +228,7 @@ body.theme-dark .t-dn,body.theme-blue .t-dn{color:var(--ink)}
 #close{position:sticky;top:0;float:right;margin:-6px -4px 0 0;border:1px solid var(--line);background:var(--bg);
   width:32px;height:32px;border-radius:8px;font-size:17px;cursor:pointer;color:var(--dim);line-height:1}
 #close:hover{background:var(--raise);color:var(--ink)}
-#vbadge{float:right;margin:-2px 10px 0 0;padding:6px 16px;border-radius:20px;font-size:15px;font-weight:700;
+#vbadge{float:right;margin:-1px 10px 0 0;padding:3px 10px;border-radius:14px;font-size:12px;font-weight:700;
   letter-spacing:.06em;text-transform:uppercase;line-height:1.3}
 .ans{border-left:3px solid var(--line);padding:8px 0 8px 13px;margin-bottom:12px;font-size:14.5px}
 .ans b{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;
@@ -246,6 +252,18 @@ body.theme-blue .agentdl{background:#d9e7f5;color:#071a2b}
 .hash{font:11.5px ui-monospace,Menlo,monospace;color:var(--faint);white-space:nowrap}
 .verdict-list{margin:0;padding:0;list-style:none;font-size:13px;color:var(--faint)}
 .verdict-list li{margin-bottom:6px}
+.starcta{text-align:center;font-size:18px;font-weight:600;line-height:1.45;margin:48px auto 8px;max-width:520px}
+.starcta a{text-decoration:underline;text-underline-offset:3px}
+.term{background:var(--raise);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:12px 14px;
+  font:12.5px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;height:168px;overflow:auto;margin-bottom:8px}
+.term .ln{white-space:pre;opacity:0;transition:opacity .25s}.term .ln.on{opacity:1}
+.term .d{color:var(--faint)}.term .k{color:var(--link)}.term .w{color:var(--ink)}.term .r{color:var(--dim)}
+.term .on-c{color:var(--good)}.term .off-c{color:var(--warn)}.term .gap-c{color:var(--bad)}
+@media (prefers-reduced-motion:reduce){.term .ln{transition:none}}
+#cite{position:relative}
+#cite .copybtn{position:absolute;top:8px;right:8px;padding:3px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);
+  color:var(--dim);font:inherit;font-size:12px;cursor:pointer}
+#cite .copybtn:hover{color:var(--ink);border-color:var(--ink)}
 pre{background:var(--raise);border:1px solid var(--line);border-radius:8px;padding:14px 16px;
   overflow-x:auto;font:12.5px/1.6 ui-monospace,"SF Mono",Menlo,monospace;margin:0 0 18px}
 .steps{counter-reset:st;list-style:none;padding:0;margin:0 0 18px}
@@ -313,6 +331,9 @@ score or a guarantee that the model will behave the same way in your own product
 <a href="#results" onclick="go('results');return false">See the results</a> or
 <a href="#what" onclick="go('what');return false">read the design</a>.</p></div>
 
+<p class="starcta">Love what we're building? Help others find it: give us 5 stars on
+<a href="https://github.com/LLM-Archive/llm-archive.github.io" target="_blank" rel="noopener" title="Opens the repository on GitHub; the Star button is at the top right">GitHub</a>!</p>
+
 </section>
 
 <section class="page" id="results">
@@ -320,13 +341,10 @@ score or a guarantee that the model will behave the same way in your own product
 <p class="lede">What we've measured so far.</p>
 
 <h3>The current picture</h3>
-<p><small><b>How to read a row:</b> first look at the <b>What changes</b> column (the literal
-question is only visible for the 2 open-lane protocols — the rest stay guarded while their model is
-active), then the score and its margin, and finally whether it passed the checks.</small></p>
 <p><span class="tag t-fl"><span id="rows-model-label">model:</span> <code>claude-sonnet-5</code></span> <small id="rows-earlier"></small></p>
 <div class="vtabs" id="rows-tabs" role="tablist" aria-label="Protocol version" hidden></div>
 <div class="scroll"><table>
-<thead><tr><th title="The protocol, and which model answered it">Protocol</th><th title="What part of the question's wording was changed between versions">What changes</th><th title="Whether this protocol's questions and answers are public (open), or still kept private until the model retires">Lane</th><th title="The day this measurement ran">Date</th><th title="How often it kept the same decision when we changed the question">Stability</th><th><abbr title="how many times it was asked">n</abbr></th><th title="Whether this result passed our quality checks, and if not, which one it failed">Results</th><th></th></tr></thead>
+<thead><tr><th title="One protocol: a fixed set of questions, asked many times with the wording changed in one specific way. Below it, which model answered.">Protocol</th><th>What changes <span class="help-tip" title="What was changed in the wording between the two versions being compared (A and B): the order of the options, the default option, an added anchor number, or the way the outcomes are framed. Everything else stays the same.">?</span></th><th>Lane <span class="help-tip" title="open: the questions and every raw answer are public (only the first scenario's wording is shown on this page). guard: the wording stays private while its model is active, so it can't leak into training data.">?</span></th><th>Date <span class="help-tip" title="The day this measurement ran">?</span></th><th>Stability <span class="help-tip" title="How often the model kept the same decision when only the wording changed. 100% means the rewording never moved its decision; the lower it is, the more the wording alone changed what the model decided. The ± is the margin of error.">?</span></th><th>n <span class="help-tip" title="How many answers each of the four versions of the question received (the number after × is the four versions)">?</span></th><th>Results <span class="help-tip" title="on curve: the result cleared all our quality checks and counts on the main curve. off curve: the flag names the check it failed; the number is still what was measured, but it is not counted on the main curve.">?</span></th><th></th></tr></thead>
 <tbody id="rows"></tbody>
 </table></div>
 <p><small>When we change how a protocol is measured, we release the change as a new version
@@ -339,7 +357,7 @@ the method itself can be shown to actually work · <a href="https://huggingface.
 <p><span class="tag t-fl">model: <code>qwen2.5-1.5b-instruct-q4_k_m</code></span></p>
 <div class="vtabs" id="orows-tabs" role="tablist" aria-label="Protocol version" hidden></div>
 <div class="scroll"><table>
-<thead><tr><th title="The protocol, and which model answered it">Protocol</th><th title="What part of the question's wording was changed between versions">What changes</th><th title="Whether this protocol's questions and answers are public (open), or still kept private until the model retires">Lane</th><th title="The day this measurement ran">Date</th><th title="How often it kept the same decision when we changed the question">Stability</th><th><abbr title="how many times it was asked">n</abbr></th><th title="Whether this result passed our quality checks, and if not, which one it failed">Results</th><th></th></tr></thead>
+<thead><tr><th title="One protocol: a fixed set of questions, asked many times with the wording changed in one specific way. Below it, which model answered.">Protocol</th><th>What changes <span class="help-tip" title="What was changed in the wording between the two versions being compared (A and B): the order of the options, the default option, an added anchor number, or the way the outcomes are framed. Everything else stays the same.">?</span></th><th>Lane <span class="help-tip" title="open: the questions and every raw answer are public (only the first scenario's wording is shown on this page). guard: the wording stays private while its model is active, so it can't leak into training data.">?</span></th><th>Date <span class="help-tip" title="The day this measurement ran">?</span></th><th>Stability <span class="help-tip" title="How often the model kept the same decision when only the wording changed. 100% means the rewording never moved its decision; the lower it is, the more the wording alone changed what the model decided. The ± is the margin of error.">?</span></th><th>n <span class="help-tip" title="How many answers each of the four versions of the question received (the number after × is the four versions)">?</span></th><th>Results <span class="help-tip" title="on curve: the result cleared all our quality checks and counts on the main curve. off curve: the flag names the check it failed; the number is still what was measured, but it is not counted on the main curve.">?</span></th><th></th></tr></thead>
 <tbody id="orows"></tbody>
 </table></div>
 <p><small>When we change how a protocol is measured, we release the change as a new version
@@ -380,7 +398,7 @@ in the <a href="guide/data-dictionary.html">data dictionary</a>, part of the sep
 <p><small>Everything comes from the public GitHub repo. No account, no API key, no cost.</small></p>
 
 <h3>How to cite it</h3>
-<pre>@software{llm_archive_2026_22881127,
+<div id="cite"><pre>@software{llm_archive_2026_22881127,
   author       = {LLM-Archive},
   title        = {LLM-Archive: a long-running stability archive for commercial language models},
   month        = sep,
@@ -389,7 +407,7 @@ in the <a href="guide/data-dictionary.html">data dictionary</a>, part of the sep
   version      = {v0.4},
   doi          = {10.5281/zenodo.22881127},
   url          = {https://doi.org/10.5281/zenodo.22881127}
-}</pre>
+}</pre></div>
 
 <h3>How to verify it hasn't been tampered with</h3>
 <p>Download the file, compute its own <code>sha256</code>, and compare it with the one we publish.
@@ -534,6 +552,9 @@ anyone who wants to can download it and re-run what we're doing, today.</p>
 </div>
 <p><small>The two series are never compared against each other — each answers a different
 question: "what changed" and "does the method work".</small></p>
+
+<h3>Recent activity</h3>
+<div class="term" id="term" aria-label="Recent activity"><div id="term-lines"></div></div>
 
 </section>
 
@@ -736,7 +757,7 @@ code preserves the record's exact identity.</small></p>
 <tr><td><abbr title="The random difference we expect even when there's no real change">Noise floor</abbr></td><td>Random variation</td><td>A change below this threshold could just be chance, and isn't presented as a real improvement or weakness.</td></tr>
 <tr><td>Confidence interval / CI95%</td><td>Margin of uncertainty</td><td>The range around the stability, e.g. 92%–96%. Shows how precise the estimate is from that particular sample.</td></tr>
 <tr><td>Sample size / <code>n</code></td><td>How many responses each version gets</td><td><code>n</code> is 30 in the <code>v0</code> protocols and 120 in the <code>v1</code> protocols (15 scenarios, asked 2 or 8 times each). It is fixed per protocol and never changes from run to run.</td></tr>
-<tr><td>PASS / off curve</td><td>Whether a result counts in the main chart</td><td>A result that fails one of our checks is still published in full, but marked with the reason and left off the main chart. It doesn't by itself mean the measurement is wrong.</td></tr>
+<tr><td>on curve / off curve</td><td>Whether a result counts in the main chart</td><td>A result that fails one of our checks is still published in full, but marked with the reason and left off the main chart. It doesn't by itself mean the measurement is wrong.</td></tr>
 <tr><td>Flag</td><td>The name of the check that failed</td><td>For example <code>below_surface_noise</code>: the real change moved the answer no more than a punctuation-only change did, so there is nothing to report. Each flag is explained in the results panel.</td></tr>
 </tbody></table></div>
 
@@ -772,8 +793,7 @@ code preserves the record's exact identity.</small></p>
   <button id="close" aria-label="Close">×</button>
   <span id="vbadge" class="t-up" hidden></span>
   <div class="eyebrow" id="dk"></div>
-  <h2 id="dt"></h2>
-  <p><small id="dm"></small></p>
+  <h2 id="dt" style="margin-bottom:22px"></h2>
 
   <div id="locked" hidden>
     <div class="callout"><div class="lock-badge" title="Contamination Shield Active">🔒 <span>Contamination Shield Active</span></div>
@@ -815,7 +835,13 @@ code preserves the record's exact identity.</small></p>
   </div>
 
   <h3>The measurement</h3>
+  <details class="what-protocol"><summary><small><b>What this protocol asks the model</b></small></summary>
+  <p><small id="pr-what"></small></p>
+  <pre id="pr-shape" style="font-size:12px"></pre>
+  <p><small id="pr-b"></small></p>
+  </details>
   <table><tbody>
+    <tr><td><abbr title="How many times this protocol has been measured on this model, counting the run shown here">Times measured</abbr></td><td class="num" id="dtimes"></td></tr>
     <tr><td><abbr title="How often the model kept the same decision across the two equivalent versions">Stability</abbr> <small>(A&nbsp;↔&nbsp;B)</small></td><td class="num" id="ds"></td></tr>
     <tr><td><abbr title="The random difference we expect even when two questions are completely identical">Noise floor</abbr></td><td class="num" id="dnf"></td></tr>
     <tr><td><abbr title="n = how many times each version of the question was repeated">Sample</abbr></td><td class="num" id="dsamp"></td></tr>
@@ -832,8 +858,8 @@ code preserves the record's exact identity.</small></p>
     <p><small><b>Vertical axis:</b> stability in % — how often the model kept the same decision when the question was reworded (higher is more stable).
     <b>Horizontal axis:</b> date of each measurement. Each dot is one measurement, its bar the margin of error, a ringed dot a bridge week, the large dot the latest.</small></p>
     <div id="dhist-chart"></div>
-    <div class="scroll"><table class="cmp hist"><thead><tr><th>Date</th><th>Stability</th><th>Checks</th><th></th></tr></thead><tbody id="dhist-body"></tbody></table></div>
-    <p><small>Every measurement of this protocol by this model, oldest first; the table above shows the latest one.</small></p>
+    <div class="scroll histbox"><table class="cmp hist"><thead><tr><th>Date</th><th>Stability</th><th>Checks</th><th></th></tr></thead><tbody id="dhist-body"></tbody></table></div>
+    <p><small>Every measurement of this protocol by this model, newest first; the table above shows the latest one. The newest 12 show at once; scroll for older ones.</small></p>
   </div>
 
   <h3>Provenance</h3>
@@ -913,7 +939,7 @@ const TYPE_LABELS={wording:'Wording change',anchoring:'Anchoring',order:'Option 
 function panelName(d){return (FAMILY_LABELS[d.family]||d.family)+': '+(TYPE_LABELS[d.rewording_type]||d.rewording_type);}
 
 function checksTag(d){
- if(d.on_curve) return '<span class="tag t-up">✓ PASS</span>';
+ if(d.on_curve) return '<span class="tag t-up">✓ on curve</span>';
  if(d.flags.length) return d.flags.map(f=>'<span class="tag t-dn">'+f+'</span>').join(' ');
  return '<span class="tag t-fl">off curve</span>';
 }
@@ -946,11 +972,12 @@ function bodyHtml(rows){
    ? rows.map(rowHtml).join('')
    : '<tr><td colspan="8"><small>No measurements yet.</small></td></tr>';
 }
-// One tab per protocol version, so versions are not mixed in one list. Both tables show the same
+// One tab per protocol version, newest first and opened on the newest, so the table always leads
+// with the protocols currently being measured and older versions sit one click away. Both tables show the same
 // set of versions (every version present in either table); a version with no measurements in a
 // table says so. Filtering only hides rows: each row keeps its index into ALL, so the detail
 // drawer is unaffected.
-const VERSIONS=[...new Set(ALL.map(versionOf))].sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1)));
+const VERSIONS=[...new Set(ALL.map(versionOf))].sort((a,b)=>parseInt(b.slice(1))-parseInt(a.slice(1)));
 function renderTable(id,rows){
  const body=document.getElementById(id), tabs=document.getElementById(id+'-tabs');
  if(VERSIONS.length<2){tabs.hidden=true;body.innerHTML=bodyHtml(rows);return;}
@@ -958,7 +985,7 @@ function renderTable(id,rows){
   body.innerHTML=bodyHtml(rows.filter(d=>versionOf(d)===v));
   tabs.querySelectorAll('button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.v===v)));
  };
- tabs.innerHTML=VERSIONS.map(v=>'<button type="button" role="tab" data-v="'+v+'">'+v+'</button>').join('');
+ tabs.innerHTML=VERSIONS.map(v=>'<button type="button" role="tab" data-v="'+v+'">.'+v+'</button>').join('');
  tabs.hidden=false;
  tabs.onclick=e=>{const b=e.target.closest('button');if(b)show(b.dataset.v);};
  show(VERSIONS[0]);
@@ -1004,7 +1031,7 @@ const FLAG_EXPLAIN={
 // Bridge and history, drawn in the drawer. Built with textContent/SVG only; every number comes from the row data.
 const marginOf=m=>'±'+((m.ci_high_pct-m.ci_low_pct)/2).toFixed(1);
 const signed=x=>(x>=0?'+':'−')+Math.abs(x).toFixed(1);
-const checksOf=m=>m.on_curve?'✓ PASS':((m.flags&&m.flags.length)?m.flags.join(', '):'off curve');
+const checksOf=m=>m.on_curve?'✓ on curve':((m.flags&&m.flags.length)?m.flags.join(', '):'off curve');
 function el(tag,text,cls){const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;}
 
 // One two-column table: `mine` against `theirs` (either can be a bridge-week measurement or a latest one).
@@ -1086,8 +1113,6 @@ function openDetail(i){const d=ALL[i];
  set('dk',panelName(d));
  {const t=document.getElementById('dt');t.textContent='Stability '+d.stability_pct.toFixed(1)+'% ';
   const s=document.createElement('small');s.textContent='– '+d.run_date;t.appendChild(s);}
- set('dm','The A↔B gap is '+d.gap_pct.toFixed(1)+' points. Null change: '+d.gap_null_pct.toFixed(1)
-   +' · drop bound (A↔B): '+d.drop_bound_pct_ab.toFixed(1)+'.');
  const isOpen=d.lane==='open';
  document.getElementById('texts').hidden=!isOpen;
  document.getElementById('locked').hidden=isOpen;
@@ -1141,6 +1166,18 @@ function openDetail(i){const d=ALL[i];
  set('ds',d.stability_pct.toFixed(1)+'% (±'+((d.ci_high_pct-d.ci_low_pct)/2).toFixed(1)+')');
  set('dnf',d.null_floor_pct.toFixed(1)+' points');
  set('dsamp',d.n+' per version × 4 · '+d.n_items+' scenarios');
+ {const per=Math.round(d.n/d.n_items);
+  set('pr-what','One measurement of this protocol is '+d.n_items+' scenarios, each written in 4 versions ('+(4*d.n_items)+' different questions). '
+   +'Every version of every scenario is asked '+per+' times, each in a fresh session, so each version gets '+d.n+' answers and the whole measurement '+(4*d.n)+'.');
+  set('pr-shape','One scenario (shape only, the wording differs per scenario):\n'
+   +'  A   the base question ........................ DECISION: <option>\n'
+   +"  A′  A with only spacing/punctuation changed ... (null-change control)\n"
+   +'  B   A with one equivalent change ............. (the change being tested)\n'
+   +'  C   A with one number changed so the correct\n'
+   +'      answer flips ............................. (positive control)');
+  const BCH={wording:'the outcomes are reworded (gain/loss, or percent/frequency) with the same facts',anchoring:'one irrelevant anchor number is added',order:'the options are listed in a different order',default:'a different option is pre-selected as the default'};
+  set('pr-b','In this protocol, B differs from A only in that '+(BCH[d.rewording_type]||'one equivalent change is made')+'. The measurement is how often the model\u2019s decision stays the same between A and B.');}
+ {const h=d.history||[];set('dtimes',h.length?h.length+(h.length>1?' · since '+h[0].run_date:''):'1');}
  set('dp',d.protocol_id);set('di',d.subject_model_id);
  renderBridge(d);renderHistory(d);
  set('dpsha',d.panel_sha256.slice(0,12)+'…');set('ddate',d.run_date);
@@ -1201,7 +1238,7 @@ function openDetail(i){const d=ALL[i];
    && !!((d.gates&&d.gates['A-C']&&d.gates['A-C'].reading));
  const verdictEl=document.getElementById('verdict');
  const badge=document.getElementById('vbadge');
- badge.className=d.on_curve?'t-up':'t-dn';badge.textContent=d.on_curve?'passed':'failed';badge.hidden=false;
+ badge.className=d.on_curve?'t-up':'t-dn';badge.textContent=d.on_curve?'on curve':'off curve';badge.hidden=false;
  if(d.on_curve){
   verdictEl.innerHTML='<p><small>No flag is raised. This measurement is on the main curve.</small></p>';
  }else{
@@ -1229,4 +1266,62 @@ function shutDetail(){dr.classList.remove('on');sc.classList.remove('on');setTim
 document.getElementById('close').addEventListener('click',shutDetail);
 sc.addEventListener('click',shutDetail);
 document.addEventListener('keydown',e=>{if(e.key==='Escape')shutDetail();});
+
+// "?" help markers: the text lives in a `title` attribute (readable without JavaScript), and is taken over here so it
+// also opens on tap (touch screens have no hover) and by keyboard. Delegated, so markers added later work too.
+(function(){
+ const tip=document.createElement('div');tip.id='tip';tip.hidden=true;tip.setAttribute('role','tooltip');document.body.appendChild(tip);
+ let cur=null;
+ const take=h=>{if(h.hasAttribute('title')){h.dataset.tip=h.getAttribute('title');h.removeAttribute('title');}
+  if(!h.hasAttribute('tabindex')){h.tabIndex=0;h.setAttribute('role','button');h.setAttribute('aria-label','What is this?');}};
+ const hide=()=>{tip.hidden=true;cur=null;};
+ const show=h=>{take(h);tip.textContent=h.dataset.tip||'';tip.hidden=false;cur=h;
+  const r=h.getBoundingClientRect(),w=tip.offsetWidth,ht=tip.offsetHeight;
+  let x=Math.min(Math.max(12,r.left+r.width/2-w/2),window.innerWidth-w-12);
+  let y=r.bottom+8;if(y+ht>window.innerHeight-8)y=Math.max(8,r.top-ht-8);
+  tip.style.left=x+'px';tip.style.top=y+'px';};
+ const tipOf=e=>e.target.closest&&e.target.closest('.help-tip');
+ document.addEventListener('mouseover',e=>{const h=tipOf(e);if(h)show(h);});
+ document.addEventListener('mouseout',e=>{if(tipOf(e))hide();});
+ document.addEventListener('focusin',e=>{const h=tipOf(e);if(h)show(h);});
+ document.addEventListener('focusout',e=>{if(tipOf(e))hide();});
+ document.addEventListener('click',e=>{const h=tipOf(e);if(!h){hide();return;}e.stopPropagation();if(cur===h&&!tip.hidden&&e.detail>0&&window.matchMedia('(hover: none)').matches)hide();else show(h);},true);
+ document.addEventListener('keydown',e=>{if(e.key==='Escape')hide();});
+ window.addEventListener('scroll',hide,true);
+})();
+
+// Copy button on the BibTeX block ("How to cite it"). Only added when the block is a <pre> (a formally tagged release exists).
+(function(){
+ const box=document.getElementById('cite'),pre=box&&box.querySelector('pre');if(!pre)return;
+ const b=document.createElement('button');b.type='button';b.className='copybtn';b.textContent='Copy';box.appendChild(b);
+ const done=ok=>{b.textContent=ok?'Copied ✓':'Press Ctrl/Cmd+C';setTimeout(()=>{b.textContent='Copy';},1800);};
+ b.addEventListener('click',()=>{
+  const t=pre.textContent;
+  const fallback=()=>{const r=document.createRange();r.selectNodeContents(pre);const s=getSelection();s.removeAllRanges();s.addRange(r);
+   let ok=false;try{ok=document.execCommand('copy');}catch(e){}done(ok);};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(()=>done(true),fallback);else fallback();
+ });
+})();
+
+// "Recent activity" terminal: the rows are built in the renderer (build_activity_events); this only shows them, one after
+// another the first time it scrolls into view, with textContent only.
+(function(){
+ const EVENTS=[{"date": "2026-09-25", "kind": "measured", "result": "stability 99.2%", "tone": "off", "what": "sunk_cost_fallacy__order__v1 · claude-sonnet-5"}, {"date": "2026-09-25", "kind": "measured", "result": "stability 100.0%", "tone": "off", "what": "risky_choice_framing__anchoring__v1 · qwen2.5-1.5b-instruct-q4_k_m"}, {"date": "2026-09-25", "kind": "checks", "result": "3 of 3 ran", "tone": null, "what": "scheduled instrument checks"}, {"date": "2026-09-24", "kind": "measured", "result": "stability 80.0%", "tone": "off", "what": "sunk_cost_fallacy__wording__v1 · qwen2.5-1.5b-instruct-q4_k_m"}, {"date": "2026-09-24", "kind": "measured", "result": "stability 82.1%", "tone": "off", "what": "sunk_cost_fallacy__wording__v0 · qwen2.5-1.5b-instruct-q4_k_m"}, {"date": "2026-09-24", "kind": "measured", "result": "stability 78.6%", "tone": "off", "what": "sunk_cost_fallacy__order__v1 · qwen2.5-1.5b-instruct-q4_k_m"}, {"date": "2026-09-24", "kind": "measured", "result": "stability 81.5%", "tone": "off", "what": "sunk_cost_fallacy__order__v0 · qwen2.5-1.5b-instruct-q4_k_m"}, {"date": "2026-09-24", "kind": "measured", "result": "stability 96.4%", "tone": "off", "what": "sunk_cost_fallacy__default__v1 · qwen2.5-1.5b-instruct-q4_k_m"}, {"date": "2026-09-24", "kind": "measured", "result": "stability 96.2%", "tone": "off", "what": "sunk_cost_fallacy__default__v0 · qwen2.5-1.5b-instruct-q4_k_m"}, {"date": "2026-09-24", "kind": "measured", "result": "stability 100.0%", "tone": "off", "what": "sunk_cost_fallacy__anchoring__v1 · qwen2.5-1.5b-instruct-q4_k_m"}, {"date": "2026-09-24", "kind": "measured", "result": "stability 100.0%", "tone": "off", "what": "sunk_cost_fallacy__anchoring__v0 · qwen2.5-1.5b-instruct-q4_k_m"}, {"date": "2026-09-24", "kind": "measured", "result": "stability 90.5%", "tone": "off", "what": "risky_choice_framing__wording__v1 · qwen2.5-1.5b-instruct-q4_k_m"}, {"date": "2026-09-24", "kind": "measured", "result": "stability 95.0%", "tone": "off", "what": "risky_choice_framing__wording__v0 · qwen2.5-1.5b-instruct-q4_k_m"}, {"date": "2026-09-24", "kind": "measured", "result": "stability 100.0%", "tone": "off", "what": "risky_choice_framing__order__v1 · qwen2.5-1.5b-instruct-q4_k_m"}, {"date": "2026-09-24", "kind": "measured", "result": "stability 100.0%", "tone": "off", "what": "risky_choice_framing__order__v0 · qwen2.5-1.5b-instruct-q4_k_m"}, {"date": "2026-09-24", "kind": "measured", "result": "stability 68.3%", "tone": "off", "what": "risky_choice_framing__default__v1 · qwen2.5-1.5b-instruct-q4_k_m"}, {"date": "2026-09-24", "kind": "measured", "result": "stability 85.7%", "tone": "off", "what": "risky_choice_framing__anchoring__v1 · qwen2.5-1.5b-instruct-q4_k_m"}, {"date": "2026-09-24", "kind": "measured", "result": "stability 100.0%", "tone": "off", "what": "risky_choice_framing__anchoring__v0 · qwen2.5-1.5b-instruct-q4_k_m"}, {"date": "2026-09-24", "kind": "measured", "result": "stability 95.0%", "tone": "off", "what": "base_rate_neglect__wording__v1 · qwen2.5-1.5b-instruct-q4_k_m"}, {"date": "2026-09-24", "kind": "measured", "result": "stability 90.0%", "tone": "off", "what": "base_rate_neglect__wording__v0 · qwen2.5-1.5b-instruct-q4_k_m"}, {"date": "2026-09-24", "kind": "measured", "result": "stability 32.5%", "tone": "on", "what": "base_rate_neglect__order__v1 · qwen2.5-1.5b-instruct-q4_k_m"}, {"date": "2026-09-24", "kind": "measured", "result": "stability 20.0%", "tone": "on", "what": "base_rate_neglect__order__v0 · qwen2.5-1.5b-instruct-q4_k_m"}, {"date": "2026-09-24", "kind": "measured", "result": "stability 100.0%", "tone": "off", "what": "base_rate_neglect__default__v1 · qwen2.5-1.5b-instruct-q4_k_m"}, {"date": "2026-09-24", "kind": "measured", "result": "stability 100.0%", "tone": "off", "what": "base_rate_neglect__default__v0 · qwen2.5-1.5b-instruct-q4_k_m"}, {"date": "2026-09-24", "kind": "measured", "result": "stability 90.0%", "tone": "off", "what": "base_rate_neglect__anchoring__v1 · qwen2.5-1.5b-instruct-q4_k_m"}, {"date": "2026-09-24", "kind": "measured", "result": "stability 86.7%", "tone": "off", "what": "base_rate_neglect__anchoring__v0 · qwen2.5-1.5b-instruct-q4_k_m"}, {"date": "2026-09-24", "kind": "checks", "result": "2 of 2 ran", "tone": null, "what": "scheduled instrument checks"}, {"date": "2026-09-24", "kind": "release", "result": "DOI 10.5281/zenodo.22881127", "tone": null, "what": "v0.4"}, {"date": "2026-09-23", "kind": "measured", "result": "stability 92.9%", "tone": "off", "what": "risky_choice_framing__order__v0 · qwen2.5-1.5b-instruct-q4_k_m"}, {"date": "2026-09-23", "kind": "checks", "result": "2 of 2 ran", "tone": null, "what": "scheduled instrument checks"}];
+ const box=document.getElementById('term-lines');if(!box)return;
+ if(!EVENTS.length){box.textContent='no activity recorded yet';return;}
+ const span=(cls,t)=>{const e=document.createElement('span');e.className=cls;e.textContent=t;return e;};
+ const TONE={on:['on-c','on curve'],off:['off-c','off curve'],gap:['gap-c','']};
+ const lines=EVENTS.map(e=>{
+  const d=document.createElement('div');d.className='ln';
+  d.append(span('d',e.date+'  '),span('k',e.kind.padEnd(9)),span('w',e.what+'  '),span(e.tone==='gap'?'gap-c':'r',e.result));
+  if(e.tone==='on'||e.tone==='off')d.append(span('r','  '),span(TONE[e.tone][0],TONE[e.tone][1]));
+  box.appendChild(d);return d;});
+ // The lines appear one after another the first time the log scrolls into view (all at once for reduced motion).
+ const reveal=()=>{const still=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  lines.forEach((d,i)=>{if(still)d.classList.add('on');else setTimeout(()=>d.classList.add('on'),140*i);});};
+ if('IntersectionObserver' in window){
+  const io=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting)){io.disconnect();reveal();}},{threshold:.4});
+  io.observe(box.parentNode);
+ }else reveal();
+})();
 </script>
