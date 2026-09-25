@@ -20,6 +20,7 @@ from core.budget import budget
 from core.plumbing.fake_client import FakeClient
 
 from core.plumbing import prereg
+from core.plumbing.anthropic_client import CircuitOpen
 
 from . import coverage, run_due, schedule
 
@@ -209,14 +210,19 @@ def check_run_full_sweep_ladder(data) -> list[str]:
         for pid in guard_lane:
             shutil.copy(_REAL_PROTOCOLS_DIR / f"{pid}.json", protocols_dir_guard / f"{pid}.json")
         ledger_guard = tmp / "ledger_lane_guard.json"
-        _write_ledger(ledger_guard, run_date, "8.50")  # 85% of the real €10 general ceiling
+        # 85% of a scaled ceiling with the real rungs: the two protocols (n=120 -> ~3.2 each) must
+        # FIT (see check_would_fit below for the rule that stops one that doesn't), so the lane
+        # rung is what is under test, not the ceiling.
+        _write_ledger(ledger_guard, run_date, "85.00")
+        scaled_config = tmp / "budget_scaled.json"
+        scaled_config.write_text(json.dumps({"monthly_ceiling_eur": "100.00", "bridge_reserve_eur": "1.00", "rungs": real_rungs}))
 
         with mock.patch("core.plumbing.anthropic_client.AnthropicClient", _StubClient), contextlib.redirect_stdout(io.StringIO()):
             results_guard = run_due.run_full_sweep(
                 client_kind="anthropic", run_date=run_date,
                 protocols_dir=protocols_dir_guard, out_root=tmp / "experiments_lane_guard",
                 subject_models_path=_REAL_SUBJECT_MODELS,
-                budget_ledger=ledger_guard, budget_config=budget.DEFAULT_CONFIG,
+                budget_ledger=ledger_guard, budget_config=scaled_config,
                 manifests_dir=None,
             )
         by_pid_guard = {r["protocol_id"]: r for r in results_guard}
@@ -419,6 +425,208 @@ def check_prereg_guard(data) -> list[str]:
     return errors
 
 
+def check_would_fit(data) -> list[str]:
+    """A protocol that would push the month past its ceiling must not start, even though the rung
+    (which only reads what is already spent) still allows it: at EUR 8.00 of 10.00 the ladder says
+    `guard_only_sweep`, and a v1 protocol (~3.2) is a guard-lane one -- allowed by the rung, but it
+    would end near 11. It is skipped, and nothing is spent."""
+    del data
+    errors = []
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = Path(tmp)
+        pdir = tmp / "protocols"
+        pdir.mkdir()
+        big = next(json.loads(f.read_text()) for f in sorted(_REAL_PROTOCOLS_DIR.glob("*.json"))
+                   if json.loads(f.read_text())["lane"] == "guard" and json.loads(f.read_text())["n"] == 120)
+        (pdir / f"{big['protocol_id']}.json").write_text(json.dumps(big))
+        ledger = tmp / "ledger.json"
+        _write_ledger(ledger, "2026-06-01", "8.00")
+        with mock.patch("core.plumbing.anthropic_client.AnthropicClient", _MeteredStub), contextlib.redirect_stdout(io.StringIO()):
+            results = run_due.run_full_sweep(
+                client_kind="anthropic", run_date="2026-06-15", protocols_dir=pdir, out_root=tmp / "exp",
+                subject_models_path=_REAL_SUBJECT_MODELS, budget_ledger=ledger, budget_config=budget.DEFAULT_CONFIG,
+                model_id="stub-model", model_family="stub-family", manifests_dir=None,
+            )
+        if not results or results[0].get("skipped") != "budget_halted" or "would not fit" not in results[0].get("detail", ""):
+            errors.append(f"a protocol that would exceed the ceiling must be skipped as 'would not fit': {results}")
+        if len(json.loads(ledger.read_text())) != 1:
+            errors.append("a skipped protocol must spend, and log, nothing")
+    return errors
+
+
+class _MeteredStub(_StubClient):
+    """A stub that reports token usage the way AnthropicClient does: 1000 in / 500 out per call, so
+    a call costs exactly $0.007 at Sonnet 5's list price ($2 / $10 per 1M). `break_after` makes it
+    raise CircuitOpen on that call number, as the real client's breaker would."""
+
+    break_after: int | None = None
+
+    def __init__(self, model_id: str, model_family: str) -> None:
+        super().__init__(model_id, model_family)
+        self.input_tokens = 0
+        self.output_tokens = 0
+        self._calls = 0
+
+    def complete(self, prompt, *, meta):
+        self._calls += 1
+        if self.break_after is not None and self._calls > self.break_after:
+            raise CircuitOpen("stub breaker")
+        self.input_tokens += 1000
+        self.output_tokens += 500
+        return super().complete(prompt, meta=meta)
+
+    def cost_usd(self):
+        return Fraction(self.input_tokens * 2 + self.output_tokens * 10, 1_000_000)
+
+
+def _one_v0_protocol(dest: Path) -> dict:
+    """Copies one real admitted protocol into `dest` (a fresh dir) and returns its JSON."""
+    dest.mkdir()
+    for f in sorted(_REAL_PROTOCOLS_DIR.glob("*.json")):
+        p = json.loads(f.read_text())
+        if p["status"] == "admitted" and p["n"] == 30:
+            shutil.copy(f, dest / f.name)
+            return p
+    raise RuntimeError("no admitted n=30 protocol left to test against")
+
+
+def check_measured_spend(data) -> list[str]:
+    """An unattended paid run must leave the ledger true without a human: after a protocol runs,
+    run_full_sweep writes tokens x price into spend.json, and the sweep's own projection is NOT
+    added on top of it (that would count the same money twice and cut the sweep short). And a
+    breaker that opens partway through must stop the whole sweep, log the calls already billed, and
+    leave that protocol unrecorded as a finished run."""
+    del data
+    errors = []
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = Path(tmp)
+        pdir = tmp / "protocols"
+        proto = _one_v0_protocol(pdir)
+        ledger = tmp / "ledger.json"
+        _write_ledger(ledger, "2026-06-01", "0")
+        calls = proto["n"] * 4
+        with mock.patch("core.plumbing.anthropic_client.AnthropicClient", _MeteredStub), contextlib.redirect_stdout(io.StringIO()):
+            results = run_due.run_full_sweep(
+                client_kind="anthropic", run_date="2026-06-15", protocols_dir=pdir, out_root=tmp / "exp",
+                subject_models_path=_REAL_SUBJECT_MODELS, budget_ledger=ledger, budget_config=budget.DEFAULT_CONFIG,
+                model_id="stub-model", model_family="stub-family", manifests_dir=None,
+            )
+        if not results or "run_id" not in results[0]:
+            return [f"measured spend: the protocol did not run: {results}"]
+        entries = [e for e in json.loads(ledger.read_text()) if e["run_id"] == results[0]["run_id"]]
+        if len(entries) != 1 or Fraction(entries[0]["amount_eur"]) != Fraction(calls * 7, 1000):
+            errors.append(f"measured spend: want one ledger entry of {calls * 0.007:.3f}, got {entries}")
+        elif "tokens x list price" not in (entries[0]["note"] or ""):
+            errors.append(f"measured spend: the note must say how the amount was derived: {entries[0]['note']!r}")
+        if "spend_recorded" not in results[0]:
+            errors.append("measured spend: result must say the ledger was written")
+
+        # breaker: opens on call 10 of the first protocol -> sweep stops, aborted spend is logged
+        pdir2 = tmp / "protocols2"
+        _one_v0_protocol(pdir2)
+        for f in sorted(_REAL_PROTOCOLS_DIR.glob("*.json"))[:2]:
+            shutil.copy(f, pdir2 / f.name)
+        ledger2 = tmp / "ledger2.json"
+        _write_ledger(ledger2, "2026-06-01", "0")
+
+        class _Breaking(_MeteredStub):
+            break_after = 10
+
+        with mock.patch("core.plumbing.anthropic_client.AnthropicClient", _Breaking), contextlib.redirect_stdout(io.StringIO()):
+            results2 = run_due.run_full_sweep(
+                client_kind="anthropic", run_date="2026-06-15", protocols_dir=pdir2, out_root=tmp / "exp2",
+                subject_models_path=_REAL_SUBJECT_MODELS, budget_ledger=ledger2, budget_config=budget.DEFAULT_CONFIG,
+                model_id="stub-model", model_family="stub-family", manifests_dir=None,
+            )
+        if [r.get("skipped") for r in results2] != ["circuit_open"]:
+            errors.append(f"circuit breaker: the sweep must stop at the first open breaker, got {results2}")
+        aborted = [e for e in json.loads(ledger2.read_text()) if "aborted" in e["run_id"]]
+        if len(aborted) != 1 or Fraction(aborted[0]["amount_eur"]) != Fraction(10 * 7, 1000):
+            errors.append(f"circuit breaker: the 10 billed calls must be logged as one aborted entry of 0.07, got {aborted}")
+        if any(d.name.startswith("2026-06-15__") and not d.name.startswith(".") for d in (tmp / "exp2").glob("*")):
+            errors.append("circuit breaker: an abandoned run must not leave a finished run directory")
+    if "circuit_open" not in run_due._STILL_DUE_SKIPS:
+        errors.append("circuit_open must leave the job due, not record it as done")
+    return errors
+
+
+def check_anthropic_client_metering(data) -> list[str]:
+    """AnthropicClient counts the tokens the API returns, prices them, and opens its breaker on a
+    dead credential at once or on repeated failures -- exercised against a stand-in `anthropic`
+    module, so nothing is billed."""
+    del data
+    import sys
+    import types
+
+    errors = []
+
+    class _APIError(Exception):
+        def __init__(self, status=None):
+            super().__init__(f"status {status}")
+            self.status_code = status
+
+    class _Msg:
+        content = [types.SimpleNamespace(type="text", text="x\nDECISION: A")]
+        stop_reason = "end_turn"
+        model = "claude-sonnet-5"
+        usage = types.SimpleNamespace(input_tokens=1000, output_tokens=500)
+
+    script: list = []
+
+    class _Messages:
+        def create(self, **kw):
+            item = script.pop(0)
+            if isinstance(item, Exception):
+                raise item
+            return item
+
+    class _Anthropic:
+        def __init__(self, **kw):
+            self.messages = _Messages()
+
+    fake = types.SimpleNamespace(Anthropic=_Anthropic, APIError=_APIError)
+    from core.plumbing.anthropic_client import AnthropicClient
+
+    with mock.patch.dict(sys.modules, {"anthropic": fake}):
+        c = AnthropicClient("claude-sonnet-5", "claude-sonnet", api_key="k")
+        script[:] = [_Msg(), _Msg()]
+        c.complete("p", meta={}); c.complete("p", meta={})
+        if (c.input_tokens, c.output_tokens) != (2000, 1000):
+            errors.append(f"usage must add up per call, got {(c.input_tokens, c.output_tokens)}")
+        if c.cost_usd() != Fraction(14, 1000):
+            errors.append(f"2 calls x (1000 in, 500 out) at $2/$10 must cost 0.014, got {c.cost_usd()}")
+
+        other = AnthropicClient("some-unpriced-model", "f", api_key="k")
+        if other.cost_usd() is not None:
+            errors.append("a model with no listed price must have no cost (fall back to the manual log)")
+
+        # a dead credential opens the breaker on the first call
+        script[:] = [_APIError(401)]
+        try:
+            c.complete("p", meta={})
+            errors.append("a 401 must open the breaker at once")
+        except CircuitOpen:
+            pass
+
+        # scattered failures do not; five in a row do; a success resets the count
+        c2 = AnthropicClient("claude-sonnet-5", "claude-sonnet", api_key="k")
+        script[:] = [_APIError(500)] * 4 + [_Msg()] + [_APIError(500)] * 4
+        for _ in range(4):
+            r = c2.complete("p", meta={})
+            if r.error is None:
+                errors.append("a failed call below the limit must come back as an error Response, not raise")
+        c2.complete("p", meta={})
+        for _ in range(4):
+            c2.complete("p", meta={})  # 4 more failures after a success: still below 5 in a row
+        script[:] = [_APIError(500)]
+        try:
+            c2.complete("p", meta={})
+            errors.append("the 5th failure in a row must open the breaker")
+        except CircuitOpen:
+            pass
+    return errors
+
+
 def main() -> int:
     data = json.loads(_VECTORS.read_text(encoding="utf-8"))
 
@@ -434,6 +642,9 @@ def main() -> int:
         ("already_run_this_month", lambda: check_already_run_this_month(data)),
         ("sweep_rotation", lambda: check_sweep_rotation(data)),
         ("prereg_guard", lambda: check_prereg_guard(data)),
+        ("would_fit", lambda: check_would_fit(data)),
+        ("measured_spend", lambda: check_measured_spend(data)),
+        ("anthropic_client_metering", lambda: check_anthropic_client_metering(data)),
     )
 
     all_errors: list[str] = []

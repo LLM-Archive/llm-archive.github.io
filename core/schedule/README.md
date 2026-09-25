@@ -20,11 +20,23 @@ not because of a hardcoded list of "real jobs".
 
 ## What this doesn't do (yet)
 
-- **Doesn't run on a recurring, unattended schedule.** `run_due.py` is a caller you invoke by
-  hand (or a workflow you trigger by hand) — it does not itself add a cron. Wiring an actual
-  recurring trigger that runs `--client anthropic` and commits results back unattended is a
-  separate, deliberate decision (STATUS.md) — two of the three runners spend real money, and
-  none of them have a human present at run time the way every real run so far has.
+- **Doesn't schedule itself.** `run_due.py` is a caller; the recurring triggers are GitHub
+  Actions workflows in `.github/workflows/`, one per kind of job, all calling it with `--only`:
+  `daily-reference-check.yml` (`--only reference_model`, free), `subject-fingerprint.yml`
+  (`--only subject_fingerprint`, ~EUR 0.003/day) and `paid-sweep.yml` (`--only full_sweep`, real
+  money, days 1-5 of the month; `run_due` only runs it when 30 days have passed). `--only` is what
+  keeps the cheap jobs structurally unable to reach the expensive one.
+- **Paid runs are unattended, so they carry their own limits** (added 2026-09-25):
+  - *Measured spend.* After each paid protocol, `run_due` writes tokens x list price into
+    `state/spend.json` (`core.plumbing.anthropic_client` counts the API's own `usage`; a model with
+    no listed price is not auto-logged, and the manual "log the real bill" reminder prints as
+    before). The entry's note says it is not yet reconciled against the Console bill: reconcile
+    monthly, record any difference by hand.
+  - *Would it fit?* Before each protocol, `spent + the protocol's pessimistic estimate` must be
+    within `monthly_ceiling_eur`, on top of the rung check (which only reads what is already spent).
+  - *Circuit breaker.* `CircuitOpen` (a 401/403/404, or 5 failed calls in a row) stops the whole
+    sweep; the calls already billed are logged as an `...__aborted` ledger entry and the job stays
+    due (`circuit_open` is in `_STILL_DUE_SKIPS`).
 - Doesn't know about `generation_bridge` (event-triggered by `bridge_trigger`, not a cadence
   field) — separate, later work.
 - `last_run.json` only keeps the most recent date per job, not history — that's exactly why
