@@ -133,19 +133,39 @@ number — exactly the kind of thing the project wants to hear about, at **mkalo
 
 ---
 
+## 4. Run the whole method on your model (optional)
+
+The 8 questions above are a spot-check. To run the full mechanism — four versions of ten scenarios,
+the archive's own extraction rule and estimator, a noise floor, an interval and quality flags — use
+the practice panel. It is invented for this purpose, so its result is never a published number.
+
+```bash
+python3 guide/sample/llm_archive_sample.py --fake    # no model: just see what a run prints
+python3 guide/sample/llm_archive_sample.py           # your model; defaults: Ollama, llama3.2
+python3 guide/sample/llm_archive_sample.py --openai --model my-model --base-url http://localhost:1234/v1
+```
+
+**You should see** 80 `#` marks (one per answer), then a block with `stability`, `noise floor` and
+the three gaps, then the published measurements of the same kind of question with yours as the first
+row. Everything is saved in `sample_results/<run_id>/`. Read stability next to the noise floor, never
+above it; the printed flags explain themselves. Full reading guide: `guide/for-developers.md`,
+steps 5 and 6.
+
+---
+
 ## Why only two questions, and what a full comparison needs
 
-Each protocol is a frozen panel of 15 scenarios, and only the **first** scenario of each of the two
-`open` protocols is published in full. The raw records carry a `prompt_sha256` — enough to *verify* a
-prompt you already hold, never enough to reveal one. So a complete, like-for-like run of your model
-against a whole protocol is possible today only for someone who holds the panels. This is a disclosed
-gap, not an oversight: see `SPEC.md` §1.1.
+Each real protocol is a frozen panel of 15 scenarios, and only the **first** scenario of each of the
+two `open` protocols is published in full. The raw records carry a `prompt_sha256` — enough to
+*verify* a prompt you already hold, never enough to reveal one. So a complete, like-for-like run of
+your model against a real protocol is possible today only for someone who holds the panel. This is a
+disclosed gap, not an oversight: see `SPEC.md` §1.1.
 
-If you do hold them, `guide/reproducing.md` lists what a submittable `comparison_point` must match —
+If you do hold one, `guide/reproducing.md` lists what a submittable `comparison_point` must match —
 same `panel_sha256`, same `grammar_version`, same `n`, all four versions, the full outcome
 distribution, and a verifiable model id. `core/measure/client.py` defines the small interface a
-model has to implement, `core/plumbing/reference_client.py` is a worked example, and
-`core/measure/pilot.py` runs a whole protocol end to end. Send results to **mkalognomos@gmail.com**.
+model has to implement and `core/plumbing/reference_client.py` is a worked example. Send results to
+**mkalognomos@gmail.com**.
 
 ---
 
@@ -157,11 +177,13 @@ model has to implement, `core/plumbing/reference_client.py` is a worked example,
 | `Could not reach http://localhost:11434` | Ollama isn't running. `ollama serve` in another terminal |
 | `no DECISION line` for your model | It didn't end its reply with `DECISION: A` / `DECISION: B`. Read the reply — most models need a fresh chat with no system prompt |
 | The file's hashes don't match | Download `llm_archive_compare.py` again; don't compare against edited text |
+| `The very first call failed` in step 4 | The server isn't reachable at `--base-url`, or doesn't know `--model`; nothing was written, fix it and re-run |
 | `DIFF` in step 3 | Re-clone in case your copy is stale; if it persists, report it |
 
 ## Where to go next
 
 - `guide/for-researchers.md` — how to cite, and what the numbers do and don't mean
 - `guide/data-dictionary.md` — every column of every file
+- `guide/for-developers.md` — run it locally, the practice panel, how to read and compare a result
 - `guide/reproducing.md` — the full rules for a comparison
 - `SPEC.md` — the method itself

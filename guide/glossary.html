@@ -72,6 +72,7 @@ footer a{color:var(--faint)}
 <nav><a href="index.html">Guide home</a>
 <a href="for-researchers.html">For researchers</a>
 <a href="for-developers.html">For developers</a>
+<a href="for-analysts.html">For data analysts</a>
 <a href="reproducing.html">Reproducing</a>
 <a href="data-dictionary.html">Data dictionary</a>
 <a class="on" href="glossary.html">Glossary</a>
@@ -85,7 +86,7 @@ footer a{color:var(--faint)}
 </div>
 <main class="wrap">
 <h1 id="glossary">Glossary</h1>
-<p>Plain-language definitions of every term and code used in LLM-Archive's data and site. Frozen technical definitions are in <a href="../docs/spec.md"><code>../docs/spec.md</code></a>; this file exists to explain them to a reader seeing them for the first time. Terms are grouped by topic, not alphabetically, because most of them only make sense next to the ones around them.</p>
+<p>Plain-language definitions of every term and code used in LLM-Archive's data and site. Frozen technical definitions are in <a href="https://github.com/LLM-Archive/llm-archive.github.io/blob/master/SPEC.md"><code>SPEC.md</code></a>; this file exists to explain them to a reader seeing them for the first time. Terms are grouped by topic, not alphabetically, because most of them only make sense next to the ones around them.</p>
 <h2 id="the-core-idea">The core idea</h2>
 <p><strong>Decision</strong> — the one categorical answer a model gives to a protocol's question, extracted from a required <code>DECISION: &lt;token&gt;</code> line at the end of its response. There is no partial credit and no free-text scoring in v0 — a response either contains exactly one valid decision line, or it doesn't count (see <code>unparseable</code>, below).</p>
 <p><strong>Version (A / A′ / B / C)</strong> — the four differently-worded copies of the same question that make up one measurement:</p>
@@ -147,12 +148,12 @@ footer a{color:var(--faint)}
 <p><strong><code>comparison_point</code></strong> — a measurement of the same public panel run by someone other than this project, against a model of their own choosing. Accepted only with an exactly matching panel, grammar version, <code>n</code>, and full outcome data. Shown in its own table, on its own day, never merged into the main chart or treated as a ranking — see <a href="reproducing.html"><code>reproducing.md</code></a>.</p>
 <p><strong><code>series</code> (<code>commercial</code> / <code>open_weights</code>)</strong> — two entirely separate tracks that are never drawn on the same chart. <code>commercial</code> is the actual archive — the hosted product being studied, which can disappear or change silently at any time. <code>open_weights</code> is the control experiment — a downloadable model this project runs itself, used only to prove the method reproduces, never treated as "the archive."</p>
 <p><strong>Instrument</strong> — the daily self-check that catches the project's own pipeline breaking, using a fixed local open-weights reference model that is never studied for its own sake and never changes. Two parts: <code>runtime_fingerprint</code> (12 fixed prompts, expected to reproduce byte-for-byte every day) and a rotating daily replay of one of the 10 <code>guard</code> protocols against that same frozen model (expected to stay flat within normal statistical noise). If either moves, publication for that day pauses — the measurement is still recorded, flagged <code>instrument_suspect</code>, off every curve.</p>
-<p><strong><code>generation_bridge</code></strong> — a special, immediate measurement run comparing an outgoing model version against its explicitly declared successor, in the same week, on all 4 protocol types (one protocol per type, at each protocol's own frozen settings), funded from its own dedicated reserve (<code>bridge_reserve_eur</code> in <code>budget.json</code>) rather than the regular monthly sweep budget. Exists because a retired commercial model can never be measured again at any price — the handoff between two generations is the one moment that can't wait for the normal monthly schedule.</p>
+<p><strong><code>generation_bridge</code></strong> — a special, immediate measurement run comparing an outgoing model version against its explicitly declared successor, in the same week, on all 4 protocol types (one protocol per type, at each protocol's own frozen settings), funded from its own dedicated reserve rather than the regular monthly sweep budget. Exists because a retired commercial model can never be measured again at any price — the handoff between two generations is the one moment that can't wait for the normal monthly schedule.</p>
 <p><strong>Gap causes</strong> — the closed list of reasons a scheduled measurement didn't happen, always disclosed rather than left as a silent hole in the record: <code>before_archive_start</code>, <code>budget_halted</code>, <code>dormant</code>, <code>provider_outage</code>, <code>protocol_confounded</code>, <code>human_absent</code>, <code>generation_retired_early</code>, <code>generation_bridge</code>.</p>
 </main>
 <footer class="wrap">
 Written for people using LLM-Archive — see <a href="../README.md">../README.md</a>
-and <a href="../docs/spec.md">docs/spec.md</a> for the project itself.
+and <a href="https://github.com/LLM-Archive/llm-archive.github.io/blob/master/SPEC.md">SPEC.md</a> for the project itself.
 </footer>
 <script>
 (function(){

@@ -7,7 +7,7 @@ rather than its exact column name, see [`glossary.md`](glossary.md); for hands-o
 examples, see [`for-researchers.md`](for-researchers.md).
 
 **Every field with `_pct` in its name is on a 0–100 scale.** This is a hard, checked convention
-(`docs/spec.md` §6) — no published field or threshold mixes the 0–1 and 0–100 scales.
+(`SPEC.md` §6) — no published field or threshold mixes the 0–1 and 0–100 scales.
 
 ## `stability.csv`
 
@@ -97,8 +97,7 @@ questions.
 **Where an `open` protocol's wording is published today:** the full four-version text of the
 panel's **first scenario only**, embedded in the published results page (open the protocol's row on
 the site). The other 14 scenarios' wording is in no published artifact yet, and the protocol
-definition file (`protocols/*.json`) stays private even for `open` protocols, per `docs/spec.md`
-§10. See [`reproducing.md`](reproducing.md) for what this does and doesn't let an outside reader
+definitions are not published, even for `open` protocols, per `SPEC.md` §10. See [`reproducing.md`](reproducing.md) for what this does and doesn't let an outside reader
 do.
 
 ## `croissant.json`
@@ -131,7 +130,7 @@ four jobs the scheduler actually knows how to run (`full_sweep`, `subject_finger
 ## Where the open-weights measurements live
 
 There is no separate `open-weights/stability.csv`, and no `instrument.csv` — earlier drafts of
-`docs/spec.md` §10 named both, and neither was built. **Both series share `stability.csv`,
+`SPEC.md` §10 named both, and neither was built. **Both series share `stability.csv`,
 separated by its `series` column** (`commercial` or `open_weights`). Filter on it before charting:
 the two are never meant to be drawn as one line, and the project's own site keeps them in two
 separate tables for exactly that reason.

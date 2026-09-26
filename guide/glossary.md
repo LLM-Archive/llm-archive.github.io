@@ -1,7 +1,7 @@
 # Glossary
 
 Plain-language definitions of every term and code used in LLM-Archive's data and site. Frozen
-technical definitions are in [`../docs/spec.md`](../docs/spec.md); this file exists to explain
+technical definitions are in [`SPEC.md`](https://github.com/LLM-Archive/llm-archive.github.io/blob/master/SPEC.md); this file exists to explain
 them to a reader seeing them for the first time. Terms are grouped by topic, not alphabetically,
 because most of them only make sense next to the ones around them.
 
@@ -232,7 +232,7 @@ pauses — the measurement is still recorded, flagged `instrument_suspect`, off 
 **`generation_bridge`** — a special, immediate measurement run comparing an outgoing model version
 against its explicitly declared successor, in the same week, on all 4 protocol types (one
 protocol per type, at each protocol's own frozen settings), funded from its own dedicated reserve
-(`bridge_reserve_eur` in `budget.json`) rather than the regular monthly sweep budget. Exists
+rather than the regular monthly sweep budget. Exists
 because a retired commercial model can never be measured again at any price — the handoff between
 two generations is the one moment that can't wait for the normal monthly schedule.
 
