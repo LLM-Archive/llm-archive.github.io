@@ -160,7 +160,9 @@ different      A-C   gap 65.0%   (should be large: proof the model reads the que
 <p>Scenario-building code and unpublished protocol files are kept out of this repository on purpose: a contamination check only works while that text stays unseen (see the specification's section on what gets published). This is why the <code>open-lane/</code> data and the 8 published questions are the public entry points.</p>
 <h2 id="architecture-in-one-pass">Architecture in one pass</h2>
 <pre><code class="language-text">a protocol            frozen text + declared thresholds
-    → core/measure/pilot.py runs it end to end against a Client (fake or real)
+    → core/measure/pilot.py runs it end to end against a Client (fake or real) — in the project&#x27;s
+      own repository; this public copy has no core/budget/, which pilot.py imports, so here
+      guide/sample/llm_archive_sample.py runs the same steps with the same core/measure/ code
     → core/measure/grammar_v2.py extracts a DECISION: token deterministically
     → core/measure/measurement.py turns the trials into one measurement record:
         - core/measure/stats.py computes gap_pct, the noise floor, entropy, drop bounds,

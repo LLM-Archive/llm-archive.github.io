@@ -200,7 +200,9 @@ public entry points.
 
 ```text
 a protocol            frozen text + declared thresholds
-    → core/measure/pilot.py runs it end to end against a Client (fake or real)
+    → core/measure/pilot.py runs it end to end against a Client (fake or real) — in the project's
+      own repository; this public copy has no core/budget/, which pilot.py imports, so here
+      guide/sample/llm_archive_sample.py runs the same steps with the same core/measure/ code
     → core/measure/grammar_v2.py extracts a DECISION: token deterministically
     → core/measure/measurement.py turns the trials into one measurement record:
         - core/measure/stats.py computes gap_pct, the noise floor, entropy, drop bounds,
