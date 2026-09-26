@@ -320,8 +320,8 @@ footer{border-top:1px solid var(--line);margin-top:70px;padding-top:22px;font-si
 <h1>We check whether an AI changes its mind when a question says the same thing in different words and we publish the results</h1>
 
 <h3>What LLM-Archive is</h3>
-<p class="lede">An independent, automated "instrument" that checks whether an AI keeps the same
-decision when a question changes form but not meaning.</p>
+<p class="lede">An open, longitudinal dataset for studying behavioral changes and stability in large
+language models.</p>
 
 <h3>A 30-second example</h3>
 <p>We ask the same dilemma with two equivalent wordings:</p>
@@ -424,8 +424,9 @@ don't need to install anything else.</p>
 
 <h3>What isn't downloadable yet</h3>
 <p>The questions and answers for protocols that are still private stay hidden — if we published them
-now, the next model could "learn" them and the measurement would lose its meaning. They all open up
-once the corresponding model is four generations old (four newer model generations have been measured after it). Their number and existence are always disclosed.</p>
+now, the next model could "learn" them and the measurement would lose its meaning. We open them
+once the corresponding model is four generations old (four newer model generations have been measured after it) — by hand, as a
+commitment we keep, not as something the code does by itself. Their number and existence are always disclosed.</p>
 
 <h3>License</h3>
 <div class="scroll"><table>
@@ -583,8 +584,10 @@ measurement itself.</p>
 
 <div class="callout">
 <p><b>Most questions stay hidden while the model is still in use.</b> Otherwise the next model
-could "learn" them and the measurement would lose its meaning. They all open up once the model is
-four generations old: questions, answers, code.</p>
+could "learn" them and the measurement would lose its meaning. We open them once the model is four
+generations old — every version of every question, and every answer. That is a step we take by
+hand, on our word: nothing in the code opens anything on a timer. The measurement code itself is
+public already.</p>
 </div>
 
 <h3>No answer is judged by a human or another AI</h3>
@@ -632,14 +635,16 @@ The names below leave the series off.</small></p>
 </tbody></table></div>
 <p><small>What each protocol actually asks (the 15 scenarios themselves) stays hidden for
 guard-lane protocols while the model being measured is still active — see the callout above. Two
-protocols (the <code>wording</code> type of each of two families) are <b>open-lane</b>: their full
-text and every answer are already public in <code>open-lane/2026.jsonl</code>, so you can read the
-exact wording for yourself right now.</small></p>
+protocols (the <code>wording</code> type of each of two families) are <b>open-lane</b>: every
+answer they ever produced is public in <code>open-lane/2026.jsonl</code>, and the wording of
+their <b>first scenario</b> — all four versions — is on this page, in the row's own panel. The
+other 14 scenarios' wording isn't published yet; that file carries a <code>prompt_sha256</code>
+for each trial, which lets you confirm a question you already hold, not read one you don't.</small></p>
 
 <h3>Twins</h3>
 <p>A twin is a pair of protocols — one <code>open</code>, one <code>guard</code> — from the same
-family, testing a different type. Only 2 of the 12 protocols are <code>open</code>-lane (their
-full text is public): <code>risky_choice_framing__wording</code> and
+family, testing a different type. Only 2 of the 12 protocols are <code>open</code>-lane (every
+answer public, and the first scenario's wording): <code>risky_choice_framing__wording</code> and
 <code>base_rate_neglect__wording</code>. Each has a twin — the <code>anchoring</code> protocol of
 the same family, which stays <code>guard</code> (hidden while its model is still active):</p>
 <pre>risky_choice_framing__wording  (open)   &harr;  risky_choice_framing__anchoring  (guard)
@@ -825,15 +830,16 @@ code preserves the record's exact identity.</small></p>
     <div id="lock-commercial">
     <p><b>The text is private.</b> If we published it now, the next
     model would learn it and the measurement would die — permanently, for every generation after it.</p>
-    <p style="margin-bottom:0">It all opens up once this model is four generations old: all four versions,
-    every answer, code — <b>right next to the numbers you see now</b>. <span id="lockyr"></span>.</p>
+    <p style="margin-bottom:0">We open it once this model is four generations old: all four versions,
+    every answer — <b>right next to the numbers you see now</b>. By hand, on our word; nothing opens
+    on a timer. <span id="lockyr"></span>.</p>
     </div>
     <div id="lock-frozen" hidden>
     <p><b>The text is private — but not because of this model.</b> This one is frozen and can't learn
     anything. The same protocol also runs on the commercial model, and publishing it now would let a
     future version of that model learn it and end the measurement.</p>
-    <p style="margin-bottom:0">It opens when the commercial model is four generations old: all four versions, every
-    answer, code — <b>right next to the numbers you see now</b>. This frozen model is never retired,
+    <p style="margin-bottom:0">We open it when the commercial model is four generations old: all four versions, every
+    answer — <b>right next to the numbers you see now</b>, by hand rather than on a timer. This frozen model is never retired,
     so it has no date of its own.</p>
     </div></div>
   </div>
@@ -1251,11 +1257,14 @@ function openDetail(i){const d=ALL[i];
  set('cgb',d.gap_pct.toFixed(1)+' vs '+d.drop_bound_pct_ab.toFixed(1)+' points'+mark(!hasFlag('below_drop_bound')));
  set('csd',scenDomUnset?'threshold not set':(d.scenario_concentration_pct==null?'not computable':d.scenario_concentration_pct.toFixed(1)+'% (top 2 scenarios)'+mark(!scenDom)));
  // "Published" used to be said unconditionally here, regardless of lane -- true for an open-lane
- // measurement (the full text and every answer really are in open-lane/*.jsonl), but misleading
- // for guard, where only this row's aggregate numbers are public and the text stays private until
- // this model generation retires (see the "locked" panel above, isOpen just above). Lane-aware now.
+ // measurement's answers (every trial really is in open-lane/*.jsonl), but misleading for guard,
+ // where only this row's aggregate numbers are public and the wording stays private until the
+ // protocol is declassified (see the "locked" panel above, isOpen just above). Lane-aware now.
+ // 2026-09-26: the open-lane branch used to claim "full text" -- open-lane/*.jsonl carries
+ // prompt_sha256, never the prompt, and only the first scenario's wording is published (render.py
+ // _example_texts). Corrected here and in the Data/Design copy; SPEC.md §1.1 is the governing gap.
  const availability=isOpen
-   ? 'Full text and answers are published even though it’s off the main curve.'
+   ? 'Every answer is published, and the first scenario’s four versions are shown above, even though it’s off the main curve.'
    : d.series==='open_weights'
      ? 'Only the result is public. The questions and the model’s answers stay private until the commercial model running the same protocol is four generations old.'
      : 'Only the result is public. The questions and the model’s answers stay private until this model is four generations old.';

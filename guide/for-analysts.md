@@ -16,7 +16,7 @@ standard-library equivalent, because the files are plain CSV and JSON Lines.
 |---|---|---|
 | `stability.csv` | one measurement (one protocol, one model, one day) | the headline number and everything needed to judge it |
 | `outcomes.csv` | one `(run_id, version, outcome)` count | the same outcome counts as `stability.csv`, already unpivoted |
-| `open-lane/<year>.jsonl` | one trial: one question, one raw response | recomputing a number from scratch; text analysis of responses |
+| `open-lane/<year>.jsonl` | one trial: which scenario and version was asked, and the raw response (not the question text) | recomputing a number from scratch; text analysis of responses |
 | `coverage.csv` | one scheduled job on one day | what ran, and why anything didn't |
 | `croissant.json` | — | machine-readable schema, for tools that read Croissant metadata |
 

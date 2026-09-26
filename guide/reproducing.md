@@ -122,11 +122,13 @@ substitute a paraphrase of the scenarios; it is not the same panel.
 spreadsheet of every measurement we've run: which question, which model, how stable the answer was (0 to
 100), and whether it passed our quality checks.
 
-**2. Get the real questions and answers — for 2 of the 12 protocols.** Only two protocols publish their
-actual wording: `risky_choice_framing__wording` and `base_rate_neglect__wording` (marked
+**2. Get the real answers — for 2 of the 12 protocols.** Only two protocols publish their
+trial-level data: `risky_choice_framing__wording` and `base_rate_neglect__wording` (marked
 `lane: open` — see [`glossary.md`](glossary.md)). For those, download `open-lane/<year>.jsonl` from
-Downloads: every real question the model was asked, its exact response, and which option it
-picked.
+Downloads: for every trial, the model's exact response, which option it picked, and which scenario
+and version it belongs to. **Not the questions themselves** — each line carries a `prompt_sha256`,
+not the prompt, so the file lets you verify a question you already hold, not read one you don't.
+The only wording published today is the first scenario's, on the Results page (step 4 below).
 
 **3. What you can do with that today: check our math, for your own sake.** Take the real responses
 from step 2 and recompute the published stability score yourself — the formula is public
