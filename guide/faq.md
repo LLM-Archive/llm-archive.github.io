@@ -36,7 +36,7 @@ tokens, is scored `unparseable` rather than interpreted.
 **Why measure a second, frozen model every day?**
 To catch the project's own pipeline breaking before mistaking that for a change in the model being
 studied. If a fixed, never-changing reference model suddenly answers differently, something in the
-project's own setup changed — not the subject model. This is disclosed as a real limit, not a
+project's own setup changed — not the commercial model. This is disclosed as a real limit, not a
 complete guarantee: if the reference model stays flat, that rules out the project's own pipeline as
 a cause, but it does **not** rule out the commercial provider silently changing something upstream
 (a router, a hidden system instruction, quantization) — no local check can see behind a hosted

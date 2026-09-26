@@ -129,7 +129,8 @@ explanation of each, and **a table of LLM-Archive's own published measurements o
 question** (risky choice, reworded) with yours as the first row. Every reply and the full
 measurement are saved in `sample_results/<run_id>/`: `trials.jsonl` holds each reply exactly as your
 model wrote it, and `measurement.json` holds the record, with the same field names as a row of
-`stability.csv` ([`data-dictionary.md`](data-dictionary.md)).
+`stability.csv` ([`data-dictionary.md`](data-dictionary.md)), except `api_surface_sha`, which only applies to runs
+against a commercial API.
 
 ### 6. Read your result, and compare it with ours
 
