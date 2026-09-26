@@ -101,9 +101,13 @@ Possible today only for someone who holds all 15 scenarios of a protocol; the pu
 you one (see "In plain words", step 4). If you do hold them, the submission must match, exactly:
 same `panel_sha256` · same `grammar_version` · same `n` per version (30 in `v0`, 120 in `v1`) · all
 four versions A, A′, B, C · the full outcome distribution per version · the exact, verifiable model
-id. `core/measure/client.py` defines the small interface a model has to implement,
-`core/plumbing/reference_client.py` is a worked example, and `core/measure/pilot.py` runs a whole
-protocol end to end. **If any requirement cannot be met, say which one and stop** — do not
+id. `core/measure/client.py` defines the small interface a model has to implement and
+`core/plumbing/reference_client.py` is a worked example. The project's own runner,
+`core/measure/pilot.py`, **cannot be imported from this public repository**: it imports
+`core.budget`, which is private by design (`SPEC.md` §10). The complete run that does work with
+public files alone is `guide/sample/llm_archive_sample.py`, which asks the questions, extracts each
+answer and computes the measurement with the same `core/measure/` code — on a small invented panel,
+not on a real protocol. **If any requirement cannot be met, say which one and stop** — do not
 substitute a paraphrase of the scenarios; it is not the same panel.
 
 ### What an agent must not conclude
