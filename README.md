@@ -34,7 +34,7 @@ record of exactly that one property, and of the evidence that the measuring itse
   re-implement it in any language.
 - **Read a number with its evidence.** Every `stability_pct` comes with a noise floor, an interval
   and flags, and a flagged measurement is published, never deleted. What the number does *not*
-  claim (not a capability score, not a ranking, not comparable across model families) is in
+  claim (not a capability score, not a ranking, not comparable across model lines) is in
   [`guide/for-researchers.html`](https://llm-archive.github.io/guide/for-researchers.html).
 
 ## How to run it
@@ -66,7 +66,7 @@ written for [data analysts](https://llm-archive.github.io/guide/for-analysts.htm
 
 ### Try it on your own model
 
-Nothing here needs an account, and a model on your own computer costs nothing.
+A model on your own computer costs nothing and needs no account; only a hosted model needs a key.
 
 ```bash
 # 1. See what a run prints, with no model at all (a synthetic stand-in):

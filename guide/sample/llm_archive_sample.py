@@ -50,6 +50,7 @@ from core.measure.schema import VERSIONS  # noqa: E402
 from llm_archive_compare import ask  # noqa: E402  (the same one-call-to-your-model code as the spot-check)
 
 # The published protocols the sample panel resembles: same family, same rewording type.
+MAX_FAILURES_IN_A_ROW = 5  # a server that has gone away should stop the run, not fill it with lost replies
 PUBLISHED_KIND = "risky_choice_framing__wording__"
 PROTOCOL_PATH = Path(__file__).resolve().parent / "sample_protocol.json"
 
@@ -109,10 +110,15 @@ def run(protocol: dict, client, run_date: str, out_root: Path) -> tuple[dict, Pa
     calls = schedule(protocol, run_date, client.subject_model_id)
     print(f"Asking {client.subject_model_id}: {len(calls)} questions. One # per answer.")
     trials, returned = [], set()
+    failures_in_a_row = 0
     for index, call in enumerate(calls):
         response = client.complete(call["prompt"], meta={k: call[k] for k in ("version", "scenario_id", "rep")})
+        failures_in_a_row = failures_in_a_row + 1 if response.error else 0
         if index == 0 and response.error:
             sys.exit(f"The very first call failed, so nothing was written:\n{response.error}")
+        if failures_in_a_row >= MAX_FAILURES_IN_A_ROW:
+            sys.exit(f"\nStopped: {MAX_FAILURES_IN_A_ROW} calls in a row failed (call {index + 1} of {len(calls)}), "
+                     f"so nothing was written. The last error:\n{response.error}")
         result = classify(response, protocol["options"], grammar_version=protocol["grammar_version"])
         if response.returned_model_id:
             returned.add(response.returned_model_id)
@@ -143,6 +149,13 @@ def run(protocol: dict, client, run_date: str, out_root: Path) -> tuple[dict, Pa
     return record, out_dir
 
 
+def _num(text: str) -> float | None:
+    try:
+        return float(text)
+    except ValueError:
+        return None
+
+
 def _pct(x) -> str:
     return "n/a" if x is None else f"{x:.1f}%"
 
@@ -169,8 +182,8 @@ def compare_with_published(m: dict) -> None:
     yours = f"{'YOURS: ' + m['subject_model_id']:<30}{'sample_risky_choice_wording':<38}{_pct(m['stability_pct']):>10}  "
     print("  " + yours + f"{_pct(m['ci_low_pct']) + ' to ' + _pct(m['ci_high_pct']):<17}{_pct(m['null_floor_pct']):>11}   {m['n']}")
     for (model, protocol), row in sorted(latest.items()):
-        interval = f"{float(row['ci_low_pct']):.1f}% to {float(row['ci_high_pct']):.1f}%"
-        print(f"  {model:<30}{protocol:<38}{float(row['stability_pct']):>9.1f}%  {interval:<17}{float(row['null_floor_pct']):>10.1f}%   {row['n']}")
+        interval = f"{_pct(_num(row['ci_low_pct']))} to {_pct(_num(row['ci_high_pct']))}"
+        print(f"  {model:<30}{protocol:<38}{_pct(_num(row['stability_pct'])):>10}  {interval:<17}{_pct(_num(row['null_floor_pct'])):>11}   {row['n']}")
     print("Overlapping intervals mean the difference is within what sampling noise alone can produce here.")
     print("For the same questions asked of your model and of ours, use guide/llm_archive_compare.py.")
 
@@ -178,6 +191,19 @@ def compare_with_published(m: dict) -> None:
 def report(m: dict, out_dir: Path) -> None:
     line = "=" * 72
     print(f"\n{line}\nPRACTICE PANEL RESULT: {m['subject_model_id']}\n{line}")
+    lost: dict[str, int] = {}
+    for counts in m["outcomes"].values():
+        for outcome, count in counts.items():
+            if outcome != "valid" and count:
+                lost[outcome] = lost.get(outcome, 0) + count
+    replies = sum(sum(c.values()) for c in m["outcomes"].values())
+    usable = replies - sum(lost.values())
+    if usable == 0:
+        print(f"No usable answer: all {replies} replies were lost ({', '.join(f'{k} {v}' for k, v in lost.items())}).")
+        print("No measurement is possible. A reply counts only if it ends with a line 'DECISION: A' or")
+        print("'DECISION: B'. Open trials.jsonl and read what your model wrote instead.")
+        print(f"\nSaved: {out_dir}/")
+        return
     print(f"stability            {_pct(m['stability_pct'])}   (95% interval {_pct(m['ci_low_pct'])} to {_pct(m['ci_high_pct'])})")
     print(f"noise floor          {_pct(m['null_floor_pct'])}   (a gap this small is expected from sampling alone)")
     print(f"cosmetic edit  A-A'  gap {_pct(m['gap_null_pct'])}   (should be near zero: this is the null change)")
@@ -189,6 +215,11 @@ def report(m: dict, out_dir: Path) -> None:
         valid = m["outcomes"][v]["valid"]
         total = sum(m["outcomes"][v].values())
         print(f"  {v:<8} A={d['A']:<3} B={d['B']:<3}  valid replies {valid}/{total}")
+    if lost:
+        detail = ", ".join(f"{k} {v}" for k, v in sorted(lost.items()))
+        print(f"\nLost replies: {sum(lost.values())} of {replies} ({detail}). They are never guessed at; see trials.jsonl.")
+        if usable < replies / 2:
+            print("More than half of the replies were unusable, so read this result with great caution.")
     print("\nFlags:", ", ".join(m["flags"]) if m["flags"] else "none")
     for flag in m["flags"]:
         print(f"  {flag}: {WHAT_FLAGS_MEAN.get(flag, '')}")

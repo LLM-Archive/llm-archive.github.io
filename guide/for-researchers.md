@@ -33,7 +33,7 @@ same way," and no such claim is ever published.
 - **Not a claim that the wording change was psychologically inert.** That the change "shouldn't"
   matter is the protocol's own design claim, argued in its Method & Limits documentation — not
   something this statistic measures directly.
-- **Not comparable across model families.** The frozen code refuses to draw one line across
+- **Not comparable across model lines.** The frozen code refuses to draw one line across
   `model_family` boundaries. A Sonnet-series curve and a hypothetical Opus-series curve are never
   merged, because doing so would present a trend that's really an artifact of which products
   happened to get measured when.
@@ -142,7 +142,7 @@ stability["flags"] = stability["flags"].apply(json.loads)
 # Only look at measurements that made the main curve:
 on_curve = stability[stability["on_curve"]]
 
-# Never mix series or model families in one comparison — the project itself won't:
+# Never mix series or model lines in one comparison — the project itself won't:
 sonnet_wording = on_curve[
     (on_curve["model_family"] == "claude-sonnet") & (on_curve["rewording_type"] == "wording")
 ]

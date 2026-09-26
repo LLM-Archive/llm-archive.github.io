@@ -888,7 +888,7 @@ def render_coverage_bar(data: dict) -> str:
             '<div class="cov"><span class="dot" aria-hidden="true"></span>'
             "<b>Not yet measuring a real model.</b> This is a pre-launch build of the pipeline — "
             f"<b>{admitted} of {total}</b> protocols admitted, <b>{measured} of {total}</b> exercised so far, "
-            "all against a synthetic test client, never a real subject model."
+            "all against a synthetic test client, never a real commercial model."
             '<div style="margin-top:7px">Real, public numbers begin once a real API client and the '
             "first paid run exist · "
             "<a href=\"#\" onclick=\"go('how');return false\">what this means</a></div></div>"

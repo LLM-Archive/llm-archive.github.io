@@ -96,7 +96,7 @@ footer a{color:var(--faint)}
 <li><strong>Not a measure of capability.</strong> A very capable model can be highly unstable, and vice versa.</li>
 <li><strong>Not a measure of correctness</strong>, for protocols with no ground truth (framing, preference-style decisions). Stability there is a measure of <em>consistency</em>, not of being right.</li>
 <li><strong>Not a claim that the wording change was psychologically inert.</strong> That the change "shouldn't" matter is the protocol's own design claim, argued in its Method &amp; Limits documentation — not something this statistic measures directly.</li>
-<li><strong>Not comparable across model families.</strong> The frozen code refuses to draw one line across <code>model_family</code> boundaries. A Sonnet-series curve and a hypothetical Opus-series curve are never merged, because doing so would present a trend that's really an artifact of which products happened to get measured when.</li>
+<li><strong>Not comparable across model lines.</strong> The frozen code refuses to draw one line across <code>model_family</code> boundaries. A Sonnet-series curve and a hypothetical Opus-series curve are never merged, because doing so would present a trend that's really an artifact of which products happened to get measured when.</li>
 <li><strong>Not a human-likeness score.</strong> Any comparison to a published human result (<code>human_model_gap</code>) is secondary, reported only where a multi-lab or meta-analytic human finding exists for direct comparison, and is never aggregated or treated as a headline. Published research on this question has found that models can fail to reproduce human response biases at all — so a human-model gap and a model's self-stability are not guaranteed to be measuring the same underlying thing, and this project does not claim they are.</li>
 </ul>
 <h2 id="how-this-differs-from-lmsys-arena-helm-mmlu-big-bench">How this differs from LMSYS Arena, HELM, MMLU, BIG-bench</h2>
@@ -139,7 +139,7 @@ stability[&quot;flags&quot;] = stability[&quot;flags&quot;].apply(json.loads)
 # Only look at measurements that made the main curve:
 on_curve = stability[stability[&quot;on_curve&quot;]]
 
-# Never mix series or model families in one comparison — the project itself won&#x27;t:
+# Never mix series or model lines in one comparison — the project itself won&#x27;t:
 sonnet_wording = on_curve[
     (on_curve[&quot;model_family&quot;] == &quot;claude-sonnet&quot;) &amp; (on_curve[&quot;rewording_type&quot;] == &quot;wording&quot;)
 ]</code></pre>
