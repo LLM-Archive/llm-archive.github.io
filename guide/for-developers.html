@@ -4,21 +4,29 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>For developers — LLM-Archive Guide</title>
+<link rel="icon" type="image/png" href="../logo.png?v=2">
+<link rel="apple-touch-icon" href="../logo.png?v=2">
 <script>
 (function(){var t='blue';try{t=localStorage.getItem('llm-archive-theme')||'blue';}catch(e){}
 if(t!=='white'&&t!=='dark'&&t!=='blue')t='blue';document.documentElement.classList.add('theme-'+t);})();
 </script>
 <style>
-:root{--ink:#15161a;--dim:#5a5c66;--faint:#8c8f99;--line:#e4e4e8;--bg:#fff;--raise:#fafafb;--link:#1a4fd6}
+:root{--ink:#15161a;--logo:#55585f;--dim:#5a5c66;--faint:#8c8f99;--line:#e4e4e8;--bg:#fff;--raise:#fafafb;--link:#1a4fd6}
 @media(prefers-color-scheme:dark){
-  :root{--ink:#e8edf3;--dim:#aeb9c7;--faint:#7f8b99;--line:#34404d;--bg:#14181d;--raise:#1d242c;--link:#79aef2}
+  :root{--logo:var(--ink);--ink:#e8edf3;--dim:#aeb9c7;--faint:#7f8b99;--line:#34404d;--bg:#14181d;--raise:#1d242c;--link:#79aef2}
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 system-ui,-apple-system,"Segoe UI",Inter,sans-serif;-webkit-font-smoothing:antialiased}
 .wrap{max-width:760px;margin:0 auto;padding:0 20px}
 header{border-bottom:1px solid var(--line);padding:16px 0;margin-bottom:8px}
 header .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px}
-.brand{font-size:14px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);text-decoration:none;margin-right:8px}
+.brand{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);text-decoration:none;margin-right:8px}
+.brand .logo{width:36px;height:36px;display:block;flex:none;background:var(--logo,currentColor);-webkit-mask:url(../logo.png?v=2) center/contain no-repeat;mask:url(../logo.png?v=2) center/contain no-repeat}
+.brand .logo.spin{animation:logospin .8s cubic-bezier(.25,.6,.35,1)}
+@keyframes logospin{to{transform:rotate(180deg)}}
+@media(prefers-reduced-motion:reduce){.brand .logo.spin{animation:none}}
+.brand .bt{display:flex;flex-direction:column}
+.brand a{display:block;line-height:0}
 .brand small{display:block;font-size:10px;font-weight:600;letter-spacing:.08em;color:var(--faint)}
 nav{display:flex;flex-wrap:wrap;gap:2px}
 nav a{font-size:13px;color:var(--dim);text-decoration:none;padding:5px 9px;border-radius:6px}
@@ -35,9 +43,9 @@ a{color:var(--link)}
 code{font:13px ui-monospace,"SF Mono",Menlo,monospace;background:var(--raise);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
 pre{background:var(--raise);border:1px solid var(--line);border-radius:8px;padding:14px 16px;overflow-x:auto;margin:0 0 16px}
 pre code{background:none;border:0;padding:0;font-size:13px;line-height:1.55}
-html.theme-white{--ink:#15161a;--dim:#5a5c66;--faint:#8c8f99;--line:#e4e4e8;--bg:#fff;--raise:#fafafb;--link:#1a4fd6}
-html.theme-blue{--ink:#d9e7f5;--dim:#a9bed2;--faint:#7189a1;--line:#29435d;--bg:#071a2b;--raise:#0d263d;--link:#65c7f7}
-html.theme-dark{--ink:#e8edf3;--dim:#aeb9c7;--faint:#7f8b99;--line:#34404d;--bg:#14181d;--raise:#1d242c;--link:#79aef2}
+html.theme-white{--ink:#15161a;--logo:#55585f;--dim:#5a5c66;--faint:#8c8f99;--line:#e4e4e8;--bg:#fff;--raise:#fafafb;--link:#1a4fd6}
+html.theme-blue{--logo:var(--ink);--ink:#d9e7f5;--dim:#a9bed2;--faint:#7189a1;--line:#29435d;--bg:#071a2b;--raise:#0d263d;--link:#65c7f7}
+html.theme-dark{--logo:var(--ink);--ink:#e8edf3;--dim:#aeb9c7;--faint:#7f8b99;--line:#34404d;--bg:#14181d;--raise:#1d242c;--link:#79aef2}
 .themes{position:fixed;top:14px;right:18px;z-index:80;display:flex;gap:4px;padding:4px;border:1px solid var(--line);border-radius:9px;background:var(--bg);box-shadow:0 4px 16px rgba(20,20,24,.08)}
 html.theme-dark .themes{box-shadow:0 4px 16px rgba(0,0,0,.3)}
 @media(max-width:760px){.themes{position:static;width:fit-content;margin:8px 10px 0 auto}}
@@ -60,7 +68,7 @@ footer a{color:var(--faint)}
 </head>
 <body>
 <header><div class="wrap">
-<a class="brand" href="index.html">LLM-Archive<small>Guide</small></a>
+<div class="brand"><a href="index.html" aria-label="LLM-Archive guide home"><span class="logo" aria-hidden="true"></span></a><span class="bt">LLM-Archive<small>Guide</small></span></div>
 <nav><a href="index.html">Guide home</a>
 <a href="for-researchers.html">For researchers</a>
 <a class="on" href="for-developers.html">For developers</a>
@@ -138,6 +146,9 @@ and <a href="../docs/spec.md">docs/spec.md</a> for the project itself.
   buttons.forEach(function(b){b.addEventListener('click',function(){apply(b.dataset.theme);});});
   apply(cur);
 })();
+(function(){var l=document.querySelector('.brand a'),s=l&&l.querySelector('.logo');if(!s)return;
+['mouseenter','click'].forEach(function(e){l.addEventListener(e,function(){s.classList.add('spin');});});
+s.addEventListener('animationend',function(){s.classList.remove('spin');});})();
 </script>
 <script>
 (function(){
