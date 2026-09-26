@@ -50,7 +50,7 @@ most human, so that the human step is left with as little as possible to decide.
    English and calls no model, and it has its own self-test showing it rejects a broken B.
 3. **No leaked cue, judged by a person against written criteria (gate 2).** A blind reviewer, reading
    the wording alone, must not be able to infer the base rate, the designer's preferred answer, or an
-   outcome consequence that A does not state. Where the wording does leak, that item is published as
+   outcome consequence that A does not state. Where the wording does leak, that scenario is published as
    "cue sensitivity" rather than hidden.
 4. **The answer format is the same (gate 3).** Both versions use the same required `DECISION:` line.
 5. **A person signs off against a fixed checklist (gate 4).** Not open judgment: gates 1 and 1b pass;
@@ -155,7 +155,27 @@ replaces it.
 published separately rather than only as an average. **`scenario_spread_pct`** summarizes their
 range (min/max/median/IQR). **`scenario_concentration_pct`** is the share of the total gap
 produced by just the two worst-behaved scenarios — if this is high, a reader can see directly that
-the finding rides on a couple of items, without having to trust a single summary number.
+the finding rides on a couple of scenarios, without having to trust a single summary number.
+
+### The name in the files, and the word used in the text
+
+Some quantities have a longer or older name in the column headers and the code than the word this guide
+uses. The column names are fixed, so this table is the bridge between them.
+
+| In the files and the code | In the text |
+|---|---|
+| `gap_pct`, `stability_pct` | the **gap** between A and B, and **stability** (100 minus the gap) |
+| `gap_null_pct` | the gap between A and A′: the **null change** |
+| `gap_positive_pct`, `theta_positive_pct`, `not_reading` | the **positive control**: the gap between A and C, its threshold, and the flag when it fails |
+| `null_floor_pct`, `at_noise_floor` | the **noise floor** |
+| `u_a`, `u_a_prime`, `u_b`, `u_c` | the share of **lost responses** in each version |
+| `drop_bound_pct_*`, `below_drop_bound`, `drop_confounded` | the **drop bound** and the flags built on it |
+| `drop_asymmetry_pct_*`, `asymmetric_missingness` | how differently two versions **lost responses** (the flag uses the word "missingness") |
+| `grammar_version`, `extractor_sha` | the **decision grammar** (the rule that reads `DECISION: X`): its version, and the hash of its file |
+| `n_items` | the number of **scenarios** (15) |
+| `instrument_suspect` | an **instrument alarm**: the daily reference-model check moved |
+| `series = open_weights` | the **reference model** (a frozen model whose weights are open) |
+| `subject_model_id` | the **model that was measured** (it is filled for the reference model too) |
 
 ## Statuses, flags, and what comes off the curve
 
@@ -167,7 +187,7 @@ just excluded from the headline chart and visibly marked with the reason.
 
 | Flag | Plain meaning |
 |---|---|
-| `below_surface_noise` | The real wording change didn't move the answer more than a meaningless punctuation-only change did — there's no signal to report. |
+| `below_surface_noise` | The real wording change didn't move the answer more than the null change (a punctuation-only edit) did — there's no signal to report. |
 | `not_reading` | The positive control (which should always move the answer) didn't. The model doesn't appear to be reading the question. |
 | `degenerate_candidate` | Near-zero entropy with high stability — it always gives the same answer, which isn't the same thing as being stable. |
 | `drop_confounded` | Too many responses were lost in at least one of the three comparisons to trust the result. |
@@ -219,7 +239,7 @@ into the main chart or treated as a ranking — see [`reproducing.md`](reproduci
 **`series` (`commercial` / `open_weights`)** — two entirely separate tracks that are never drawn on
 the same chart. `commercial` is the actual archive — the hosted product being studied, which can
 disappear or change silently at any time. `open_weights` is the control experiment — a downloadable
-model this project runs itself, used only to prove the method reproduces, never treated as "the
+reference model this project runs itself, used only to prove the method reproduces, never treated as "the
 archive."
 
 **Instrument** — the daily self-check that catches the project's own pipeline breaking, using a

@@ -38,7 +38,7 @@ LABEL = {
     "C": "C   a different question      (SHOULD change the answer)",
 }
 
-# The archive's own extraction rule (core/measure/grammar_v2.py), copied so this file stands alone:
+# The archive's own decision grammar (core/measure/grammar_v2.py), copied so this file stands alone:
 # plain string matching, no model in the loop. Nothing outside a decision line is read, so
 # "I'd go with B in the end" is unparseable rather than "B".
 _DECISION = re.compile(r"^decision ?[:：] ?(.*)$")

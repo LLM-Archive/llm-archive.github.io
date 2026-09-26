@@ -1,6 +1,6 @@
 # Reproducing a result / submitting a comparison point
 
-LLM-Archive's panel, decision grammar, and extraction rule are all public by design — the point of
+LLM-Archive's panel and decision grammar are both public by design — the point of
 the project isn't "trust us," it's "here is exactly what would have to be true for this number to
 be wrong, go check." This page covers the two things an outside party can actually do with that:
 reproduce an `open`-lane result, and run the same panel against a different model.
@@ -174,7 +174,7 @@ but doesn't reveal it). See [`data-dictionary.md`](data-dictionary.md) for the e
 To check a specific published number:
 
 1. Pull every trial for the `run_id` you're checking from `open-lane/<year>.jsonl`.
-2. Re-run the same deterministic extraction rule described in `SPEC.md` §5 (`DECISION:
+2. Re-run the same deterministic decision grammar described in `SPEC.md` §5 (`DECISION:
    <token>` on its own line, `token` from the protocol's closed option set) against each raw
    response.
 3. Recompute `gap_pct`, `null_floor_pct`, and the three gates using the formulas in
@@ -187,7 +187,7 @@ project wants reported — open an [issue](https://github.com/LLM-Archive/llm-ar
 
 ## Running the panel against your own model — a `comparison_point`
 
-Because the panel, grammar, and extraction rule are public, anyone can run the *same* frozen
+Because the panel and the decision grammar are public, anyone can run the *same* frozen
 15-scenario panel against a model of their own choosing. If you do, the result can be published as
 a `comparison_point` — but only if it's a genuinely like-for-like run. To be accepted, a submission
 needs **all** of the following, matching exactly:
@@ -195,7 +195,7 @@ needs **all** of the following, matching exactly:
 - The same `panel_sha256` as the protocol you're comparing against (i.e., you used the real
   scenario content, not a paraphrase of it — for a `guard`-lane protocol this means you cannot
   submit a comparison point at all, since its wording isn't public).
-- The same `grammar_version` — the identical `DECISION: <token>` extraction rule, applied the same
+- The same `grammar_version` — the identical `DECISION: <token>` decision grammar, applied the same
   way.
 - The same `n` per version (30 in `v0`, 120 in `v1`).
 - **All four versions** (A, A′, B, C) — not just the headline A/B contrast. A submission missing

@@ -84,7 +84,7 @@ or on two scenarios.
 
 The nearest thing to a generalization signal is architectural, not statistical: **each rewording
 type runs as three independent scenario-family panels**, and if all three move together, that's
-much stronger evidence than any interval over 15 items could provide.
+much stronger evidence than any interval over 15 scenarios could provide.
 
 ## Reading the checks, not just the headline
 

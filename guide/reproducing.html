@@ -86,7 +86,7 @@ footer a{color:var(--faint)}
 </div>
 <main class="wrap">
 <h1 id="reproducing-a-result-submitting-a-comparison-point">Reproducing a result / submitting a comparison point</h1>
-<p>LLM-Archive's panel, decision grammar, and extraction rule are all public by design — the point of the project isn't "trust us," it's "here is exactly what would have to be true for this number to be wrong, go check." This page covers the two things an outside party can actually do with that: reproduce an <code>open</code>-lane result, and run the same panel against a different model.</p>
+<p>LLM-Archive's panel and decision grammar are both public by design — the point of the project isn't "trust us," it's "here is exactly what would have to be true for this number to be wrong, go check." This page covers the two things an outside party can actually do with that: reproduce an <code>open</code>-lane result, and run the same panel against a different model.</p>
 <h2 id="run-it-with-an-ai-agent-or-by-hand-reproduce-a-published-number">Run it with an AI agent (or by hand): reproduce a published number</h2>
 <p><strong>For you, or for an AI agent you hand this file to.</strong> Everything below uses only the public repository, <code>github.com/LLM-Archive/llm-archive.github.io</code>, and Python 3.10+ (standard library only — nothing to install). The specification is <code>SPEC.md</code> at the repository root.</p>
 <blockquote><p><strong>If you are an AI agent reading this:</strong> run the steps in order. After each step compare what you got with its <strong>"You should see"</strong> line, and <strong>stop at the first mismatch</strong>, reporting exactly what you saw instead of continuing. Every figure you report must come from a file or a command's output — never from memory and never estimated. Do not send anything to anyone (including the email address in "Submitting one") without the person you are working for asking you to.</p></blockquote>
@@ -153,16 +153,16 @@ PY</code></pre>
 <p>To check a specific published number:</p>
 <ol>
 <li>Pull every trial for the <code>run_id</code> you're checking from <code>open-lane/&lt;year&gt;.jsonl</code>.</li>
-<li>Re-run the same deterministic extraction rule described in <code>SPEC.md</code> §5 (<code>DECISION: &lt;token&gt;</code> on its own line, <code>token</code> from the protocol's closed option set) against each raw response.</li>
+<li>Re-run the same deterministic decision grammar described in <code>SPEC.md</code> §5 (<code>DECISION: &lt;token&gt;</code> on its own line, <code>token</code> from the protocol's closed option set) against each raw response.</li>
 <li>Recompute <code>gap_pct</code>, <code>null_floor_pct</code>, and the three gates using the formulas in <code>SPEC.md</code> §6 — pure standard-library arithmetic, no numerical library required.</li>
 <li>Compare against the published <code>stability_pct</code>, <code>gap_null_pct</code>, <code>gap_positive_pct</code>, and <code>flags</code> for that <code>run_id</code> in <code>stability.csv</code>.</li>
 </ol>
 <p>If your recomputation disagrees with the published record, that's exactly the kind of finding this project wants reported — open an <a href="https://github.com/LLM-Archive/llm-archive.github.io/issues">issue</a> or write to mkalognomos@gmail.com.</p>
 <h2 id="running-the-panel-against-your-own-model-a-comparisonpoint">Running the panel against your own model — a <code>comparison_point</code></h2>
-<p>Because the panel, grammar, and extraction rule are public, anyone can run the <em>same</em> frozen 15-scenario panel against a model of their own choosing. If you do, the result can be published as a <code>comparison_point</code> — but only if it's a genuinely like-for-like run. To be accepted, a submission needs <strong>all</strong> of the following, matching exactly:</p>
+<p>Because the panel and the decision grammar are public, anyone can run the <em>same</em> frozen 15-scenario panel against a model of their own choosing. If you do, the result can be published as a <code>comparison_point</code> — but only if it's a genuinely like-for-like run. To be accepted, a submission needs <strong>all</strong> of the following, matching exactly:</p>
 <ul>
 <li>The same <code>panel_sha256</code> as the protocol you're comparing against (i.e., you used the real scenario content, not a paraphrase of it — for a <code>guard</code>-lane protocol this means you cannot submit a comparison point at all, since its wording isn't public).</li>
-<li>The same <code>grammar_version</code> — the identical <code>DECISION: &lt;token&gt;</code> extraction rule, applied the same way.</li>
+<li>The same <code>grammar_version</code> — the identical <code>DECISION: &lt;token&gt;</code> decision grammar, applied the same way.</li>
 <li>The same <code>n</code> per version (30 in <code>v0</code>, 120 in <code>v1</code>).</li>
 <li><strong>All four versions</strong> (A, A′, B, C) — not just the headline A/B contrast. A submission missing the null-change or positive control can't be checked for the same validity issues every project measurement is checked for.</li>
 <li>The full outcome distribution per version (valid / unparseable / refused / etc.), not just a final score — so <code>u</code>, the drop bound, and the gates can be computed for your run exactly as they are for the project's own.</li>
