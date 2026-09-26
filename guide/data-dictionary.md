@@ -47,10 +47,10 @@ One row per measurement. One column per key below, in the order they appear in
 | `gates` | JSON object | Pass/fail detail for every check, one entry each. |
 | `on_curve` | bool | Whether this measurement counts toward the main published time series. |
 | `panel_sha256` / `protocol_sha256` | sha256 | Fingerprints proving the scenario content and full protocol definition weren't edited after the fact. |
-| `extractor_sha` | sha256 | Fingerprint of the exact decision-extraction code used. |
+| `extractor_sha` | sha256 | Fingerprint (sha256) of the file that holds the decision grammar used. |
 | `analysis_code_sha` | sha256 | Fingerprint of the exact `core/measure/` code that computed this row. |
 | `schema_sha256` | sha256 | Fingerprint of the closed schema itself. |
-| `grammar_version` | int | Version of the `DECISION:` extraction grammar — 1 in the `v0` series, 2 in the `v1` series (version 2 counts a line as a decision line only if what follows the colon is already a valid option; version 1's behaviour is unchanged). |
+| `grammar_version` | int | Version of the decision grammar (the `DECISION:` line and how it is read) — 1 in the `v0` series, 2 in the `v1` series (version 2 counts a line as a decision line only if what follows the colon is already a valid option; version 1's behaviour is unchanged). |
 | `series` | enum | `commercial` or `open_weights` — never mixed on one chart. |
 | `lane` | enum | `open`, `guard`, or `sealed`. |
 | `twin_id` | text | The paired protocol's id, if this protocol has a twin (see glossary); empty otherwise. |
@@ -90,7 +90,7 @@ filtered out afterward.
 
 **What it does not contain: the prompt text itself.** Each record carries `prompt_sha256` — a
 one-way hash that lets you *verify* a prompt you already hold, but which cannot reveal the wording
-— not the sent prompt. So these records are enough to re-run the extraction rule over
+— not the sent prompt. So these records are enough to re-run the decision grammar over
 `response_text` and recompute every published statistic, and not enough to reconstruct the
 questions.
 
@@ -127,7 +127,7 @@ four jobs the scheduler actually knows how to run (`full_sweep`, `subject_finger
 | `ran` | Whether it actually ran that day. |
 | `cause` | Empty when it ran; otherwise one gap cause from the closed list. |
 
-## Where the open-weights measurements live
+## Where the reference model's measurements live
 
 There is no separate `open-weights/stability.csv`, and no `instrument.csv` — earlier drafts of
 `SPEC.md` §10 named both, and neither was built. **Both series share `stability.csv`,

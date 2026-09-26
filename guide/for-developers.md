@@ -84,7 +84,7 @@ its decision when the wording changed.
 ### 5. Run the whole method on your model (the practice panel)
 
 Two questions are a spot-check, not a measurement. To run the real mechanism — four versions of
-every scenario, many repetitions, the archive's own extraction rule and estimator, a noise floor, a
+every scenario, many repetitions, the archive's own decision grammar and estimator, a noise floor, a
 confidence interval and the quality flags — use the practice panel:
 
 ```bash
@@ -136,9 +136,9 @@ against a commercial API.
 
 Read it in this order, the same order the archive reads its own numbers:
 
-1. **Is the measurement even valid?** The `A-A'` gap (a cosmetic edit) should be near zero and the
+1. **Is the measurement even valid?** The `A-A'` gap (the null change) should be near zero and the
    `A-C` gap (a genuinely different question) should be large. If not, the flags say which failed:
-   `below_surface_noise` (the reworded question moved the answer no more than the cosmetic edit did),
+   `below_surface_noise` (the reworded question moved the answer no more than the null change did),
    or `not_reading` (the model did not react to the different question).
 2. **Then read stability against the noise floor.** With this few replies, even a model that never
    changes its answer shows a gap of about the noise floor. A difference smaller than the floor, or
@@ -180,7 +180,7 @@ would require and how one is submitted.
 The single most important fact about this codebase: **`core/measure/` is frozen forever**, as of
 the first real measurement. It contains the estimator, the two statistical checks (null-change and
 positive control), the noise floor, the entropy series, the bootstrap confidence interval, the
-deterministic decision-extraction grammar, the structural admission gate, and the hash chain. Every
+deterministic decision grammar, the structural admission gate, and the hash chain. Every
 value in it is checked against hand-derived golden test vectors (`core/testdata/vectors/`) so it can
 be re-implemented from scratch, in any language, and checked bit-for-bit against this project's own
 numbers — that reproducibility is the entire point of freezing it.

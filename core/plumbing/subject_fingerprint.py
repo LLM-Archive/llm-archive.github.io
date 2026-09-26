@@ -9,7 +9,7 @@ Unlike `runtime_fingerprint.py` (12 prompts against the pinned LOCAL reference m
 logprobs for exact-equality drift detection), this targets the REMOTE commercial subject, which
 exposes no logprobs over the Messages API and isn't byte-pinned the way the reference model is
 (spec.md §7's table draws exactly this line: "runtime_fingerprint" is exact equality, this row is
-just "daily, public series"). So the observable here is coarser but still mechanical: each item has
+just "daily, public series"). So the observable here is coarser but still mechanical: each question has
 a pre-declared correct answer, the model is asked to end its reply with a `DECISION: yes` or
 `DECISION: no` line -- the exact same frozen grammar every protocol prompt already uses
 (`core.measure.grammar`/`client.classify`, spec.md §5), not a second, bespoke parser -- and the
@@ -17,11 +17,11 @@ day's record is how many of the 24 came back valid-and-correct, valid-and-wrong,
 refused/truncated/empty/blocked. A future model suddenly missing "is 7 a prime number" is itself a
 signal, the same way runtime_fingerprint moving at all is a signal for the reference model.
 
-**Frozen panel, same discipline as `runtime_fingerprint.py`'s 12 prompts:** these 24 items never
+**Frozen panel, same discipline as `runtime_fingerprint.py`'s 12 prompts:** these 24 questions never
 change once run for real; a change here is a core_change like anything else on spec.md §13's list.
 Deliberately kept simple/short (spec.md §7: "not full 250-400-word scenarios") -- a live 3-call
 sample of this exact style measured ~103 tokens/call, projecting 24×30 = 720 calls/month to
-~$0.83, against ~$4/month for full-scenario-length items at the same daily count. Balanced 12
+~$0.83, against ~$4/month for full-scenario-length questions at the same daily count. Balanced 12
 yes / 12 no on purpose (in same-topic pairs, e.g. p01/p02 both about primality) so an "always
 answer yes" degenerate strategy would score only 50%, not 100% -- the same reasoning
 `core/measure/`'s own `degenerate_candidate` flag exists for, just against a different failure mode.
@@ -161,7 +161,7 @@ class FakeFingerprintClient:
     wrong/refused/unparseable, so a `--client fake` run exercises every outcome branch without
     spending anything. Says nothing about any real model, same disclaimer as fake_client.py's
     FakeClient (which this deliberately doesn't reuse: its table is keyed on protocol-specific
-    version/scenario_id meta this module's items don't have)."""
+    version/scenario_id meta this module's questions don't have)."""
 
     subject_model_id = "fake-subject-fingerprint-v1"
     model_family = "fake"
@@ -220,7 +220,7 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="command", required=True)
 
-    p_run = sub.add_parser("run", help="run today's 24 items and write the record")
+    p_run = sub.add_parser("run", help="run today's 24 questions and write the record")
     p_run.add_argument("--client", choices=["fake", "anthropic"], required=True)
     p_run.add_argument("--model-id", default=None, help="required for --client anthropic unless subject_models.yaml already has an active commercial generation")
     p_run.add_argument("--model-family", default=None)

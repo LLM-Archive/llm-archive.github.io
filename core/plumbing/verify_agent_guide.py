@@ -10,12 +10,12 @@ ships), then:
   2. runs the guide's step 1 for real: --print-prompts, fake replies, --read-answers;
   3. runs the guide's own python snippets (steps 2 and 3) extracted from the markdown, not copies;
   4. checks the standalone script agrees with the archive: its 8 prompts are in open-lane/ by sha256,
-     its published scores are in stability.csv, its extraction rule gives the same answers as
+     its published scores are in stability.csv, its copy of the decision grammar gives the same answers as
      core/measure/grammar_v2.py, its reference answers are in experiments/;
   5. every file the guide names exists in the shipped set.
 --live does the same on files fetched over the network from https://llm-archive.github.io/ (the URLs
 the guide gives users), so a change or outage on the public side is caught too; the only local input
-is core/measure/grammar_v2.py, the reference the script's extraction rule is compared with.
+is core/measure/grammar_v2.py, the reference the script's copy of the decision grammar is compared with.
 Exit 0 only if all pass. Standard library only.
 """
 

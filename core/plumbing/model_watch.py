@@ -10,6 +10,11 @@ later at any price: once the provider retires the old model it can never be meas
 `cadence.yaml` names the trigger (`bridge_trigger: any_new_model_id_in_family`) but nothing in the
 code ever noticed a new model. This is that missing eye and nothing more.
 
+Since 2026-09-25 the bridge is manual: `cadence.yaml`'s comment "automatic, immediate" and its
+`bridge_reserve_monthly: 2.80` are stale (that file is frozen, spec.md §13.5). What this project
+actually uses is `budget.json`'s `bridge_reserve_eur` (6.50); `subject_models.yaml`'s `auto_bridge`
+carries the same `any_new_model_id_in_family` value as `bridge_trigger` and is not read by code.
+
 What it does, and deliberately does not do:
 
   * It DETECTS. `check` lists the models the API exposes (`GET /v1/models`; no tokens, no cost),

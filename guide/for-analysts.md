@@ -57,7 +57,7 @@ way to get a wrong chart out of this data.
 
 | Column | Filter on it because... |
 |---|---|
-| `series` | `commercial` and `open_weights` are never drawn as one line. The open-weights rows are a frozen reference model, measured to check the pipeline, not a second subject. |
+| `series` | `commercial` and `open_weights` are never drawn as one line. The `open_weights` rows are a frozen reference model, measured to check the pipeline, not a second subject. |
 | `model_family` | Never draw one line across model lines: a trend across a boundary between them is an artifact of which products happened to be measured when. |
 | `protocol_id` | A protocol is one specific frozen panel. Different protocols are different questions; averaging them together has no meaning. `v0` and `v1` (see `n` and `grammar_version`) are different series of the same design — keep them apart. |
 | `on_curve` | `true` marks the measurements that count toward the headline time series. A `false` row is still published in full, with the reason in `flags`. |

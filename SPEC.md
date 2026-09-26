@@ -41,11 +41,11 @@ literature, and no construct-validity claim.
 
 **This defines what the project is, which is why it comes first.**
 
-The subject model (`claude-sonnet-*`) is **the thing being studied**, not the yardstick. No one is
+The commercial model (`claude-sonnet-*`) is **the thing being studied**, not the yardstick. No one is
 going to "compare against the 2027 Sonnet" — and there would be no reason to.
 
 The **yardstick** is the frozen panel: 15 scenarios, `panel_sha256`, together with the decision
-grammar and the extraction rule. The grammar, the extraction rule and every panel's `panel_sha256`
+grammar. The decision grammar and every panel's `panel_sha256`
 are public; the scenario *wording* is published per lane (§10), which for the two `open` protocols
 is what makes an outside run on the same panel possible at all — so that, on that same panel, there
 is a **multi-year trail from a real commercial product** to compare against (`comparison_point`,
@@ -412,7 +412,7 @@ The same mistake as measuring sea level at three points on the planet and connec
 
 ### 4.2 Third-party comparison points
 
-The grammar and the extraction rule are public, and the `open` lane exists so that **the panel can
+The decision grammar is public, and the `open` lane exists so that **the panel can
 be run against someone else's model and checked against this project's own trail**.
 
 **`comparison_point`** — accepted only with: the same `panel_sha256` · the same `grammar_version`
@@ -447,6 +447,16 @@ It is a **read-only view**: it cannot trigger a measurement, it does not change 
 > The expensive-if-missed decision fires immediately; the interpretive one waits for proof. If it
 > turns out it wasn't the successor, the bridge data **isn't lost** — it becomes a
 > `comparison_point`.
+
+> **"Automatic" here describes the decision, not who runs it** *(clarified 2026-09-27; the change of
+> who runs it was made on 2026-09-25)*. That any new model id in the family means "bridge now" needs
+> no judgment and no human. The bridge itself is nevertheless **run by hand**: it spends about
+> €6 on paid calls, and the owner keeps every paid job manual. What is automatic is the alarm:
+> `core/plumbing/model_watch.py` opens a loud issue the day a new id appears and repeats it daily
+> until the old and new model's runs are found in the repository. The frozen `cadence.yaml` still
+> carries the comment "BRIDGE: automatic, immediate" on `bridge_trigger`, and
+> `subject_models.yaml`'s `auto_bridge` repeats the same rule under a second name; both files are
+> frozen, so this note is the correction.
 
 | What happened | What the system does |
 |---|---|
@@ -832,6 +842,16 @@ succession_offer:       365d
 concluded_after:        730d
 ```
 
+> **Two notes on the frozen `cadence.yaml`, checked against the code on 2026-09-27.**
+> **(1) A stale value.** The frozen file still carries `bridge_reserve_monthly: 2.80`. Nothing reads
+> it, and it predates the recalibration of 2026-09-24. The reserve that applies is `bridge_reserve_eur`
+> in `budget.json` (private), currently 6.50 — the same quantity under a second name, with a
+> different number. **(2) Keys nothing reads.** The scheduler recognises only values shaped `<n>d` or
+> `<n>h` (`core/schedule/schedule.py`, `parse_cadence`). The seven keys of any other shape —
+> `open_weights_series`, `sealed_scan`, `generation_bridge_protocols`, `active_switch`,
+> `bridge_reserve_monthly`, `retirement_threshold`, `declassify_after` — are policy constants stated in
+> a file, not schedules: no code counts down to them, and acting on them is a human step.
+
 ---
 
 ## 9. Budget — a fixed, disclosed monthly ceiling
@@ -901,6 +921,19 @@ never a code change, and never a spec change.
 `trial` · `measurement` · `coverage_gap` · `render_manifest` · `status` — plus, for succession
 (§4.3): `subject_model` · `generation_bridge` · `bridge_incomplete` · `series_closed` ·
 `needs_review` · `comparison_point`.
+
+> **What the list is, and is not** *(checked against the code on 2026-09-27)*. The list feeds
+> `schema_sha256` and is enforced nowhere else. Of the 13 types, the code writes three under that
+> `record_type`: `measurement`, `trial` and `experiment_run`. The others are declared and reserved: no
+> code writes a record with those names (`generation_bridge` and `coverage_gap` appear in the code as
+> a gap cause and as a coverage concept, not as a `record_type`). Conversely the code writes records
+> under `record_type` values that are **not** in this list — `spend` and `budget_decision` (the budget
+> ledger), `subject_fingerprint`, `model_observed`, `revalidation` and `instrument_alarm` — all
+> internal bookkeeping (spend, daily checks, model-id observations, alarm verdicts). The modules that
+> write `subject_fingerprint`, `model_observed` and `revalidation` state in their own docstrings that
+> they are deliberately kept outside the frozen list, because adding a value to it changes
+> `schema_sha256`. In the published files, `stability.csv` carries only `measurement` rows and
+> `open-lane/` only `trial` rows; `outcomes.csv` and `coverage.csv` have no `record_type` column.
 
 ### Flags
 

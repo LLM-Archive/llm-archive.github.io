@@ -42,10 +42,10 @@ a cause, but it does **not** rule out the commercial provider silently changing 
 (a router, a hidden system instruction, quantization) — no local check can see behind a hosted
 API. See `SPEC.md` §7.
 
-**Why track a downloadable ("open-weights") model at all, separately from the commercial one?**
+**Why track a downloadable reference model at all, separately from the commercial one?**
 As a control experiment proving the method itself reproduces, run once per model generation rather
 than monthly, since a downloadable model can't be silently changed by a provider — it's re-run
-under the project's own control instead. The commercial series and the open-weights series are
+under the project's own control instead. The `commercial` series and the `open_weights` series are
 never drawn on the same chart or averaged together; they answer different questions.
 
 **Why not just compare the model to how humans answer the same question?**

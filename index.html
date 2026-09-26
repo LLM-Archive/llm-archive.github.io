@@ -359,7 +359,7 @@ score or a guarantee that the model will behave the same way in your own product
 (<code>v0</code>, <code>v1</code>, ...) and keep the old version's published numbers too — so you
 can always check a number against what came before, instead of it quietly changing meaning.</small></p>
 
-<h3>A second check — open model</h3>
+<h3>A second check — the reference model</h3>
 <p class="lede">We also run the same protocols on a model that anyone can download and re-run, so that
 the method itself can be shown to actually work · <a href="https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF" target="_blank" rel="noopener">Download qwen2.5</a></p>
 <p><span class="tag t-fl">model: <code>qwen2.5-1.5b-instruct-q4_k_m</code></span></p>
@@ -527,7 +527,7 @@ Version B: "Out of a group of 600 people, 400 will die."</i> The meaning is iden
 model's answer differs between the two, the measurement records that its decision was swayed by
 wording alone.</li>
 <li><b>Uses four versions of every question.</b> <b>A</b>, the baseline wording. <b>A′</b>, a
-meaningless change (spacing, punctuation) that measures noise. <b>B</b>, an equivalent rewording —
+null change (spacing, punctuation) that measures noise. <b>B</b>, an equivalent rewording —
 what's actually being measured. <b>C</b>, a real change in meaning, where the answer
 <i>should</i> change, confirming the model is actually reading the question.</li>
 <li><b>Tracks two different categories of model.</b> <b>Commercial</b> models (Claude, GPT-class)
@@ -551,12 +551,12 @@ breakdown).</p>
 <p>A commercial model (e.g. Claude, GPT) is really a product: it changes behind the scenes, without
 notice. It's valuable to track it over time, but once it's retired, no one else can re-ask the same
 model to check our measurement.</p>
-<p>That's why we run the same method on an <b>open</b> model too, which stays available forever. So
-anyone who wants to can download it and re-run what we're doing, today.</p>
+<p>That's why we run the same method on a frozen <b>reference model</b> too. Its weights are open, so it
+stays available forever, and anyone who wants to can download it and re-run what we're doing, today.</p>
 <div class="pair">
   <div class="box"><div class="eyebrow">Commercial models — <b>the archive</b></div>
   <p style="margin-bottom:0"><i>"Here's what this method recorded for models that no longer exist."</i></p></div>
-  <div class="box"><div class="eyebrow">Open model — <b>the control experiment</b></div>
+  <div class="box"><div class="eyebrow">Reference model — <b>the control experiment</b></div>
   <p style="margin-bottom:0"><i>"The method works, and here's the proof — re-run it yourself."</i></p></div>
 </div>
 <p><small>The two series are never compared against each other — each answers a different
@@ -733,7 +733,7 @@ your own statistical analysis of LLM bias — framing effects, anchoring bias, a
 <ul>
 <li><b>Verify the files.</b> Download <code>verify.py</code> from the site and confirm the data's
 authenticity against its published SHA-256 checksums.</li>
-<li><b>Run the open model yourself.</b> Download the open model (e.g. Qwen2.5-1.5B) and use
+<li><b>Run the reference model yourself.</b> Download it (its weights are open, e.g. Qwen2.5-1.5B) and use
 LLM-Archive's own methodology — 12 protocols, 4 versions (A/A′/B/C) — to reproduce the results on
 your own machine or server.</li>
 </ul>
@@ -788,7 +788,7 @@ code preserves the record's exact identity.</small></p>
 <tr><td>Confidence interval / CI95%</td><td>Margin of uncertainty</td><td>The range around the stability, e.g. 92%–96%. Shows how precise the estimate is from that particular sample.</td></tr>
 <tr><td>Sample size / <code>n</code></td><td>How many responses each version gets</td><td><code>n</code> is 30 in the <code>v0</code> protocols and 120 in the <code>v1</code> protocols (15 scenarios, asked 2 or 8 times each). It is fixed per protocol and never changes from run to run.</td></tr>
 <tr><td>on curve / off curve</td><td>Whether a result counts in the main chart</td><td>A result that fails one of our checks is still published in full, but marked with the reason and left off the main chart. It doesn't by itself mean the measurement is wrong.</td></tr>
-<tr><td>Flag</td><td>The name of the check that failed</td><td>For example <code>below_surface_noise</code>: the real change moved the answer no more than a punctuation-only change did, so there is nothing to report. Each flag is explained in the results panel.</td></tr>
+<tr><td>Flag</td><td>The name of the check that failed</td><td>For example <code>below_surface_noise</code>: the real change moved the answer no more than the null change (a punctuation-only edit) did, so there is nothing to report. Each flag is explained in the results panel.</td></tr>
 </tbody></table></div>
 
 <h3>Run settings</h3>
@@ -839,7 +839,7 @@ code preserves the record's exact identity.</small></p>
     anything. The same protocol also runs on the commercial model, and publishing it now would let a
     future version of that model learn it and end the measurement.</p>
     <p style="margin-bottom:0">We open it when the commercial model is four generations old: all four versions, every
-    answer — <b>right next to the numbers you see now</b>, by hand rather than on a timer. This frozen model is never retired,
+    answer — <b>right next to the numbers you see now</b>, by hand rather than on a timer. This reference model is never retired,
     so it has no date of its own.</p>
     </div></div>
   </div>
@@ -1219,7 +1219,7 @@ function openDetail(i){const d=ALL[i];
  sh('dxsha',d.extractor_sha);sh('dprh',d.protocol_sha256);sh('dan',d.analysis_code_sha);
  set('dret',d.returned_model_id||'—');
  document.getElementById('dsr').innerHTML = d.series==='commercial'
-   ? 'commercial models — <b>the archive</b>' : 'open weights — <b>the control experiment</b>';
+   ? 'commercial models — <b>the archive</b>' : 'reference model — <b>the control experiment</b>';
  const gates=d.gates||{}, gAA=gates['A-A_prime']||{}, gAC=gates['A-C']||{}, gAB=gates['A-B']||{};
  // The pill next to each check is derived from the same boolean that picks its ✓/⚠ suffix --
  // never a separate, hand-typed claim -- so the two can't disagree (they used to: this badge

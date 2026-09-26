@@ -46,7 +46,7 @@ Each question comes in four versions. **Only one of them is the measurement.**
 | | What it is | What a change means |
 |---|---|---|
 | **A** | the baseline | — |
-| **A′** | cosmetic edits only | Should **not** change. If it does, the model's answer is just unsteady, and the A→B result below means nothing. |
+| **A′** | the null change: cosmetic edits only | Should **not** change. If it does, the model's answer is just unsteady, and the A→B result below means nothing. |
 | **B** | same meaning, different wording | **This is the measurement.** A change here is the model being swayed by how the question was put. |
 | **C** | a genuinely different question | **Should** change. If it doesn't, read the reply — a model answering the same regardless isn't reading the question. |
 
@@ -136,7 +136,7 @@ number — exactly the kind of thing the project wants to hear about, at **mkalo
 ## 4. Run the whole method on your model (optional)
 
 The 8 questions above are a spot-check. To run the full mechanism — four versions of ten scenarios,
-the archive's own extraction rule and estimator, a noise floor, an interval and quality flags — use
+the archive's own decision grammar and estimator, a noise floor, an interval and quality flags — use
 the practice panel. It is invented for this purpose, so its result is never a published number.
 
 ```bash
