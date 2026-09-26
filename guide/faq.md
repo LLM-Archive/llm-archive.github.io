@@ -59,8 +59,11 @@ harder, contested claim.
 **What's the difference between `open`, `guard`, and `sealed` protocols?**
 How much of a protocol's exact wording is published, and when:
 
-- `open` — full text, immediately.
-- `guard` — only outcome categories now; full text after four model generations.
+- `open` — every raw response immediately, plus the wording of the panel's **first scenario**. The
+  other 14 scenarios' wording is not published yet: a disclosed gap, not the design
+  ([`glossary.md`](glossary.md), `SPEC.md` §1.1).
+- `guard` — only outcome categories now; the wording after four model generations. That opening is
+  a commitment the project keeps by hand — no code counts generations or opens anything on a timer.
 - `sealed` — not even that a specific scenario exists in detail; only that the protocol exists and
   how many trials it has. Never opens.
 
@@ -71,9 +74,10 @@ Because a protocol whose exact wording is public will eventually be read by a mo
 training, and once that happens, "the model's answer moved" and "the model has now seen the test"
 become indistinguishable from the outside. Keeping most protocols private for a while, and pairing
 each public one with a hidden "twin" measuring the same underlying phenomenon, is what makes it
-possible to tell those two explanations apart later. Full text does eventually become public for
-`guard` protocols (after four generations) — `sealed` protocols are the deliberate exception, kept
-back permanently as an uncontaminated instrument for the very long term.
+possible to tell those two explanations apart later. The wording does eventually become public for
+`guard` protocols (after four generations, opened by hand rather than automatically) — `sealed`
+protocols are the deliberate exception, kept back permanently as an uncontaminated instrument for
+the very long term.
 
 **Can I run the same test against a different model and get it published?**
 Yes — see [`reproducing.md`](reproducing.md) for exactly what's required for a submission to count

@@ -190,7 +190,7 @@ whether it's *allowed to count*, not what it *asks*.
 | Lane | What's published | When |
 |---|---|---|
 | `open` | Every raw response, per trial (`open-lane/<year>.jsonl`), plus the four-version text of the panel's **first scenario** on the results page. The other 14 scenarios' wording is not yet published — see the note below | Responses immediately; the rest of the panel's wording, not yet |
-| `guard` | Only outcome categories (valid/refused/etc.) — never the wording itself | Full text only after 4 model generations |
+| `guard` | Only outcome categories (valid/refused/etc.) — never the wording itself | The wording only after 4 model generations — opened by hand, as a commitment; no code counts generations or declassifies anything |
 | `sealed` | That the protocol exists and how many trials it has — nothing else | Never |
 
 **A gap disclosed rather than glossed (2026-09-23):** "`open` = the wording is public" is the

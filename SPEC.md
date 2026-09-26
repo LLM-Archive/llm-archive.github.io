@@ -1000,9 +1000,15 @@ what it automates and what stays a human decision (which version, when).
    twin's *measured drift*; a `guard` protocol whose text is already public is indistinguishable
    from an `open` one, and the comparison stops meaning anything. `mutable/build_protocol_*.py`
    generates that exact text (and `panels.py` holds the shared scenario base every type builds
-   from), so both folders stay private, not just the JSON output. The `open` lane's text still
-   reaches the public — through `open-lane/<year>.jsonl`, generated from `experiments/` per trial
-   — never by publishing `protocols/`/`mutable/` directly.
+   from), so both folders stay private, not just the JSON output. What reaches the public for the
+   `open` lane does so without either folder being published directly: every per-trial **response**,
+   through `open-lane/<year>.jsonl`, generated from `experiments/` per trial — and, of the scenario
+   **wording**, only the first scenario's four versions, embedded in the results page by
+   `core/plumbing/render.py` (`_example_texts`, which runs for `lane == "open"` only).
+   *Corrected 2026-09-26: this paragraph used to say the `open` lane's text "reaches the public
+   through `open-lane/<year>.jsonl`". It does not — a trial line carries `prompt_sha256`, never the
+   prompt itself, so no scenario wording travels in that file at all. §1.1's disclosed gap is the
+   governing statement and always was; this sentence contradicted it.*
 4. **The private strategy trail** — the private planning and strategy notes kept alongside the
    project. Not code, and not data the public site needs: competitive reasoning, legal/trademark notes, planning history.
 
@@ -1034,6 +1040,22 @@ pushed anywhere near the public or private archive repos. Only two hashes (`pane
 
 **`guard` ALWAYS stores full traces, on every run.** The 10% sample applies only to repeats of
 `open`. The unit of declassification is **the protocol**, not the model.
+
+> **Declassification is an editorial act, performed by hand. No code implements it** — stated here
+> because the table's "Later" column, read alone, suggests a mechanism that exists. Verified
+> 2026-09-26: no module under `core/` or `tools/` reads `declassify_after`, and
+> `core/schedule/schedule.py` (`parse_cadence`) only ever recognises values shaped `<n>d` or `<n>h`,
+> so `cadence.yaml`'s `declassify_after: 4` is a **policy constant the scheduler never sees** — not
+> a countdown anything runs. The single thing that decides what a build publishes is the
+> protocol's **`lane` field**: `core/plumbing/render.py` selects on it (`write_open_lane`,
+> `_example_texts`) and nothing else consults the generation count.
+>
+> Two consequences worth stating before the first declassification, not after:
+> **(a)** flipping a protocol's `lane` to `open` would publish its per-trial traces and its **first
+> scenario's** four texts — there is no code path that publishes the other 14 scenarios' wording, so
+> honouring "full traces on declassification" means closing §1.1's disclosed gap as part of the same
+> act, deliberately, not as a side effect of the flip; **(b)** the four-generation line is a promise
+> kept by the owner on the calendar, so it needs a human step in §9's monthly batch to ever happen.
 
 ---
 
