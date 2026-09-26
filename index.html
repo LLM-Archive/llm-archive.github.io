@@ -3,6 +3,8 @@
 <title>LLM-Archive</title>
 <meta name="description" content="Independent archive tracking whether AI models keep the same decision when a question is reworded. Open data, monthly measurements, noise floor published.">
 <meta name="keywords" content="LLM benchmark, LLM evaluation, AI model evaluation, large language models, AI model comparison, LLM consistency, LLM stability, prompt sensitivity, prompt robustness, framing effect, cognitive bias in LLMs, decision stability, risky choice framing, sunk cost fallacy, base rate neglect, Asian disease problem, model drift, LLM drift, model update regression, reproducibility, open data, AI transparency, benchmark contamination, pre-registration">
+<link rel="icon" type="image/png" href="logo.png?v=2">
+<link rel="apple-touch-icon" href="logo.png?v=2">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="LLM-Archive">
 <meta property="og:title" content="LLM-Archive">
@@ -56,7 +58,7 @@
 </script>
 <style>
 :root{
-  --ink:#15161a; --dim:#5a5c66; --faint:#8c8f99; --line:#e4e4e8; --bg:#fff; --raise:#fafafb;
+  --ink:#15161a; --logo:#55585f; --dim:#5a5c66; --faint:#8c8f99; --line:#e4e4e8; --bg:#fff; --raise:#fafafb;
   --link:#1a4fd6; --good:#15803d; --warn:#b45309; --bad:#b91c1c;
   --c1:#2563eb; --c2:#dc2626; --c3:#059669; --c4:#d97706; --panel:#fff;
   --sp:clamp(18px,4vw,32px);
@@ -69,12 +71,17 @@ body{margin:0;background:var(--bg);color:var(--ink);
 header{border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);
   backdrop-filter:blur(8px);z-index:50}
 header .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding-block:10px;position:relative}
-.brand{position:relative;display:inline-flex;flex-direction:column;align-items:flex-start;font-size:14px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
-  margin-right:14px;color:var(--ink);text-decoration:none;cursor:pointer}
-.brand:hover{background:none;opacity:.65}
+.brand{position:relative;display:inline-flex;flex-direction:row;align-items:center;gap:8px;font-size:14px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  margin-right:14px;color:var(--ink)}
+.brand .logo{width:36px;height:36px;display:block;flex:none;background:var(--logo,currentColor);-webkit-mask:url(logo.png?v=2) center/contain no-repeat;mask:url(logo.png?v=2) center/contain no-repeat}
+.brand .logo.spin{animation:logospin .8s cubic-bezier(.25,.6,.35,1)}
+@keyframes logospin{to{transform:rotate(180deg)}}
+@media(prefers-reduced-motion:reduce){.brand .logo.spin{animation:none}}
+.brand .bt{display:flex;flex-direction:column;align-items:flex-start}
+.brand a.logo-link{padding:0;line-height:0;border-radius:0;background:none}
+.brand a.logo-link:hover{background:none}
 .hbreak{flex-basis:100%;height:0}
 .ver{display:block;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:none;color:var(--faint)}
-.brand.on{background:none;font-weight:700}
 header a{font-size:13px;color:var(--dim);text-decoration:none;padding:5px 10px;border-radius:6px;cursor:pointer}
 header a:hover{background:var(--raise);color:var(--ink)}
 header a.on{color:var(--ink);font-weight:640;background:var(--raise)}
@@ -83,8 +90,8 @@ header a.on{color:var(--ink);font-weight:640;background:var(--raise)}
 .themes button{border:0;border-radius:6px;background:transparent;color:var(--dim);cursor:pointer;
   font:11px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif;padding:6px 8px}
 .themes button:hover,.themes button.on{background:var(--raise);color:var(--ink);font-weight:650}
-body.theme-blue{--ink:#d9e7f5;--dim:#a9bed2;--faint:#7189a1;--line:#29435d;--bg:#071a2b;--raise:#0d263d;--panel:#102d48;--link:#65c7f7;--good:#70d6a0;--warn:#f2c477;--bad:#ff8f8f;--c1:#65c7f7;--c2:#ff7b8f;--c3:#72d6b1;--c4:#f2c477}
-body.theme-dark{--ink:#e8edf3;--dim:#aeb9c7;--faint:#7f8b99;--line:#34404d;--bg:#14181d;--raise:#1d242c;--panel:#232c36;--link:#79aef2;--good:#5fca84;--warn:#e7ad61;--bad:#f08080}
+body.theme-blue{--logo:var(--ink);--ink:#d9e7f5;--dim:#a9bed2;--faint:#7189a1;--line:#29435d;--bg:#071a2b;--raise:#0d263d;--panel:#102d48;--link:#65c7f7;--good:#70d6a0;--warn:#f2c477;--bad:#ff8f8f;--c1:#65c7f7;--c2:#ff7b8f;--c3:#72d6b1;--c4:#f2c477}
+body.theme-dark{--logo:var(--ink);--ink:#e8edf3;--dim:#aeb9c7;--faint:#7f8b99;--line:#34404d;--bg:#14181d;--raise:#1d242c;--panel:#232c36;--link:#79aef2;--good:#5fca84;--warn:#e7ad61;--bad:#f08080}
 body.theme-dark .themes{box-shadow:0 4px 16px rgba(0,0,0,.3)}
 body.theme-dark .dl{background:#e8edf3;color:#14181d}
 body.theme-blue .dl{background:#d9e7f5;color:#071a2b}
@@ -286,7 +293,7 @@ footer{border-top:1px solid var(--line);margin-top:70px;padding-top:22px;font-si
 </style>
 
 <header><div class="wrap">
-  <a href="#out" class="brand nav on" data-p="out" aria-current="page" aria-label="LLM-Archive home">LLM-Archive<span class="ver">v0.4</span></a>
+  <div class="brand"><a href="#out" class="nav logo-link on" data-p="out" aria-current="page" aria-label="LLM-Archive home"><span class="logo" aria-hidden="true"></span></a><span class="bt">LLM-Archive<span class="ver">v0.4</span></span></div>
   <span class="hbreak" aria-hidden="true"></span>
   <a href="#results" class="nav" data-p="results">Results</a>
   <a href="#what" class="nav" data-p="what">Design</a>
@@ -332,8 +339,8 @@ score or a guarantee that the model will behave the same way in your own product
 <a href="#results" onclick="go('results');return false">See the results</a> or
 <a href="#what" onclick="go('what');return false">read the design</a>.</p></div>
 
-<p class="starcta">Love what we're building? Help others find it: give us 5 stars on
-<a href="https://github.com/LLM-Archive/llm-archive.github.io" target="_blank" rel="noopener" title="Opens the repository on GitHub; the Star button is at the top right">GitHub</a>!</p>
+<p class="starcta">Do you like LLM-Archive? Help others find it: give 5 stars on
+<a href="https://github.com/LLM-Archive/llm-archive.github.io" target="_blank" rel="noopener" title="Opens the repository on GitHub; the Star button is at the top right">GitHub</a></p>
 
 </section>
 
@@ -391,12 +398,12 @@ downloaded exactly the same file. What each column inside each csv means is expl
 in the <a href="guide/data-dictionary.html">data dictionary</a>, part of the separate
 <a href="guide/index.html">guide</a>.</small></p>
 
-<h3>See if your model is easily influenced by wording.</h3>
+<h3>Need help</h3>
 <a class="agentdl" href="guide/ai-assistant.md" download="LLM-Archive-run-on-your-computer.md">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>
   <span><b>AI Assistant</b><small>An .md guide with instructions you can give to your AI agent to compare your model.</small></span>
 </a>
-<p><small>Everything comes from the public GitHub repo. No account, no API key, no cost.</small></p>
+<p><small>Everything comes from the public GitHub repo. No account, no API key.</small></p>
 
 <h3>How to cite it</h3>
 <div id="cite"><pre>@software{llm_archive_2026_22881127,
@@ -489,7 +496,7 @@ didn't make it onto the main curve — no measurement ever disappears silently.<
 <p class="lede">It measures <b>Stability</b>: a number from 0 to 100. 100 means "the AI never
 changed its mind when only the wording changed." The higher, the more stable.</p>
 
-<h3>How we calculate it</h3>
+<h3>How it calculates</h3>
 <p>Every number on this site is built from the same three parts. A <b>family</b> (e.g. sunk-cost
 fallacy) is one kind of decision problem, the <b>scenarios</b> are 15 different variations of it,
 and the <b>versions</b> (A/A′/B/C) are four ways of wording the same scenario, to see whether the
@@ -599,7 +606,7 @@ wording." That's why we publish everything, so that anyone can judge for themsel
 </tbody></table></div>
 
 <h3>The 12 protocols, one by one</h3>
-<p>3 families (<a href="#" onclick="go('does');return false">see "How we calculate it"</a>) × 4 rewording types =
+<p>3 families (<a href="#" onclick="go('does');return false">see "How it calculates"</a>) × 4 rewording types =
 12 protocols. Each row below is one protocol: the family it belongs to, and the one thing that
 particular protocol changes. <small>Each of the 12 exists in two series. <code>v0</code> is the
 first, measured on both models. <code>v1</code> asks the same scenarios with more repeats per
@@ -917,6 +924,9 @@ code preserves the record's exact identity.</small></p>
 </aside>
 
 <script>
+(function(){var l=document.querySelector('.brand a'),s=l&&l.querySelector('.logo');if(!s)return;
+['mouseenter','click'].forEach(function(e){l.addEventListener(e,function(){s.classList.add('spin');});});
+s.addEventListener('animationend',function(){s.classList.remove('spin');});})();
 function go(p){const link=document.querySelector('[data-p="'+p+'"]');if(link)link.click();}
 function showPage(pageId,updateHash){
   const link=document.querySelector('[data-p="'+pageId+'"]');
@@ -1343,7 +1353,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')shutDetail();});
  }else reveal();
 })();
 
-// Sample-size numbers on "How we calculate it" follow the newest protocol version's own data, so they never go stale.
+// Sample-size numbers on "How it calculates" follow the newest protocol version's own data, so they never go stale.
 (function(){
  const d=ALL.find(x=>versionOf(x)===VERSIONS[0]);if(!d)return;
  const v={n:d.n,items:d.n_items,per:Math.round(d.n/d.n_items),total:4*d.n};
