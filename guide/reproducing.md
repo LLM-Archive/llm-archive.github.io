@@ -90,6 +90,11 @@ and prints your model's answers next to the archive's own. Step-by-step, for Oll
 OpenAI-compatible API, or a chat window, in [`ai-assistant.md`](ai-assistant.md). This is a
 spot-check, not a score: two questions cannot support a stability number.
 
+To run the whole method on your model instead — four versions of ten scenarios, the archive's own
+estimator, a noise floor, an interval, and our published numbers printed beside yours — use
+`guide/sample/llm_archive_sample.py`, on a small invented practice panel; see
+[`for-developers.md`](for-developers.md), steps 5 and 6. That result is never a published number.
+
 ### Step 5 — a full, like-for-like comparison (`comparison_point`)
 
 Possible today only for someone who holds all 15 scenarios of a protocol; the published data gives
@@ -125,18 +130,18 @@ picked.
 
 **3. What you can do with that today: check our math, for your own sake.** Take the real responses
 from step 2 and recompute the published stability score yourself — the formula is public
-(`../docs/spec.md` §6, plain arithmetic, no special software needed). This is the difference
+(`SPEC.md` §6, plain arithmetic, no special software needed). This is the difference
 between citing a number because a website says so and knowing it's right because you re-derived it
 yourself. If your number matches ours, you can now cite it with that confidence. If it doesn't,
 you've caught something worth not trusting yet — worth telling us too, since a wrong published
-number helps no one, but either way you now know before you relied on it (see
-[`../CONTRIBUTING.md`](../CONTRIBUTING.md) if you want to send it our way).
+number helps no one, but either way you now know before you relied on it (open an
+[issue](https://github.com/LLM-Archive/llm-archive.github.io/issues) or write to mkalognomos@gmail.com if you want to send it our way).
 
 **4. What you can't do yet: run your own model on our exact questions.** To fairly compare a model
 of your own, you'd need the wording of all 15 questions in a protocol. Today, only the **first**
 question's wording is public (shown on the Results page when you open that row) — the other 14
 aren't published anywhere yet. This is a known, disclosed gap, not an oversight — see
-[`../docs/spec.md`](../docs/spec.md) §1.1. Once it's closed, this page will say so, with
+[`SPEC.md`](https://github.com/LLM-Archive/llm-archive.github.io/blob/master/SPEC.md) §1.1. Once it's closed, this page will say so, with
 step-by-step instructions for submitting your own comparison.
 
 **5. What a result would tell you, once this opens up.** Not "is my model smarter." Only: does it
@@ -152,8 +157,8 @@ both the `v0` and the `v1` series: `risky_choice_framing__wording` and `base_rat
 same as the full question wording** — see "In plain words," step 4 above, for what's actually
 public today (14 of each protocol's 15 questions aren't yet).
 
-**Where the real trial data lives:** not in a standalone protocol file — `protocols/*.json` stays in
-the private repo even for `open` protocols (`../docs/spec.md` §10). Every trial from an `open` run
+**Where the real trial data lives:** not in a standalone protocol file — the protocol definitions are
+not published, even for `open` protocols (`SPEC.md` §10). Every trial from an `open` run
 reaches the public only through `open-lane/<year>.jsonl`, copied through unchanged. Each line has
 `run_id` (the protocol id is embedded in it, as a substring — there is no separate `protocol_id`
 field), `scenario_id`, `version`, the model's real `response_text`, the extracted `token`, and
@@ -163,16 +168,16 @@ but doesn't reveal it). See [`data-dictionary.md`](data-dictionary.md) for the e
 To check a specific published number:
 
 1. Pull every trial for the `run_id` you're checking from `open-lane/<year>.jsonl`.
-2. Re-run the same deterministic extraction rule described in `../docs/spec.md` §5 (`DECISION:
+2. Re-run the same deterministic extraction rule described in `SPEC.md` §5 (`DECISION:
    <token>` on its own line, `token` from the protocol's closed option set) against each raw
    response.
 3. Recompute `gap_pct`, `null_floor_pct`, and the three gates using the formulas in
-   `../docs/spec.md` §6 — pure standard-library arithmetic, no numerical library required.
+   `SPEC.md` §6 — pure standard-library arithmetic, no numerical library required.
 4. Compare against the published `stability_pct`, `gap_null_pct`, `gap_positive_pct`, and `flags`
    for that `run_id` in `stability.csv`.
 
 If your recomputation disagrees with the published record, that's exactly the kind of finding this
-project wants reported — see [`../CONTRIBUTING.md`](../CONTRIBUTING.md).
+project wants reported — open an [issue](https://github.com/LLM-Archive/llm-archive.github.io/issues) or write to mkalognomos@gmail.com.
 
 ## Running the panel against your own model — a `comparison_point`
 

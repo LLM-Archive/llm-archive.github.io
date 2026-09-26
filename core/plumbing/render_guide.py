@@ -17,7 +17,7 @@ prefer-inaction rule.
 
 Output sits next to its markdown source (guide/index.html next to guide/README.md, mirroring
 website/index.html next to website/template.html) so every existing "../X" cross-repo link in
-guide/*.md (to docs/spec.md, ../README.md, ../CONTRIBUTING.md, ...) keeps resolving correctly
+guide/*.md (to ../README.md, ...) keeps resolving correctly
 without rewriting. Only links between guide/*.md files themselves are rewritten, .md -> .html
 (README.md -> index.html, everything else name.md -> name.html); an external link (http(s)://) or
 a link that already climbs out of guide/ (../...) is left exactly as written.
@@ -41,6 +41,7 @@ PAGES: list[tuple[str, str, str]] = [
     ("README.md", "index.html", "Guide home"),
     ("for-researchers.md", "for-researchers.html", "For researchers"),
     ("for-developers.md", "for-developers.html", "For developers"),
+    ("for-analysts.md", "for-analysts.html", "For data analysts"),
     ("reproducing.md", "reproducing.html", "Reproducing"),
     ("data-dictionary.md", "data-dictionary.html", "Data dictionary"),
     ("glossary.md", "glossary.html", "Glossary"),
@@ -371,7 +372,7 @@ def render_page(current_out_name: str, title: str, body_html: str) -> str:
 </main>
 <footer class="wrap">
 Written for people using LLM-Archive — see <a href="../README.md">../README.md</a>
-and <a href="../docs/spec.md">docs/spec.md</a> for the project itself.
+and <a href="https://github.com/LLM-Archive/llm-archive.github.io/blob/master/SPEC.md">SPEC.md</a> for the project itself.
 </footer>
 {THEME_SCRIPT}
 {COPY_SCRIPT}
@@ -411,8 +412,8 @@ def _verify() -> list[str]:
     if got != want:
         errors.append(f"render_inline: sibling .md link, got {got!r}, want {want!r}")
 
-    got = render_inline("[`../docs/spec.md`](../docs/spec.md) §10")
-    if 'href="../docs/spec.md"' not in got:
+    got = render_inline("[`../README.md`](../README.md) §10")
+    if 'href="../README.md"' not in got:
         errors.append(f"render_inline: cross-repo ../ link should be left unrewritten, got {got!r}")
 
     got = render_inline("[README](README.md)")
@@ -479,8 +480,8 @@ def _verify() -> list[str]:
         faq_html = (out_dir / "faq.html").read_text(encoding="utf-8")
         if 'href="glossary.html"' not in faq_html:
             errors.append("build_guide: faq.html should link to glossary.html, not glossary.md")
-        if 'href="../docs/spec.md"' not in faq_html:
-            errors.append("build_guide: faq.html should keep the cross-repo link to ../docs/spec.md")
+        if 'href="../README.md"' not in faq_html:
+            errors.append("build_guide: faq.html should keep the cross-repo link to ../README.md")
 
     return errors
 

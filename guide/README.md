@@ -2,8 +2,8 @@
 
 This folder is written for people **using** LLM-Archive — researchers, developers, journalists,
 students. Everything here is in English, kept in sync with the frozen
-specification at [`../docs/spec.md`](../docs/spec.md). If the two ever disagree,
-`docs/spec.md` is correct and this guide is what needs fixing.
+specification at [`SPEC.md`](https://github.com/LLM-Archive/llm-archive.github.io/blob/master/SPEC.md). If the two ever disagree,
+`SPEC.md` is correct and this guide is what needs fixing.
 
 These `.md` files are the source; `python3 -m core.plumbing.render_guide build` turns each into a
 matching `.html` page (`README.md` → `index.html`) with a shared nav bar, sitting next to its
@@ -15,7 +15,7 @@ that renderer is a hand-rolled markdown converter rather than a dependency.
 The public site is live. The public repository is `github.com/LLM-Archive/llm-archive.github.io`,
 serving `llm-archive.github.io`; this guide ships as part of it. Everything below describes how
 the finished project is designed to work. Where something described here isn't built yet, it's
-marked as such — this project's own principle (`docs/spec.md` §9, §10) is to disclose gaps rather
+marked as such — this project's own principle (`SPEC.md` §9, §10) is to disclose gaps rather
 than imply a feature exists before it does, and this guide follows the same rule about itself.
 
 ## Where to start, depending on who you are
@@ -23,12 +23,13 @@ than imply a feature exists before it does, and this guide follows the same rule
 | You are... | Start here |
 |---|---|
 | A researcher who wants to cite a number, or understand what it does and doesn't prove | [`for-researchers.md`](for-researchers.md) |
-| A developer who wants to load the data, or extend/audit the code | [`for-developers.md`](for-developers.md) |
+| A developer who wants to run the code locally, try a model of their own, or extend/audit it | [`for-developers.md`](for-developers.md) |
+| A data analyst who wants to load the files and get correct answers out of them | [`for-analysts.md`](for-analysts.md) |
 | Someone who wants to run the same panel against a different model | [`reproducing.md`](reproducing.md) |
 | Someone who wants to know what a specific column or term means | [`data-dictionary.md`](data-dictionary.md) and [`glossary.md`](glossary.md) |
 | Someone with a quick question | [`faq.md`](faq.md) |
 | Someone who wants to know how "declared before it was run" is proved | [`timestamps.md`](timestamps.md) |
-| A cited researcher who found an inaccurate quote or wants to respond | [`../CONTRIBUTING.md`](../CONTRIBUTING.md) |
+| A cited researcher who found an inaccurate quote or wants to respond | [Open an issue](https://github.com/LLM-Archive/llm-archive.github.io/issues) or write to mkalognomos@gmail.com |
 
 ## The one thing to understand before reading anything else
 

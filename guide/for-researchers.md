@@ -2,7 +2,7 @@
 
 This page is about what LLM-Archive's numbers mean, what they don't mean, and how to use them
 responsibly in your own work. For column-level detail see [`data-dictionary.md`](data-dictionary.md);
-for the full formal treatment, [`../docs/spec.md`](../docs/spec.md) §6 is the governing document —
+for the full formal treatment, [`SPEC.md`](https://github.com/LLM-Archive/llm-archive.github.io/blob/master/SPEC.md) §6 is the governing document —
 if anything here seems to disagree with it, the spec is right.
 
 ## What this project is for
@@ -14,7 +14,7 @@ reworded without changing its meaning?) that other researchers can reproduce, ci
 not a product evaluation, a ranking or a certification, it is not run to rate or promote any provider
 or model, and no number here is meant as a basis for deciding whether to buy, use or trust one. The
 scenarios are fictional decision dilemmas; no personal data is sent to a model or collected from one.
-The formal statement is `../docs/spec.md` §1.2.
+The formal statement is `SPEC.md` §1.2.
 
 ## What the metric is, precisely
 
@@ -76,7 +76,7 @@ Every measurement's claim is exactly: *"on this frozen panel, on this model, on 
 "the model is X% stable under wording" as a general property — always "on protocol `risky_choice_framing__wording__v0`," naming
 the specific protocol and, through its `panel_sha256`, the specific panel. This isn't a hedge added after the fact; it follows from a specific, disclosed
 design decision: the confidence interval is a bootstrap over responses, **conditional on the
-panel**, and no generalization interval is published (`docs/spec.md` §6). A 15-scenario cluster
+panel**, and no generalization interval is published (`SPEC.md` §6). A 15-scenario cluster
 bootstrap would understate uncertainty, so rather than publish a falsely narrow interval, this
 project publishes the raw per-scenario heterogeneity instead (`scenario_gaps_pct`,
 `scenario_concentration_pct`) and lets you see directly whether a finding rides on the whole panel
@@ -107,7 +107,7 @@ series and the positive control exist specifically to catch each of those two fa
 ## Independent research support
 
 A research team supports this project. It checks the methodology, reviews the protocols (the
-blind-reader admission gate, gate 2, in `../docs/spec.md`), repeats measurements to see whether
+blind-reader admission gate, gate 2, in `SPEC.md`), repeats measurements to see whether
 they reproduce, and advises on design decisions.
 
 ## Citing this project
@@ -154,7 +154,7 @@ tool for schema-driven loading, including automatic typing of every column.
 ## Reporting a factual issue
 
 If a human-comparison figure misquotes a study you're associated with, or you've found an actual
-defect in the frozen estimator, see [`../CONTRIBUTING.md`](../CONTRIBUTING.md) — there's a
+defect in the frozen estimator, open an [issue](https://github.com/LLM-Archive/llm-archive.github.io/issues) or write to mkalognomos@gmail.com — there's a
 specific process for each, and a specific, honest statement of what's built and what's still
 manual today.
 

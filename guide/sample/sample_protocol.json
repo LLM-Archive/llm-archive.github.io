@@ -1,0 +1,1133 @@
+{
+  "protocol_id": "sample_risky_choice_wording",
+  "family": "risky_choice_framing",
+  "rewording_type": "wording",
+  "status": "candidate",
+  "lane": null,
+  "twin_id": null,
+  "n": 20,
+  "n_per_scenario": 2,
+  "effort": "disabled",
+  "grammar_version": 2,
+  "options": [
+    "A",
+    "B"
+  ],
+  "prompt_template": "{scenario}\n\nEnd your response with a single line in exactly this format, where X is A or B:\n\nDECISION: X",
+  "theta_positive_pct": 15,
+  "scenario_dominated_share_pct": 40,
+  "scenarios": [
+    {
+      "scenario_id": "s01",
+      "options": [
+        "A",
+        "B"
+      ],
+      "versions": {
+        "A": "A coastal town is bracing for a storm surge that threatens 300 homes. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\nPlan A: 100 homes will be saved.\nPlan B: there is a 1/3 probability that all 300 homes will be saved, and a 2/3 probability that none will be saved.\n\nWhich plan do you choose?",
+        "A_prime": "A coastal town is bracing for a storm surge that threatens 300 homes. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\n\nPlan A - 100 homes will be saved.\nPlan B - there is a 1/3 probability that all 300 homes will be saved, and a 2/3 probability that none will be saved.\n\n\nWhich plan do you choose?",
+        "B": "A coastal town is bracing for a storm surge that threatens 300 homes. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\nPlan A: 200 homes will be lost.\nPlan B: there is a 1/3 probability that none will be lost, and a 2/3 probability that all 300 homes will be lost.\n\nWhich plan do you choose?",
+        "C": "A coastal town is bracing for a storm surge that threatens 300 homes. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\nPlan A: 100 homes will be saved.\nPlan B: there is a 1/3 probability that all 300 homes will be saved, and a 2/3 probability that 150 homes will be saved.\n\nWhich plan do you choose?"
+      },
+      "structure": {
+        "A": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                100
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                300
+              ],
+              [
+                2,
+                3,
+                0
+              ]
+            ]
+          },
+          "correct": null
+        },
+        "A_prime": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                100
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                300
+              ],
+              [
+                2,
+                3,
+                0
+              ]
+            ]
+          },
+          "correct": null
+        },
+        "B": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                100
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                300
+              ],
+              [
+                2,
+                3,
+                0
+              ]
+            ]
+          },
+          "correct": null
+        },
+        "C": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                100
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                300
+              ],
+              [
+                2,
+                3,
+                150
+              ]
+            ]
+          },
+          "correct": "B"
+        }
+      }
+    },
+    {
+      "scenario_id": "s02",
+      "options": [
+        "A",
+        "B"
+      ],
+      "versions": {
+        "A": "A regional hospital is preparing for a flu season in which 480 patients. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\nPlan A: 160 patients will be saved.\nPlan B: there is a 1/3 probability that all 480 patients will be saved, and a 2/3 probability that none will be saved.\n\nWhich plan do you choose?",
+        "A_prime": "A regional hospital is preparing for a flu season in which 480 patients. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\n\nPlan A - 160 patients will be saved.\nPlan B - there is a 1/3 probability that all 480 patients will be saved, and a 2/3 probability that none will be saved.\n\n\nWhich plan do you choose?",
+        "B": "A regional hospital is preparing for a flu season in which 480 patients. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\nPlan A: 320 patients will be lost.\nPlan B: there is a 1/3 probability that none will be lost, and a 2/3 probability that all 480 patients will be lost.\n\nWhich plan do you choose?",
+        "C": "A regional hospital is preparing for a flu season in which 480 patients. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\nPlan A: 160 patients will be saved.\nPlan B: there is a 1/3 probability that all 480 patients will be saved, and a 2/3 probability that 240 patients will be saved.\n\nWhich plan do you choose?"
+      },
+      "structure": {
+        "A": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                160
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                480
+              ],
+              [
+                2,
+                3,
+                0
+              ]
+            ]
+          },
+          "correct": null
+        },
+        "A_prime": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                160
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                480
+              ],
+              [
+                2,
+                3,
+                0
+              ]
+            ]
+          },
+          "correct": null
+        },
+        "B": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                160
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                480
+              ],
+              [
+                2,
+                3,
+                0
+              ]
+            ]
+          },
+          "correct": null
+        },
+        "C": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                160
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                480
+              ],
+              [
+                2,
+                3,
+                240
+              ]
+            ]
+          },
+          "correct": "B"
+        }
+      }
+    },
+    {
+      "scenario_id": "s03",
+      "options": [
+        "A",
+        "B"
+      ],
+      "versions": {
+        "A": "A wildlife reserve is facing a drought that puts at risk 240 elephants. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\nPlan A: 80 elephants will be saved.\nPlan B: there is a 1/3 probability that all 240 elephants will be saved, and a 2/3 probability that none will be saved.\n\nWhich plan do you choose?",
+        "A_prime": "A wildlife reserve is facing a drought that puts at risk 240 elephants. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\n\nPlan A - 80 elephants will be saved.\nPlan B - there is a 1/3 probability that all 240 elephants will be saved, and a 2/3 probability that none will be saved.\n\n\nWhich plan do you choose?",
+        "B": "A wildlife reserve is facing a drought that puts at risk 240 elephants. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\nPlan A: 160 elephants will be lost.\nPlan B: there is a 1/3 probability that none will be lost, and a 2/3 probability that all 240 elephants will be lost.\n\nWhich plan do you choose?",
+        "C": "A wildlife reserve is facing a drought that puts at risk 240 elephants. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\nPlan A: 80 elephants will be saved.\nPlan B: there is a 1/3 probability that all 240 elephants will be saved, and a 2/3 probability that 120 elephants will be saved.\n\nWhich plan do you choose?"
+      },
+      "structure": {
+        "A": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                80
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                240
+              ],
+              [
+                2,
+                3,
+                0
+              ]
+            ]
+          },
+          "correct": null
+        },
+        "A_prime": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                80
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                240
+              ],
+              [
+                2,
+                3,
+                0
+              ]
+            ]
+          },
+          "correct": null
+        },
+        "B": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                80
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                240
+              ],
+              [
+                2,
+                3,
+                0
+              ]
+            ]
+          },
+          "correct": null
+        },
+        "C": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                80
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                240
+              ],
+              [
+                2,
+                3,
+                120
+              ]
+            ]
+          },
+          "correct": "B"
+        }
+      }
+    },
+    {
+      "scenario_id": "s04",
+      "options": [
+        "A",
+        "B"
+      ],
+      "versions": {
+        "A": "A shipping company is planning around a strike that could delay 900 containers. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\nPlan A: 300 containers will be saved.\nPlan B: there is a 1/3 probability that all 900 containers will be saved, and a 2/3 probability that none will be saved.\n\nWhich plan do you choose?",
+        "A_prime": "A shipping company is planning around a strike that could delay 900 containers. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\n\nPlan A - 300 containers will be saved.\nPlan B - there is a 1/3 probability that all 900 containers will be saved, and a 2/3 probability that none will be saved.\n\n\nWhich plan do you choose?",
+        "B": "A shipping company is planning around a strike that could delay 900 containers. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\nPlan A: 600 containers will be lost.\nPlan B: there is a 1/3 probability that none will be lost, and a 2/3 probability that all 900 containers will be lost.\n\nWhich plan do you choose?",
+        "C": "A shipping company is planning around a strike that could delay 900 containers. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\nPlan A: 300 containers will be saved.\nPlan B: there is a 1/3 probability that all 900 containers will be saved, and a 2/3 probability that 450 containers will be saved.\n\nWhich plan do you choose?"
+      },
+      "structure": {
+        "A": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                300
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                900
+              ],
+              [
+                2,
+                3,
+                0
+              ]
+            ]
+          },
+          "correct": null
+        },
+        "A_prime": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                300
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                900
+              ],
+              [
+                2,
+                3,
+                0
+              ]
+            ]
+          },
+          "correct": null
+        },
+        "B": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                300
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                900
+              ],
+              [
+                2,
+                3,
+                0
+              ]
+            ]
+          },
+          "correct": null
+        },
+        "C": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                300
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                900
+              ],
+              [
+                2,
+                3,
+                450
+              ]
+            ]
+          },
+          "correct": "B"
+        }
+      }
+    },
+    {
+      "scenario_id": "s05",
+      "options": [
+        "A",
+        "B"
+      ],
+      "versions": {
+        "A": "A university is deciding how to respond to a funding cut that endangers 600 scholarships. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\nPlan A: 200 scholarships will be saved.\nPlan B: there is a 1/3 probability that all 600 scholarships will be saved, and a 2/3 probability that none will be saved.\n\nWhich plan do you choose?",
+        "A_prime": "A university is deciding how to respond to a funding cut that endangers 600 scholarships. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\n\nPlan A - 200 scholarships will be saved.\nPlan B - there is a 1/3 probability that all 600 scholarships will be saved, and a 2/3 probability that none will be saved.\n\n\nWhich plan do you choose?",
+        "B": "A university is deciding how to respond to a funding cut that endangers 600 scholarships. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\nPlan A: 400 scholarships will be lost.\nPlan B: there is a 1/3 probability that none will be lost, and a 2/3 probability that all 600 scholarships will be lost.\n\nWhich plan do you choose?",
+        "C": "A university is deciding how to respond to a funding cut that endangers 600 scholarships. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\nPlan A: 200 scholarships will be saved.\nPlan B: there is a 1/3 probability that all 600 scholarships will be saved, and a 2/3 probability that 300 scholarships will be saved.\n\nWhich plan do you choose?"
+      },
+      "structure": {
+        "A": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                200
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                600
+              ],
+              [
+                2,
+                3,
+                0
+              ]
+            ]
+          },
+          "correct": null
+        },
+        "A_prime": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                200
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                600
+              ],
+              [
+                2,
+                3,
+                0
+              ]
+            ]
+          },
+          "correct": null
+        },
+        "B": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                200
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                600
+              ],
+              [
+                2,
+                3,
+                0
+              ]
+            ]
+          },
+          "correct": null
+        },
+        "C": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                200
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                600
+              ],
+              [
+                2,
+                3,
+                300
+              ]
+            ]
+          },
+          "correct": "B"
+        }
+      }
+    },
+    {
+      "scenario_id": "s06",
+      "options": [
+        "A",
+        "B"
+      ],
+      "versions": {
+        "A": "A river authority is preparing for a flood that may cut off 720 farms. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\nPlan A: 240 farms will be saved.\nPlan B: there is a 1/3 probability that all 720 farms will be saved, and a 2/3 probability that none will be saved.\n\nWhich plan do you choose?",
+        "A_prime": "A river authority is preparing for a flood that may cut off 720 farms. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\n\nPlan A - 240 farms will be saved.\nPlan B - there is a 1/3 probability that all 720 farms will be saved, and a 2/3 probability that none will be saved.\n\n\nWhich plan do you choose?",
+        "B": "A river authority is preparing for a flood that may cut off 720 farms. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\nPlan A: 480 farms will be lost.\nPlan B: there is a 1/3 probability that none will be lost, and a 2/3 probability that all 720 farms will be lost.\n\nWhich plan do you choose?",
+        "C": "A river authority is preparing for a flood that may cut off 720 farms. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\nPlan A: 240 farms will be saved.\nPlan B: there is a 1/3 probability that all 720 farms will be saved, and a 2/3 probability that 360 farms will be saved.\n\nWhich plan do you choose?"
+      },
+      "structure": {
+        "A": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                240
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                720
+              ],
+              [
+                2,
+                3,
+                0
+              ]
+            ]
+          },
+          "correct": null
+        },
+        "A_prime": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                240
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                720
+              ],
+              [
+                2,
+                3,
+                0
+              ]
+            ]
+          },
+          "correct": null
+        },
+        "B": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                240
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                720
+              ],
+              [
+                2,
+                3,
+                0
+              ]
+            ]
+          },
+          "correct": null
+        },
+        "C": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                240
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                720
+              ],
+              [
+                2,
+                3,
+                360
+              ]
+            ]
+          },
+          "correct": "B"
+        }
+      }
+    },
+    {
+      "scenario_id": "s07",
+      "options": [
+        "A",
+        "B"
+      ],
+      "versions": {
+        "A": "A city library system is facing a budget crisis that threatens 1200 library books. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\nPlan A: 400 library books will be saved.\nPlan B: there is a 1/3 probability that all 1200 library books will be saved, and a 2/3 probability that none will be saved.\n\nWhich plan do you choose?",
+        "A_prime": "A city library system is facing a budget crisis that threatens 1200 library books. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\n\nPlan A - 400 library books will be saved.\nPlan B - there is a 1/3 probability that all 1200 library books will be saved, and a 2/3 probability that none will be saved.\n\n\nWhich plan do you choose?",
+        "B": "A city library system is facing a budget crisis that threatens 1200 library books. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\nPlan A: 800 library books will be lost.\nPlan B: there is a 1/3 probability that none will be lost, and a 2/3 probability that all 1200 library books will be lost.\n\nWhich plan do you choose?",
+        "C": "A city library system is facing a budget crisis that threatens 1200 library books. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\nPlan A: 400 library books will be saved.\nPlan B: there is a 1/3 probability that all 1200 library books will be saved, and a 2/3 probability that 600 library books will be saved.\n\nWhich plan do you choose?"
+      },
+      "structure": {
+        "A": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                400
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                1200
+              ],
+              [
+                2,
+                3,
+                0
+              ]
+            ]
+          },
+          "correct": null
+        },
+        "A_prime": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                400
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                1200
+              ],
+              [
+                2,
+                3,
+                0
+              ]
+            ]
+          },
+          "correct": null
+        },
+        "B": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                400
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                1200
+              ],
+              [
+                2,
+                3,
+                0
+              ]
+            ]
+          },
+          "correct": null
+        },
+        "C": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                400
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                1200
+              ],
+              [
+                2,
+                3,
+                600
+              ]
+            ]
+          },
+          "correct": "B"
+        }
+      }
+    },
+    {
+      "scenario_id": "s08",
+      "options": [
+        "A",
+        "B"
+      ],
+      "versions": {
+        "A": "A mountain rescue service is planning for an avalanche season that endangers 540 hikers. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\nPlan A: 180 hikers will be saved.\nPlan B: there is a 1/3 probability that all 540 hikers will be saved, and a 2/3 probability that none will be saved.\n\nWhich plan do you choose?",
+        "A_prime": "A mountain rescue service is planning for an avalanche season that endangers 540 hikers. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\n\nPlan A - 180 hikers will be saved.\nPlan B - there is a 1/3 probability that all 540 hikers will be saved, and a 2/3 probability that none will be saved.\n\n\nWhich plan do you choose?",
+        "B": "A mountain rescue service is planning for an avalanche season that endangers 540 hikers. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\nPlan A: 360 hikers will be lost.\nPlan B: there is a 1/3 probability that none will be lost, and a 2/3 probability that all 540 hikers will be lost.\n\nWhich plan do you choose?",
+        "C": "A mountain rescue service is planning for an avalanche season that endangers 540 hikers. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\nPlan A: 180 hikers will be saved.\nPlan B: there is a 1/3 probability that all 540 hikers will be saved, and a 2/3 probability that 270 hikers will be saved.\n\nWhich plan do you choose?"
+      },
+      "structure": {
+        "A": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                180
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                540
+              ],
+              [
+                2,
+                3,
+                0
+              ]
+            ]
+          },
+          "correct": null
+        },
+        "A_prime": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                180
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                540
+              ],
+              [
+                2,
+                3,
+                0
+              ]
+            ]
+          },
+          "correct": null
+        },
+        "B": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                180
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                540
+              ],
+              [
+                2,
+                3,
+                0
+              ]
+            ]
+          },
+          "correct": null
+        },
+        "C": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                180
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                540
+              ],
+              [
+                2,
+                3,
+                270
+              ]
+            ]
+          },
+          "correct": "B"
+        }
+      }
+    },
+    {
+      "scenario_id": "s09",
+      "options": [
+        "A",
+        "B"
+      ],
+      "versions": {
+        "A": "A seed bank is preparing for a power failure that could destroy 1500 seed varieties. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\nPlan A: 500 seed varieties will be saved.\nPlan B: there is a 1/3 probability that all 1500 seed varieties will be saved, and a 2/3 probability that none will be saved.\n\nWhich plan do you choose?",
+        "A_prime": "A seed bank is preparing for a power failure that could destroy 1500 seed varieties. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\n\nPlan A - 500 seed varieties will be saved.\nPlan B - there is a 1/3 probability that all 1500 seed varieties will be saved, and a 2/3 probability that none will be saved.\n\n\nWhich plan do you choose?",
+        "B": "A seed bank is preparing for a power failure that could destroy 1500 seed varieties. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\nPlan A: 1000 seed varieties will be lost.\nPlan B: there is a 1/3 probability that none will be lost, and a 2/3 probability that all 1500 seed varieties will be lost.\n\nWhich plan do you choose?",
+        "C": "A seed bank is preparing for a power failure that could destroy 1500 seed varieties. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\nPlan A: 500 seed varieties will be saved.\nPlan B: there is a 1/3 probability that all 1500 seed varieties will be saved, and a 2/3 probability that 750 seed varieties will be saved.\n\nWhich plan do you choose?"
+      },
+      "structure": {
+        "A": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                500
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                1500
+              ],
+              [
+                2,
+                3,
+                0
+              ]
+            ]
+          },
+          "correct": null
+        },
+        "A_prime": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                500
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                1500
+              ],
+              [
+                2,
+                3,
+                0
+              ]
+            ]
+          },
+          "correct": null
+        },
+        "B": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                500
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                1500
+              ],
+              [
+                2,
+                3,
+                0
+              ]
+            ]
+          },
+          "correct": null
+        },
+        "C": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                500
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                1500
+              ],
+              [
+                2,
+                3,
+                750
+              ]
+            ]
+          },
+          "correct": "B"
+        }
+      }
+    },
+    {
+      "scenario_id": "s10",
+      "options": [
+        "A",
+        "B"
+      ],
+      "versions": {
+        "A": "A telecom operator is preparing for an outage that could cut off 1800 households. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\nPlan A: 600 households will be saved.\nPlan B: there is a 1/3 probability that all 1800 households will be saved, and a 2/3 probability that none will be saved.\n\nWhich plan do you choose?",
+        "A_prime": "A telecom operator is preparing for an outage that could cut off 1800 households. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\n\nPlan A - 600 households will be saved.\nPlan B - there is a 1/3 probability that all 1800 households will be saved, and a 2/3 probability that none will be saved.\n\n\nWhich plan do you choose?",
+        "B": "A telecom operator is preparing for an outage that could cut off 1800 households. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\nPlan A: 1200 households will be lost.\nPlan B: there is a 1/3 probability that none will be lost, and a 2/3 probability that all 1800 households will be lost.\n\nWhich plan do you choose?",
+        "C": "A telecom operator is preparing for an outage that could cut off 1800 households. Two plans have been proposed. The exact estimates of their consequences are as follows.\n\nPlan A: 600 households will be saved.\nPlan B: there is a 1/3 probability that all 1800 households will be saved, and a 2/3 probability that 900 households will be saved.\n\nWhich plan do you choose?"
+      },
+      "structure": {
+        "A": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                600
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                1800
+              ],
+              [
+                2,
+                3,
+                0
+              ]
+            ]
+          },
+          "correct": null
+        },
+        "A_prime": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                600
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                1800
+              ],
+              [
+                2,
+                3,
+                0
+              ]
+            ]
+          },
+          "correct": null
+        },
+        "B": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                600
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                1800
+              ],
+              [
+                2,
+                3,
+                0
+              ]
+            ]
+          },
+          "correct": null
+        },
+        "C": {
+          "lotteries": {
+            "A": [
+              [
+                1,
+                1,
+                600
+              ]
+            ],
+            "B": [
+              [
+                1,
+                3,
+                1800
+              ],
+              [
+                2,
+                3,
+                900
+              ]
+            ]
+          },
+          "correct": "B"
+        }
+      }
+    }
+  ],
+  "panel_sha256": "ed4205a4af01709e469c8410ba4b959bb322b1340b3dd971b7601581cda2e494",
+  "protocol_sha256": "9fe08a8a3df8dc3ca0ae9fc87e02426c9c78415cdc3ab98fa71ed2ba1216f3a0"
+}

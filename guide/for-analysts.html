@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>For data analysts — LLM-Archive Guide</title>
+<link rel="icon" type="image/png" href="../logo.png?v=2">
+<link rel="apple-touch-icon" href="../logo.png?v=2">
+<script>
+(function(){var t='blue';try{t=localStorage.getItem('llm-archive-theme')||'blue';}catch(e){}
+if(t!=='white'&&t!=='dark'&&t!=='blue')t='blue';document.documentElement.classList.add('theme-'+t);})();
+</script>
+<style>
+:root{--ink:#15161a;--logo:#55585f;--dim:#5a5c66;--faint:#8c8f99;--line:#e4e4e8;--bg:#fff;--raise:#fafafb;--link:#1a4fd6}
+@media(prefers-color-scheme:dark){
+  :root{--logo:var(--ink);--ink:#e8edf3;--dim:#aeb9c7;--faint:#7f8b99;--line:#34404d;--bg:#14181d;--raise:#1d242c;--link:#79aef2}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 system-ui,-apple-system,"Segoe UI",Inter,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:760px;margin:0 auto;padding:0 20px}
+header{border-bottom:1px solid var(--line);padding:16px 0;margin-bottom:8px}
+header .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px}
+.brand{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);text-decoration:none;margin-right:8px}
+.brand .logo{width:36px;height:36px;display:block;flex:none;background:var(--logo,currentColor);-webkit-mask:url(../logo.png?v=2) center/contain no-repeat;mask:url(../logo.png?v=2) center/contain no-repeat}
+.brand .logo.spin{animation:logospin .8s cubic-bezier(.25,.6,.35,1)}
+@keyframes logospin{to{transform:rotate(180deg)}}
+@media(prefers-reduced-motion:reduce){.brand .logo.spin{animation:none}}
+.brand .bt{display:flex;flex-direction:column}
+.brand a{display:block;line-height:0}
+.brand small{display:block;font-size:10px;font-weight:600;letter-spacing:.08em;color:var(--faint)}
+nav{display:flex;flex-wrap:wrap;gap:2px}
+nav a{font-size:13px;color:var(--dim);text-decoration:none;padding:5px 9px;border-radius:6px}
+nav a.on{color:var(--ink);font-weight:650;background:var(--raise)}
+main{padding:28px 0 80px}
+h1{font-size:clamp(22px,3.6vw,28px);line-height:1.3;font-weight:660;letter-spacing:-.02em;margin:0 0 16px}
+h2{font-size:clamp(19px,3.2vw,23px);line-height:1.3;letter-spacing:-.015em;margin:34px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+h3,h4{font-size:15px;font-weight:700;margin:22px 0 8px}
+h1:target,h2:target,h3:target,h4:target{scroll-margin-top:16px}
+p{margin:0 0 14px}
+ul,ol{margin:0 0 14px;padding-left:22px}
+li{margin-bottom:6px}
+a{color:var(--link)}
+code{font:13px ui-monospace,"SF Mono",Menlo,monospace;background:var(--raise);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+pre{background:var(--raise);border:1px solid var(--line);border-radius:8px;padding:14px 16px;overflow-x:auto;margin:0 0 16px}
+pre code{background:none;border:0;padding:0;font-size:13px;line-height:1.55}
+html.theme-white{--ink:#15161a;--logo:#55585f;--dim:#5a5c66;--faint:#8c8f99;--line:#e4e4e8;--bg:#fff;--raise:#fafafb;--link:#1a4fd6}
+html.theme-blue{--logo:var(--ink);--ink:#d9e7f5;--dim:#a9bed2;--faint:#7189a1;--line:#29435d;--bg:#071a2b;--raise:#0d263d;--link:#65c7f7}
+html.theme-dark{--logo:var(--ink);--ink:#e8edf3;--dim:#aeb9c7;--faint:#7f8b99;--line:#34404d;--bg:#14181d;--raise:#1d242c;--link:#79aef2}
+.themes{position:fixed;top:14px;right:18px;z-index:80;display:flex;gap:4px;padding:4px;border:1px solid var(--line);border-radius:9px;background:var(--bg);box-shadow:0 4px 16px rgba(20,20,24,.08)}
+html.theme-dark .themes{box-shadow:0 4px 16px rgba(0,0,0,.3)}
+@media(max-width:760px){.themes{position:static;width:fit-content;margin:8px 10px 0 auto}}
+.themes button{border:0;border-radius:6px;background:transparent;color:var(--dim);cursor:pointer;font:11px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif;padding:6px 8px}
+.themes button:hover,.themes button.on{background:var(--raise);color:var(--ink);font-weight:650}
+.codewrap{position:relative;margin:0 0 16px}
+.codewrap pre{margin:0}
+.copybtn{position:absolute;top:8px;right:8px;font:600 12px system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--dim);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:4px 10px;cursor:pointer;opacity:.85}
+.copybtn:hover,.copybtn:focus-visible{opacity:1;color:var(--ink);border-color:var(--faint)}
+.copybtn.done{color:var(--ink);border-color:var(--ink);opacity:1}
+blockquote{margin:0 0 16px;padding:2px 16px;border-left:3px solid var(--line);color:var(--dim)}
+hr{border:0;border-top:1px solid var(--line);margin:28px 0}
+.twrap{overflow-x:auto;margin:0 0 18px}
+table{width:100%;border-collapse:collapse;font-size:14.5px}
+th{text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);padding:0 14px 8px 0;border-bottom:2px solid var(--line);white-space:nowrap}
+td{padding:10px 14px 10px 0;border-bottom:1px solid var(--line);vertical-align:top}
+footer{border-top:1px solid var(--line);padding:18px 0;font-size:12.5px;color:var(--faint)}
+footer a{color:var(--faint)}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+<div class="brand"><a href="index.html" aria-label="LLM-Archive guide home"><span class="logo" aria-hidden="true"></span></a><span class="bt">LLM-Archive<small>Guide</small></span></div>
+<nav><a href="index.html">Guide home</a>
+<a href="for-researchers.html">For researchers</a>
+<a href="for-developers.html">For developers</a>
+<a class="on" href="for-analysts.html">For data analysts</a>
+<a href="reproducing.html">Reproducing</a>
+<a href="data-dictionary.html">Data dictionary</a>
+<a href="glossary.html">Glossary</a>
+<a href="faq.html">FAQ</a>
+<a href="timestamps.html">Time proofs</a></nav>
+</div></header>
+<div class="themes" role="group" aria-label="Theme picker">
+<button type="button" data-theme="blue">Blue</button>
+<button type="button" data-theme="white">Light</button>
+<button type="button" data-theme="dark">Dark</button>
+</div>
+<main class="wrap">
+<h1 id="for-data-analysts">For data analysts</h1>
+<p>This page is for anyone who wants to load LLM-Archive's published files into a notebook, a spreadsheet or a BI tool and get correct answers out of them. It covers what each file is, how they join, what to filter on before you chart anything, and the mistakes that produce a plausible but wrong result. For what each column means, see <a href="data-dictionary.html"><code>data-dictionary.md</code></a>; for what the headline number does and doesn't prove, <a href="for-researchers.html"><code>for-researchers.md</code></a>.</p>
+<p>Everything here uses only the public repository, <code>github.com/LLM-Archive/llm-archive.github.io</code>, or the same files from the site's <strong>Downloads</strong> page. The snippets use <code>pandas</code>; every one has a standard-library equivalent, because the files are plain CSV and JSON Lines.</p>
+<h2 id="the-files-and-how-they-fit-together">The files, and how they fit together</h2>
+<div class="twrap"><table><thead><tr><th>File</th><th>One row is...</th><th>Use it for</th></tr></thead><tbody><tr><td><code>stability.csv</code></td><td>one measurement (one protocol, one model, one day)</td><td>the headline number and everything needed to judge it</td></tr><tr><td><code>outcomes.csv</code></td><td>one <code>(run_id, version, outcome)</code> count</td><td>the same outcome counts as <code>stability.csv</code>, already unpivoted</td></tr><tr><td><code>open-lane/&lt;year&gt;.jsonl</code></td><td>one trial: one question, one raw response</td><td>recomputing a number from scratch; text analysis of responses</td></tr><tr><td><code>coverage.csv</code></td><td>one scheduled job on one day</td><td>what ran, and why anything didn't</td></tr><tr><td><code>croissant.json</code></td><td>—</td><td>machine-readable schema, for tools that read Croissant metadata</td></tr></tbody></table></div>
+<p>The join key is <strong><code>run_id</code></strong>. It is unique per measurement, it appears in <code>stability.csv</code>, <code>outcomes.csv</code> and <code>open-lane/</code>, and it is the right thing to cite. <code>coverage.csv</code> has no <code>run_id</code> because it describes jobs, not measurements.</p>
+<h2 id="load-stability-csv-correctly">Load <code>stability.csv</code> correctly</h2>
+<p>A few columns hold a JSON value inside one CSV cell (<code>flags</code>, <code>outcomes</code>, <code>decisions</code>, <code>gates</code>, <code>n_valid</code>, <code>scenario_gaps_pct</code>, <code>scenario_spread_pct</code>). Parse them once, right after loading:</p>
+<pre><code class="language-python">import json
+import pandas as pd
+
+JSON_COLUMNS = [&quot;flags&quot;, &quot;outcomes&quot;, &quot;decisions&quot;, &quot;gates&quot;, &quot;n_valid&quot;,
+                &quot;scenario_gaps_pct&quot;, &quot;scenario_spread_pct&quot;]
+
+stability = pd.read_csv(&quot;stability.csv&quot;)
+for column in JSON_COLUMNS:
+    stability[column] = stability[column].apply(lambda x: json.loads(x) if isinstance(x, str) else None)</code></pre>
+<p><strong>You should see</strong> one row per measurement, <code>on_curve</code> and <code>at_noise_floor</code> as real booleans, and <code>flags</code> as Python lists (an empty list when nothing applied).</p>
+<blockquote><p><strong>A pandas trap:</strong> read the column as <code>stability["flags"]</code>, never <code>stability.flags</code>. <code>DataFrame.flags</code> is a built-in pandas attribute, so the dot form silently returns something else.</p></blockquote>
+<p>Every column with <code>_pct</code> in its name is on a <strong>0–100 scale</strong>, never 0–1. This is a checked convention, so you never need to guess.</p>
+<h2 id="filter-before-you-chart">Filter before you chart</h2>
+<p>Four columns decide which rows belong in the same picture. Skipping any of them is the most common way to get a wrong chart out of this data.</p>
+<div class="twrap"><table><thead><tr><th>Column</th><th>Filter on it because...</th></tr></thead><tbody><tr><td><code>series</code></td><td><code>commercial</code> and <code>open_weights</code> are never drawn as one line. The open-weights rows are a frozen reference model, measured to check the pipeline, not a second subject.</td></tr><tr><td><code>model_family</code></td><td>Never draw one line across families: a trend across a family boundary is an artifact of which products happened to be measured when.</td></tr><tr><td><code>protocol_id</code></td><td>A protocol is one specific frozen panel. Different protocols are different questions; averaging them together has no meaning. <code>v0</code> and <code>v1</code> (see <code>n</code> and <code>grammar_version</code>) are different series of the same design — keep them apart.</td></tr><tr><td><code>on_curve</code></td><td><code>true</code> marks the measurements that count toward the headline time series. A <code>false</code> row is still published in full, with the reason in <code>flags</code>.</td></tr></tbody></table></div>
+<pre><code class="language-python">headline = stability[(stability[&quot;series&quot;] == &quot;commercial&quot;) &amp; stability[&quot;on_curve&quot;]]</code></pre>
+<p>Do not treat <code>on_curve == False</code> as "bad data". It means "not headlined", for a reason you can read: every flag takes a row off the main curve and no flag ever deletes one. Which flags a row carries is often the most interesting thing about it:</p>
+<pre><code class="language-python">stability[&quot;flags&quot;].explode().value_counts()</code></pre>
+<h2 id="read-a-number-with-its-evidence">Read a number with its evidence</h2>
+<p>A <code>stability_pct</code> on its own is not a result. The columns that say how much to trust it sit in the same row:</p>
+<div class="twrap"><table><thead><tr><th>Question</th><th>Columns</th></tr></thead><tbody><tr><td>How uncertain is it?</td><td><code>ci_low_pct</code>, <code>ci_high_pct</code> — a 95% bootstrap interval, conditional on this one panel of 15 scenarios</td></tr><tr><td>Could it be sampling noise?</td><td><code>null_floor_pct</code> — the gap you would expect between two samples of the <em>same</em> distribution at this <code>n</code> — and <code>at_noise_floor</code></td></tr><tr><td>Did the control that should not move, move?</td><td><code>gap_null_pct</code> (A against A′, the null change)</td></tr><tr><td>Did the control that should move, move?</td><td><code>gap_positive_pct</code> (A against C); <code>not_reading</code> in <code>flags</code> if it did not</td></tr><tr><td>How many responses were lost?</td><td><code>u_a</code>, <code>u_a_prime</code>, <code>u_b</code>, <code>u_c</code> (fractions), and <code>drop_bound_pct_ab</code> — the worst-case error those losses could cause</td></tr><tr><td>Is one scenario doing all the work?</td><td><code>scenario_gaps_pct</code>, <code>scenario_concentration_pct</code>, and <code>scenario_dominated</code> in <code>flags</code></td></tr></tbody></table></div>
+<p><strong>Read <code>stability_pct</code> next to <code>null_floor_pct</code>, never above it.</strong> With a finite <code>n</code>, even a model that never changes its answer shows a gap of about <code>null_floor_pct</code>, so 100% is not the ceiling you should expect and a difference smaller than the floor is not a finding. <code>scenario_dominated</code> compares the share of the gap coming from the two worst scenarios with a threshold; it does not look at how large the gap is, so when the gap is one lone response it is true by construction. Read it together with <code>gap_pct</code> and <code>null_floor_pct</code>.</p>
+<p>To look at the 15 scenario-level gaps behind one headline number as a table:</p>
+<pre><code class="language-python">row = stability[stability[&quot;run_id&quot;] == &quot;&lt;a run_id from the file&gt;&quot;].iloc[0]
+scenarios = pd.Series(row[&quot;scenario_gaps_pct&quot;], name=&quot;gap_pct&quot;).rename_axis(&quot;scenario&quot;)
+print(scenarios.sort_values(ascending=False))</code></pre>
+<p>A scenario with an empty gap had no gap computed for it; it is missing, not zero.</p>
+<h2 id="repeated-measurements">Repeated measurements</h2>
+<p>The same protocol on the same model is measured again over time, so <code>(subject_model_id, protocol_id)</code> is <strong>not</strong> a unique key — <code>run_id</code> is. To follow one protocol on one model over time, sort by <code>run_date</code> (an absolute date, never a relative one) and plot the rows; to get the latest value per pair:</p>
+<pre><code class="language-python">latest = (stability.sort_values(&quot;run_date&quot;)
+                   .groupby([&quot;subject_model_id&quot;, &quot;protocol_id&quot;], as_index=False)
+                   .tail(1))</code></pre>
+<p>A single point is one frame of a video: the project's own design is the series, not any one measurement. <code>replicate_index</code> marks an occasional same-window repeat used to check <code>null_floor_pct</code> empirically; leave it out of a time series, or filter to <code>replicate_index == 0</code>.</p>
+<h2 id="outcomes-where-the-responses-went">Outcomes: where the responses went</h2>
+<p>Every response lands in exactly one outcome from a closed list: <code>valid</code>, <code>unparseable</code>, <code>refused</code>, <code>truncated</code>, <code>empty</code>, <code>off_format</code>, <code>blocked_upstream</code>. <code>outcomes.csv</code> is the same information as the <code>outcomes</code> column, one row per count:</p>
+<pre><code class="language-python">outcomes = pd.read_csv(&quot;outcomes.csv&quot;)
+by_version = outcomes.pivot_table(index=[&quot;run_id&quot;, &quot;version&quot;], columns=&quot;outcome&quot;,
+                                  values=&quot;count&quot;, aggfunc=&quot;sum&quot;).reset_index()
+by_version[&quot;valid_share&quot;] = by_version[&quot;valid&quot;] / by_version.drop(columns=[&quot;run_id&quot;, &quot;version&quot;]).sum(axis=1)</code></pre>
+<p><code>version</code> is <code>A</code>, <code>A_prime</code>, <code>B</code> or <code>C</code>. A response that is not <code>valid</code> is a <strong>lost response</strong>, and it is never counted as a decision: the drop bound exists to say how much the finding could change if the lost responses had been valid. Comparing <code>valid_share</code> across versions of one run is the quickest way to see whether missingness is even.</p>
+<h2 id="raw-responses-open-lane">Raw responses (<code>open-lane/</code>)</h2>
+<p>Only the two <code>open</code>-lane protocols publish their responses (<code>lane == "open"</code>); every other row of <code>stability.csv</code> has no trial-level file, by design. A trial has <code>run_id</code>, <code>version</code>, <code>scenario_id</code>, <code>rep</code>, <code>response_text</code>, <code>outcome</code>, <code>token</code>, and <code>prompt_sha256</code> — a one-way hash that lets you verify a prompt you already hold but does not contain the question.</p>
+<pre><code class="language-python">trials = pd.read_json(&quot;open-lane/2026.jsonl&quot;, lines=True)      # one file per calendar year
+valid = trials[trials[&quot;outcome&quot;] == &quot;valid&quot;]
+decisions = valid.groupby([&quot;run_id&quot;, &quot;version&quot;, &quot;token&quot;]).size().unstack(&quot;token&quot;, fill_value=0)</code></pre>
+<p><code>decisions</code> should match the <code>decisions</code> column of the same <code>run_id</code> in <code>stability.csv</code>. To recompute the headline number itself, follow <a href="reproducing.html"><code>reproducing.md</code></a>, Step 3. If you find a run where your recomputation disagrees with the published one, that is exactly what the project wants reported.</p>
+<h2 id="coverage-csv"><code>coverage.csv</code></h2>
+<p>One row per scheduled job per day: <code>job</code>, <code>date</code>, <code>ran</code>, and <code>cause</code>, which is empty when the job ran and otherwise one value from a closed list. An empty <code>cause</code> reads as a missing value in pandas. A day with no measurement is always explained here — never assume a missing day is a zero.</p>
+<pre><code class="language-python">coverage = pd.read_csv(&quot;coverage.csv&quot;)
+coverage[~coverage[&quot;ran&quot;]][&quot;cause&quot;].value_counts()</code></pre>
+<p>The file starts when tracking started; it is not backfilled.</p>
+<h2 id="mistakes-that-look-like-insights">Mistakes that look like insights</h2>
+<ul>
+<li><strong>Ranking models by <code>stability_pct</code>.</strong> It is not a capability score, not comparable across model families, and each row is one model on one frozen panel on one day.</li>
+<li><strong>Averaging across protocols</strong> to get "the model's stability". Each protocol is a different frozen panel; the average has no defined meaning.</li>
+<li><strong>Reading a small gap without the floor.</strong> Compare <code>gap_pct</code> with <code>null_floor_pct</code> and <code>gap_null_pct</code> first.</li>
+<li><strong>Dropping the flagged rows</strong> as noise. They are published on purpose; the flag tells you why they are off the main curve.</li>
+<li><strong>Treating a missing value as zero</strong> in <code>scenario_gaps_pct</code> or <code>coverage.csv</code>'s <code>cause</code>.</li>
+<li><strong>Mixing <code>commercial</code> and <code>open_weights</code></strong>, or <code>v0</code> and <code>v1</code>, in one line.</li>
+<li><strong>Blending a <code>comparison_point</code></strong> — someone else's run of the same panel on their model — into the project's own series. It stays in its own table, next to the main series and never merged into it.</li>
+</ul>
+<h2 id="reuse-and-citation">Reuse and citation</h2>
+<p>The CSVs and <code>open-lane/</code> are CC-BY-4.0: reuse, merge with your own datasets, or build on them commercially, with attribution. Cite a specific <code>run_id</code> and <code>protocol_id</code> rather than the project as a whole — see <code>CITATION.cff</code> in the repository. A citation that names a dated, hash-verified measurement can be checked; "LLM-Archive found..." cannot.</p>
+<p>If your tool reads Croissant metadata, <code>croissant.json</code> describes <code>stability.csv</code>, <code>outcomes.csv</code> and <code>open-lane/</code> with a typed field for every column.</p>
+</main>
+<footer class="wrap">
+Written for people using LLM-Archive — see <a href="../README.md">../README.md</a>
+and <a href="https://github.com/LLM-Archive/llm-archive.github.io/blob/master/SPEC.md">SPEC.md</a> for the project itself.
+</footer>
+<script>
+(function(){
+  var buttons=document.querySelectorAll('.themes [data-theme]');
+  function apply(t){
+    var c=document.documentElement.classList;c.remove('theme-blue','theme-dark','theme-white');c.add('theme-'+t);
+    buttons.forEach(function(b){var on=b.dataset.theme===t;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));});
+    try{localStorage.setItem('llm-archive-theme',t);}catch(e){}
+  }
+  var cur='blue';['white','dark','blue'].forEach(function(t){if(document.documentElement.classList.contains('theme-'+t))cur=t;});
+  buttons.forEach(function(b){b.addEventListener('click',function(){apply(b.dataset.theme);});});
+  apply(cur);
+})();
+(function(){var l=document.querySelector('.brand a'),s=l&&l.querySelector('.logo');if(!s)return;
+['mouseenter','click'].forEach(function(e){l.addEventListener(e,function(){s.classList.add('spin');});});
+s.addEventListener('animationend',function(){s.classList.remove('spin');});})();
+</script>
+<script>
+(function(){
+  function copyText(text){
+    if(navigator.clipboard&&window.isSecureContext){return navigator.clipboard.writeText(text);}
+    return new Promise(function(resolve,reject){
+      var t=document.createElement('textarea');t.value=text;t.setAttribute('readonly','');
+      t.style.position='fixed';t.style.opacity='0';document.body.appendChild(t);t.select();
+      try{document.execCommand('copy')?resolve():reject();}catch(e){reject(e);}
+      document.body.removeChild(t);
+    });
+  }
+  document.querySelectorAll('pre').forEach(function(pre){
+    var code=pre.querySelector('code');if(!code)return;
+    var wrap=document.createElement('div');wrap.className='codewrap';
+    pre.parentNode.insertBefore(wrap,pre);wrap.appendChild(pre);
+    var b=document.createElement('button');b.type='button';b.className='copybtn';
+    b.textContent='Copy';b.setAttribute('aria-label','Copy code to clipboard');
+    b.addEventListener('click',function(){
+      copyText(code.textContent).then(function(){b.textContent='Copied';b.classList.add('done');},
+        function(){b.textContent='Press Ctrl+C';});
+      setTimeout(function(){b.textContent='Copy';b.classList.remove('done');},1600);
+    });
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 # FAQ
 
 Quick answers. For the full reasoning behind any of these, follow the link to
-[`../docs/spec.md`](../docs/spec.md), which is the governing document if anything here is unclear
+[`SPEC.md`](https://github.com/LLM-Archive/llm-archive.github.io/blob/master/SPEC.md), which is the governing document if anything here is unclear
 or seems to conflict with it.
 
 **What does LLM-Archive actually measure?**
@@ -16,14 +16,14 @@ the same decision when a question is reworded without changing its meaning — s
 researchers can reproduce, cite and extend it. It is not a product evaluation or a ranking, it is not
 run to rate or promote any model, and no number is meant as a basis for deciding whether to buy, use
 or trust one. The scenarios are fictional dilemmas; no personal data is sent to or collected from a
-model. See [`../docs/spec.md`](../docs/spec.md) §1.2.
+model. See [`SPEC.md`](https://github.com/LLM-Archive/llm-archive.github.io/blob/master/SPEC.md) §1.2.
 
 **Why isn't a perfectly consistent model reported as 100% stable?**
 Because with a finite number of responses, two samples from the *identical* distribution still
 produce some measured gap by chance alone. This "noise floor" is published next to every
 measurement (`null_floor_pct`) so a reader can see how much of any gap is just sampling noise. At
 the project's chosen sample size (`n=30` per version), the ceiling is about 89.9% in the worst
-case (a binary decision at 50/50) — see `../docs/spec.md` §6 for why `n` is this small: real calls
+case (a binary decision at 50/50) — see `SPEC.md` §6 for why `n` is this small: real calls
 against the real API come back deterministic without a client-controllable sampling parameter, so
 this project no longer pays for repeat samples that would just repeat the same answer.
 
@@ -40,7 +40,7 @@ project's own setup changed — not the subject model. This is disclosed as a re
 complete guarantee: if the reference model stays flat, that rules out the project's own pipeline as
 a cause, but it does **not** rule out the commercial provider silently changing something upstream
 (a router, a hidden system instruction, quantization) — no local check can see behind a hosted
-API. See `../docs/spec.md` §7.
+API. See `SPEC.md` §7.
 
 **Why track a downloadable ("open-weights") model at all, separately from the commercial one?**
 As a control experiment proving the method itself reproduces, run once per model generation rather
@@ -82,21 +82,20 @@ as a valid `comparison_point`, and what such a point does and doesn't mean.
 **What happens if the project goes quiet — is the data lost?**
 No. Two independent mechanisms exist for this specifically: the project publishes a disclosed
 degradation ladder rather than going silent (reduced scope before reduced rigor — `n` and the
-statistical checks are never quietly loosened to save money, `../docs/spec.md` §9), and every
+statistical checks are never quietly loosened to save money, `SPEC.md` §9), and every
 scheduled measurement that doesn't happen is logged with a specific cause rather than left
-unexplained (`../docs/spec.md` §10). A gap the project names itself is a disclosed limitation; a
+unexplained (`SPEC.md` §10). A gap the project names itself is a disclosed limitation; a
 gap discovered by someone else later would be a much bigger problem — which is exactly why it's
 designed not to happen that way.
 
 **Does the metric say anything about model capability, alignment, or "how human" a model is?**
-No, deliberately. See the "What it does not claim" section of the root [`README.md`](../README.md)
-and the fuller version in [`for-researchers.md`](for-researchers.md).
+No, deliberately. See the "What it does not claim" section of [`for-researchers.md`](for-researchers.md).
 
 **I'm a researcher whose work is cited (or miscited) here — what do I do?**
-See [`../CONTRIBUTING.md`](../CONTRIBUTING.md) for the correction process, including how an author
-response is verified before being treated as authoritative.
+Open an [issue](https://github.com/LLM-Archive/llm-archive.github.io/issues) or write to mkalognomos@gmail.com, naming the `run_id` or file and what you
+expected instead. Nothing is edited or deleted silently: a correction is disclosed publicly in the next release notes.
 
 **Is this live yet?**
 Yes. The public site (`llm-archive.github.io`) and its repository
 (`github.com/LLM-Archive/llm-archive.github.io`) are both live. See the root
-[`README.md`](../README.md) and [`CHANGELOG.md`](../CHANGELOG.md) for the current build state.
+[`README.md`](../README.md) and the release notes on GitHub for the current build state.
