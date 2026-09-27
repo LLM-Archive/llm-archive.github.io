@@ -239,6 +239,8 @@ body.theme-dark .t-dn,body.theme-blue .t-dn{color:var(--ink)}
 #vbadge{float:right;margin:-1px 10px 0 0;padding:3px 10px;border-radius:14px;font-size:12px;font-weight:700;
   letter-spacing:.06em;text-transform:uppercase;line-height:1.3}
 .ans{border-left:3px solid var(--line);padding:8px 0 8px 13px;margin-bottom:12px;font-size:14.5px}
+.vnote{font-size:11.5px;line-height:1.4;color:var(--faint);margin:0 0 8px}
+.ans-text{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13.5px;line-height:1.6;margin-top:6px}
 .ans b{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;
   color:var(--faint);margin-bottom:3px}
 
@@ -611,27 +613,26 @@ wording." That's why we publish everything, so that anyone can judge for themsel
 <h3>The 12 protocols, one by one</h3>
 <p>3 families (<a href="#" onclick="go('does');return false">see "How it calculates"</a>) × 4 rewording types =
 12 protocols. Each row below is one protocol: the family it belongs to, and the one thing that
-particular protocol changes. <small>Each of the 12 exists in two series. <code>v0</code> is the
-first, measured on both models. <code>v1</code> asks the same scenarios with more repeats per
-scenario and an updated rule for reading the answer, so it is a separate series, never a
-continuation of <code>v0</code>; its measurements appear in the tables above as they are made.
-The names below leave the series off.</small></p>
+particular protocol changes. <small>Each protocol has a series: the latest (<code>v1</code>) is the one being measured now.
+Earlier series (<code>v0</code>) will likely open once a newer series with new scenarios replaces them.</small></p>
 
 <div class="scroll"><table>
 <thead><tr><th>Protocol</th><th>What it does, in plain words</th></tr></thead>
 <tbody>
-<tr><td><code>risky_choice_framing__wording</code></td><td><b>Risky-choice framing, reworded.</b> The AI picks between a sure outcome and a gamble with the exact same average result — one version describes it in terms of what's gained, the other in terms of what's lost. Same math, same outcome, different words: does the pick change anyway?</td></tr>
-<tr><td><code>risky_choice_framing__anchoring</code></td><td><b>Risky-choice framing, anchored.</b> Same sure-outcome-vs-gamble choice, but an unrelated number is planted in the text first. Does that number pull the answer even though it has nothing to do with the decision?</td></tr>
-<tr><td><code>risky_choice_framing__order</code></td><td><b>Risky-choice framing, reordered.</b> Same choice, just with the two options swapped in the order they're listed. Does the AI favor whichever one it reads first?</td></tr>
-<tr><td><code>risky_choice_framing__default</code></td><td><b>Risky-choice framing, with a default.</b> Same choice, but one option is marked as the "default." Does the AI just go with it instead of actually weighing both?</td></tr>
-<tr><td><code>sunk_cost_fallacy__wording</code></td><td><b>Sunk-cost fallacy, reworded.</b> The AI picks between cutting losses now (a sure amount back) and continuing a project for a gamble with the same average payoff — the money already spent is stated either way. Does that pick change with wording alone?</td></tr>
-<tr><td><code>sunk_cost_fallacy__anchoring</code></td><td><b>Sunk-cost fallacy, anchored.</b> Same stop-or-continue choice, with an unrelated number planted in the text first.</td></tr>
-<tr><td><code>sunk_cost_fallacy__order</code></td><td><b>Sunk-cost fallacy, reordered.</b> Same choice, with "stop" and "continue" swapped in the order they're listed.</td></tr>
-<tr><td><code>sunk_cost_fallacy__default</code></td><td><b>Sunk-cost fallacy, with a default.</b> Same choice, but one option — stop, or continue — is marked as the "default."</td></tr>
-<tr><td><code>base_rate_neglect__wording</code></td><td><b>Base-rate neglect, reworded.</b> A screening test comes back positive; the AI has to bet on whether that result is actually true, given how rare the condition is and how often the test is wrong. Does the bet change when the same numbers are given as percentages instead of as "X out of 1,000 people" — same math, easier to picture?</td></tr>
-<tr><td><code>base_rate_neglect__anchoring</code></td><td><b>Base-rate neglect, anchored.</b> Same positive-test bet, with an unrelated number planted in the text first.</td></tr>
-<tr><td><code>base_rate_neglect__order</code></td><td><b>Base-rate neglect, reordered.</b> Same bet, with the two options swapped in the order they're listed.</td></tr>
-<tr><td><code>base_rate_neglect__default</code></td><td><b>Base-rate neglect, with a default.</b> Same bet, but one option is marked as the "default."</td></tr>
+<tr><td><code>risky_choice_framing__wording</code><span class="tag t-open" style="margin-left:10px" title="Open from the start: every answer is public, plus the first scenario's wording.">open</span></td><td><b>Risky-choice framing, reworded.</b> The AI picks between a sure outcome and a gamble with the exact same average result — one version describes it in terms of what's gained, the other in terms of what's lost. Same math, same outcome, different words: does the pick change anyway?</td></tr>
+<tr><td><code>risky_choice_framing__anchoring</code><span class="tag t-guard" style="margin-left:10px" title="Opens after 4 model generations or when a new protocol version with new scenarios replaces it.">guard</span></td><td><b>Risky-choice framing, anchored.</b> Same sure-outcome-vs-gamble choice, but an unrelated number is planted in the text first. Does that number pull the answer even though it has nothing to do with the decision?</td></tr>
+<tr><td><code>risky_choice_framing__order</code><span class="tag t-guard" style="margin-left:10px" title="Opens after 4 model generations or when a new protocol version with new scenarios replaces it.">guard</span></td><td><b>Risky-choice framing, reordered.</b> Same choice, just with the two options swapped in the order they're listed. Does the AI favor whichever one it reads first?</td></tr>
+<tr><td><code>risky_choice_framing__default</code><span class="tag t-guard" style="margin-left:10px" title="Opens after 4 model generations or when a new protocol version with new scenarios replaces it.">guard</span></td><td><b>Risky-choice framing, with a default.</b> Same choice, but one option is marked as the "default." Does the AI just go with it instead of actually weighing both?</td></tr>
+<tr><td><code>sunk_cost_fallacy__wording</code><span class="tag t-guard" style="margin-left:10px" title="Opens after 4 model generations or when a new protocol version with new scenarios replaces it.">guard</span></td><td><b>Sunk-cost fallacy, reworded.</b> The AI picks between cutting losses now (a sure amount back) and continuing a project for a gamble with the same average payoff — the money already spent is stated either way. Does that pick change with wording alone?</td></tr>
+<tr><td><code>sunk_cost_fallacy__anchoring</code><span class="tag t-guard" style="margin-left:10px" title="Opens after 4 model generations or when a new protocol version with new scenarios replaces it.">guard</span></td><td><b>Sunk-cost fallacy, anchored.</b> Same stop-or-continue choice, with an unrelated number planted in the text first.</td></tr>
+<tr><td><code>sunk_cost_fallacy__order</code><span class="tag t-guard" style="margin-left:10px" title="Opens after 4 model generations or when a new protocol version with new scenarios replaces it.">guard</span></td><td><b>Sunk-cost fallacy, reordered.</b> Same choice, with "stop" and "continue" swapped in the order they're listed.</td></tr>
+<tr><td><code>sunk_cost_fallacy__default</code><span class="tag t-guard" style="margin-left:10px" title="Opens after 4 model generations or when a new protocol version with new scenarios replaces it.">guard</span></td><td><b>Sunk-cost fallacy, with a default.</b> Same choice, but one option — stop, or continue — is marked as the "default."</td></tr>
+<tr><td><code>base_rate_neglect__wording</code><span class="tag t-open" style="margin-left:10px" title="Open from the start: every answer is public, plus the first scenario's wording.">open</span></td><td><b>Base-rate neglect, reworded.</b> A screening test comes back positive; the AI has to bet on whether that result is actually true, given how rare the condition is and how often the test is wrong. Does the bet change when the same numbers are given as percentages instead of as "X out of 1,000 people" — same math, easier to picture?</td></tr>
+<tr><td><code>base_rate_neglect__anchoring</code><span class="tag t-guard" style="margin-left:10px" title="Opens after 4 model generations or when a new protocol version with new scenarios replaces it.">guard</span></td><td><b>Base-rate neglect, anchored.</b> Same positive-test bet, with an unrelated number planted in the text first.</td></tr>
+<tr><td><code>base_rate_neglect__order</code><span class="tag t-guard" style="margin-left:10px" title="Opens after 4 model generations or when a new protocol version with new scenarios replaces it.">guard</span></td><td><b>Base-rate neglect, reordered.</b> Same bet, with the two options swapped in the order they're listed.</td></tr>
+<tr><td><code>base_rate_neglect__default</code><span class="tag t-guard" style="margin-left:10px" title="Opens after 4 model generations or when a new protocol version with new scenarios replaces it.">guard</span></td><td><b>Base-rate neglect, with a default.</b> Same bet, but one option is marked as the "default."</td></tr>
+<tr><td colspan="2" style="padding-top:18px;font-size:12px;color:var(--faint)">Not part of the 12 above:</td></tr>
+<tr><td><code>sealed_×2</code><span class="tag t-fl" style="margin-left:10px" title="Never opened: only the fact that they exist is public, so no names and no wording.">sealed</span></td><td><b>Two sealed protocols.</b> Run only when a new model generation starts. Fixed, and never opened. <a href="guide/faq.html">Read more: open, guard and sealed</a></td></tr>
 </tbody></table></div>
 <p><small>What each protocol actually asks (the 15 scenarios themselves) stays hidden for
 guard-lane protocols while the model being measured is still active — see the callout above. Two
@@ -664,6 +665,7 @@ above) — everything else is <code>guard</code>.</p>
 <tr><td><code>open</code></td><td>2</td><td>the two <code>wording</code> protocols (public text)</td></tr>
 <tr><td><code>guard</code>, twinned</td><td>2</td><td>the two <code>anchoring</code> protocols (hidden, but paired with an open twin)</td></tr>
 <tr><td><code>guard</code>, untwinned</td><td>8</td><td>everything else (<code>order</code>/<code>default</code> × 3 families, plus <code>sunk_cost_fallacy__anchoring</code>)</td></tr>
+<tr><td><code>sealed</code></td><td>2</td><td>not part of the 12. Run only when a new model generation starts. Fixed, and never opened: only their existence is public.</td></tr>
 </tbody></table></div>
 <p><small>2 open + 10 guard = 12, and only 4 of the 10 guard protocols (the two
 <code>anchoring</code> ones) carry a <code>twin_id</code>. The other 8 are simply hidden, with no
@@ -851,14 +853,14 @@ code preserves the record's exact identity.</small></p>
   <div id="texts">
     <h3>The four versions</h3>
     <div class="pair" style="grid-template-columns:1fr">
-      <div class="box"><div class="eyebrow">A — the baseline</div><pre id="qa"></pre>
-        <div class="ans" style="margin:10px 0 0"><b>answered</b><code id="aa"></code></div></div>
-      <div class="box"><div class="eyebrow">A′ — null change <small>(control)</small></div><pre id="qn"></pre>
-        <div class="ans" style="margin:10px 0 0"><b>answered</b><code id="an"></code></div></div>
-      <div class="box" style="border-color:var(--c1)"><div class="eyebrow">B — equivalent rewording</div><pre id="qb"></pre>
-        <div class="ans" style="margin:10px 0 0"><b>answered</b><code id="ab"></code></div></div>
-      <div class="box"><div class="eyebrow">C — real change <small>(positive control)</small></div><pre id="qg"></pre>
-        <div class="ans" style="margin:10px 0 0"><b>answered</b><code id="ag"></code></div></div>
+      <div class="box"><div class="eyebrow">A — the baseline</div><div class="vnote">The original wording. Every other version is compared with this one.</div><pre id="qa"></pre>
+        <div class="ans" style="margin:10px 0 0"><b>answered</b><div class="ans-text" id="aa"></div></div></div>
+      <div class="box"><div class="eyebrow">A′ — null change <small>(control)</small></div><div class="vnote">Same meaning, only the formatting changed. It should get the same decisions as A; if not, that is noise, not a wording effect.</div><pre id="qn"></pre>
+        <div class="ans" style="margin:10px 0 0"><b>answered</b><div class="ans-text" id="an"></div></div></div>
+      <div class="box" style="border-color:var(--c1)"><div class="eyebrow">B — equivalent rewording</div><div class="vnote">Same meaning, different words. The A ↔ B gap is what we measure.</div><pre id="qb"></pre>
+        <div class="ans" style="margin:10px 0 0"><b>answered</b><div class="ans-text" id="ab"></div></div></div>
+      <div class="box"><div class="eyebrow">C — real change <small>(positive control)</small></div><div class="vnote">The meaning really changes. The model should change its decision; if not, it isn't reading the question.</div><pre id="qg"></pre>
+        <div class="ans" style="margin:10px 0 0"><b>answered</b><div class="ans-text" id="ag"></div></div></div>
     </div>
     <p><small>The measurement is the gap <b>A ↔ B</b>. Each version runs <span id="dn"></span> times in a
     <b>fresh session</b>. The decision is read <b>only</b> from the line
@@ -1006,12 +1008,12 @@ function bodyHtml(rows){
    ? rows.map(rowHtml).join('')
    : '<tr><td colspan="8"><small>No measurements yet.</small></td></tr>';
 }
-// One tab per protocol version, newest first and opened on the newest, so the table always leads
+// One tab per protocol version, oldest first (v0, v1) but opened on the newest, so the table always leads
 // with the protocols currently being measured and older versions sit one click away. Both tables show the same
 // set of versions (every version present in either table); a version with no measurements in a
 // table says so. Filtering only hides rows: each row keeps its index into ALL, so the detail
 // drawer is unaffected.
-const VERSIONS=[...new Set(ALL.map(versionOf))].sort((a,b)=>parseInt(b.slice(1))-parseInt(a.slice(1)));
+const VERSIONS=[...new Set(ALL.map(versionOf))].sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1)));
 function renderTable(id,rows){
  const body=document.getElementById(id), tabs=document.getElementById(id+'-tabs');
  if(VERSIONS.length<2){tabs.hidden=true;body.innerHTML=bodyHtml(rows);return;}
@@ -1022,7 +1024,7 @@ function renderTable(id,rows){
  tabs.innerHTML=VERSIONS.map(v=>'<button type="button" role="tab" data-v="'+v+'">.'+v+'</button>').join('');
  tabs.hidden=false;
  tabs.onclick=e=>{const b=e.target.closest('button');if(b)show(b.dataset.v);};
- show(VERSIONS[0]);
+ show(VERSIONS[VERSIONS.length-1]);
 }
 renderTable('rows',ROWS);
 renderTable('orows',OROWS);
@@ -1364,7 +1366,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')shutDetail();});
 
 // Sample-size numbers on "How it calculates" follow the newest protocol version's own data, so they never go stale.
 (function(){
- const d=ALL.find(x=>versionOf(x)===VERSIONS[0]);if(!d)return;
+ const d=ALL.find(x=>versionOf(x)===VERSIONS[VERSIONS.length-1]);if(!d)return;
  const v={n:d.n,items:d.n_items,per:Math.round(d.n/d.n_items),total:4*d.n};
  document.querySelectorAll('[data-lv]').forEach(e=>{e.textContent=String(v[e.dataset.lv]);});
 })();
