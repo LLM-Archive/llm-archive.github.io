@@ -64,6 +64,7 @@ from core.measure import stats
 from core.measure.chain import sha256_hex
 from core.measure.schema import MEASUREMENT_FIELDS, OUTCOMES, VERSIONS
 from core.plumbing import versions
+from core.plumbing.render_guide import PAGES as GUIDE_PAGES
 from core.schedule.coverage import DEFAULT_LOG as DEFAULT_COVERAGE_LOG
 from core.schedule.coverage import load_observations
 
@@ -83,6 +84,13 @@ DEFAULT_SITE_OUT = ROOT / "website" / "index.html"
 # bump it when a batch of accumulated changes is worth flagging, not on a fixed schedule.
 DEFAULT_VERSION_FILE = ROOT / "VERSION"
 DEFAULT_CITATION_FILE = ROOT / "CITATION.cff"
+DEFAULT_SITEMAP_OUT = ROOT / "sitemap.xml"
+DEFAULT_ROBOTS_OUT = ROOT / "robots.txt"
+
+# The deployed site's real, public origin (spec.md §10's payload always lands here) -- fixed,
+# not derived from anything else, since sitemap.xml/robots.txt need absolute URLs and nothing
+# else in this module has a reason to know the site's own domain.
+SITE_BASE_URL = "https://llm-archive.github.io"
 
 # The two closed vocabularies the site's copy needs a friendly label for -- kept here (not in
 # core/measure/schema.py) because these are display strings for the public site, not part of the
@@ -410,6 +418,43 @@ def write_coverage_csv(log_path: Path, out_path: Path) -> int:
         for r in rows:
             writer.writerow({"job": r["job"], "date": r["date"], "ran": str(r["ran"]), "cause": r["cause"] or ""})
     return len(rows)
+
+
+# --- sitemap.xml / robots.txt -------------------------------------------------------------------
+# Both static in shape (fixed page list, no experiments/ data), but built rather than hand-written
+# so the page list can't drift from GUIDE_PAGES the way a second, hand-copied list would.
+
+
+def sitemap_urls() -> list[str]:
+    """The deployed site's page list, in the same order render_guide.PAGES already defines it --
+    the homepage first, then every guide page at its real deploy path (guide/<name>.html, spec.md
+    §10's payload layout, not this repo's own website/ preview path)."""
+    urls = [f"{SITE_BASE_URL}/"]
+    for _md_name, out_name, _label in GUIDE_PAGES:
+        urls.append(f"{SITE_BASE_URL}/guide/{out_name}")
+    return urls
+
+
+def build_sitemap() -> str:
+    lines = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
+    for url in sitemap_urls():
+        lines.append(f"  <url><loc>{url}</loc></url>")
+    lines.append("</urlset>")
+    return "\n".join(lines) + "\n"
+
+
+def write_sitemap(out_path: Path) -> None:
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(build_sitemap(), encoding="utf-8")
+
+
+def build_robots() -> str:
+    return f"User-agent: *\nAllow: /\n\nSitemap: {SITE_BASE_URL}/sitemap.xml\n"
+
+
+def write_robots(out_path: Path) -> None:
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(build_robots(), encoding="utf-8")
 
 
 # --- website/index.html -----------------------------------------------------------------------
@@ -1073,6 +1118,18 @@ def _verify() -> list[str]:
     if len(build_activity_events({"rows": [], "orows": [], "citation": None}, [], limit=3)) != 0:
         errors.append("build_activity_events: no data should give no events")
 
+    sitemap = build_sitemap()
+    if sitemap.count("<url>") != len(GUIDE_PAGES) + 1:
+        errors.append(f"build_sitemap: expected {len(GUIDE_PAGES) + 1} <url> entries, got {sitemap.count('<url>')}")
+    if f"<loc>{SITE_BASE_URL}/</loc>" not in sitemap:
+        errors.append("build_sitemap: missing the homepage URL")
+    if f"<loc>{SITE_BASE_URL}/guide/faq.html</loc>" not in sitemap:
+        errors.append("build_sitemap: missing a guide page URL")
+
+    robots = build_robots()
+    if "Allow: /" not in robots or f"Sitemap: {SITE_BASE_URL}/sitemap.xml" not in robots:
+        errors.append(f"build_robots: missing expected directives, got {robots!r}")
+
     row = build_row({"record_type": "measurement", "run_id": "r0", "stability_pct": 82.2, "on_curve": False})
     if row["record_type"] != "measurement" or row["on_curve"] != "False":
         errors.append(f"build_row scalar case: got {row}")
@@ -1526,6 +1583,12 @@ def main(argv: list[str] | None = None) -> int:
     p_site.add_argument("--version-file", type=Path, default=DEFAULT_VERSION_FILE)
     p_site.add_argument("--citation-file", type=Path, default=DEFAULT_CITATION_FILE)
 
+    p_sitemap = sub.add_parser("build-sitemap", help="write sitemap.xml (homepage + every guide page)")
+    p_sitemap.add_argument("--out", type=Path, default=DEFAULT_SITEMAP_OUT)
+
+    p_robots = sub.add_parser("build-robots", help="write robots.txt (allow all, points at sitemap.xml)")
+    p_robots.add_argument("--out", type=Path, default=DEFAULT_ROBOTS_OUT)
+
     sub.add_parser("verify", help="run this module's own hand-worked cases")
 
     args = ap.parse_args(argv)
@@ -1556,6 +1619,16 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "build-coverage":
         n = write_coverage_csv(args.log, args.out)
         print(f"wrote {n} row(s) to {args.out}")
+        return 0
+
+    if args.command == "build-sitemap":
+        write_sitemap(args.out)
+        print(f"wrote {args.out}")
+        return 0
+
+    if args.command == "build-robots":
+        write_robots(args.out)
+        print(f"wrote {args.out}")
         return 0
 
     if args.command == "build-site":
