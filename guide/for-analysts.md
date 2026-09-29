@@ -10,6 +10,10 @@ Everything here uses only the public repository, `github.com/LLM-Archive/llm-arc
 or the same files from the site's **Downloads** page. The snippets use `pandas`; every one has a
 standard-library equivalent, because the files are plain CSV and JSON Lines.
 
+**In a hurry?** Load `stability.csv`, keep only `series == "commercial"` and `on_curve == True`,
+and you have the headline numbers. Everything below is the "why" and the "what could go wrong" —
+worth reading before you publish anything from this data, not just before you first load it.
+
 ## The files, and how they fit together
 
 | File | One row is... | Use it for |

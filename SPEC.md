@@ -472,15 +472,21 @@ snapshot of the provider's deprecation page that names the successor.
 `requires_human: false` **is revoked as an authorization to switch** — a fuzzy naming rule is not
 allowed to rewrite which series we are measuring. It survives **only** as a bridge trigger.
 
-**Bridge:** 4 protocols — **one per type** — at **each protocol's own frozen `n_per_scenario=2`**,
-four versions, **old and new**, same week. `2 × 4 × 120 = 960 calls` (measured rate, §9). *(This
-section originally sized the bridge at `n_per_scenario=1`, 480 calls, on the argument that a bridge
-only needs to catch a gross discontinuity. Corrected 2026-09-24: protocols are frozen at
-`n_per_scenario=2` (§13) and `core/measure/` cannot run a protocol at a different `n` without
-becoming a different protocol, so the bridge runs them as they are. The comment on
-`generation_bridge_protocols` in `cadence.yaml`, which is frozen, still says n=1 / 480 calls; the
-budget and this section are what apply.)* Funded from `bridge_reserve_eur` in `budget.json`
-(private — §10 — sized with a small margin over this), never from the general monthly pool — see
+**Bridge:** 4 protocols — **one per type** — at **each protocol's own frozen `n_per_scenario`**,
+four versions, **old and new**, same week: the CURRENT (highest admitted) version of each type's
+alphabetically first family, per `core/plumbing/versions.py`'s rule — the same one
+`core/schedule/run_due.py` already applies to the ordinary sweep. *(This section originally sized
+the bridge at `n_per_scenario=1`, 480 calls, on the argument that a bridge only needs to catch a
+gross discontinuity. Corrected 2026-09-24: protocols are frozen at `n_per_scenario=2` (§13) and
+`core/measure/` cannot run a protocol at a different `n` without becoming a different protocol, so
+the bridge runs them as they are — at v0's size that was `2 × 4 × 120 = 960 calls`. Corrected
+2026-09-29: `core/plumbing/model_watch.py`'s `plan_bridge()` had hardcoded `v0` and would have kept
+measuring the superseded series forever once `v1` was admitted; fixed to always pick the current
+version. `v1`'s frozen `n_per_scenario` is 8, not 2, so a bridge run while `v1` is current is
+`2 × 4 × 480 = 3840 calls` (~4x). The comment on `generation_bridge_protocols` in `cadence.yaml`,
+which is frozen, still says n=1 / 480 calls; the budget and this section are what apply.)* Funded
+from `bridge_reserve_eur` in `budget.json` (private — §10 — sized with a small margin over
+whichever version is current), never from the general monthly pool — see
 `core/budget/budget.py`'s `_general_ceiling`.
 
 **Funding: the bridge preempts that month's sweep** — the sweep is skipped with cause
@@ -844,9 +850,9 @@ concluded_after:        730d
 
 > **Two notes on the frozen `cadence.yaml`, checked against the code on 2026-09-27.**
 > **(1) A stale value.** The frozen file still carries `bridge_reserve_monthly: 2.80`. Nothing reads
-> it, and it predates the recalibration of 2026-09-24. The reserve that applies is `bridge_reserve_eur`
-> in `budget.json` (private), currently 6.50 — the same quantity under a second name, with a
-> different number. **(2) Keys nothing reads.** The scheduler recognises only values shaped `<n>d` or
+> it, and it predates the recalibration of 2026-09-24 (and the 2026-09-29 one, §4.3). The reserve
+> that applies is `bridge_reserve_eur` in `budget.json` (private), currently 26.00 — the same
+> quantity under a second name, with a different number. **(2) Keys nothing reads.** The scheduler recognises only values shaped `<n>d` or
 > `<n>h` (`core/schedule/schedule.py`, `parse_cadence`). The seven keys of any other shape —
 > `open_weights_series`, `sealed_scan`, `generation_bridge_protocols`, `active_switch`,
 > `bridge_reserve_monthly`, `retirement_threshold`, `declassify_after` — are policy constants stated in
