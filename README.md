@@ -1,26 +1,48 @@
-# LLM-Archive
+<p align="center">
+  <a href="https://llm-archive.github.io/"><img src="logo.png" alt="LLM-Archive logo" width="120" height="120"></a>
+</p>
+
+<h1 align="center">LLM-Archive</h1>
+
+*We check whether an AI changes its mind when a question says the same thing in different words —
+and we publish the results.*
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22881127.svg)](https://doi.org/10.5281/zenodo.22881127)
+[![Code: AGPL-3.0](https://img.shields.io/badge/code-AGPL--3.0-blue)](LICENSE.md)
+[![Data: CC-BY-4.0](https://img.shields.io/badge/data-CC--BY--4.0-blue)](LICENSE.md)
+[![Prose: CC-BY-SA-4.0](https://img.shields.io/badge/prose-CC--BY--SA--4.0-blue)](LICENSE.md)
+[![core/measure: stdlib only](https://img.shields.io/badge/core%2Fmeasure-stdlib%20only-brightgreen)](core/measure/)
+[![Python: 3.10+](https://img.shields.io/badge/python-3.10%2B-brightgreen)](#how-to-run-it)
 
-A long-running measurement project: does a commercial AI model's decision change when the
-same question is asked in different words — and how would we know if our own way of checking that
-had broken?
+The archive doesn't answer "how smart is an AI." It answers "did something change, when, and for
+whom."
 
 **Live site:** [llm-archive.github.io](https://llm-archive.github.io/) ·
 **Guide:** [llm-archive.github.io/guide](https://llm-archive.github.io/guide/) ·
-**Spec:** [`SPEC.md`](SPEC.md)
+**Live results:** [llm-archive.github.io/index.html#results](https://llm-archive.github.io/index.html#results) ·
+**Methodology:** [llm-archive.github.io/index.html#how](https://llm-archive.github.io/index.html#how)
 
-This repository is the public site and the public dataset, and everything in it is free to use.
-Start with the [guide](https://llm-archive.github.io/guide/) or, if you would rather just run
-something, with "How to run it" below.
+This repository **is** the public site and the public dataset — not a mirror or a summary of one.
+Everything in it, code and data alike, is free to use. New here? Start with the
+[guide](https://llm-archive.github.io/guide/), or skip straight to **"How to run it"** below if
+you'd rather just run something and see for yourself.
 
-## Why it matters
+## Overview
 
-People increasingly hand real decisions to AI models, and the models behind a product name change
-without notice. If the same question, worded differently but meaning the same thing, gets a
-different decision, then the answer depends on phrasing rather than on the question, and a model
-update can shift that without anyone announcing it. LLM-Archive keeps an open, dated, checkable
-record of exactly that one property, and of the evidence that the measuring itself still works.
+People increasingly hand real decisions to AI models — and the model behind a product name can
+change without notice. If the *same* question, worded two different ways that mean the same
+thing, gets two *different* decisions, then the answer depended on phrasing, not on the question —
+and a silent model update can shift that with nobody announcing it. LLM-Archive keeps an open,
+dated, checkable record of exactly that one property, plus the evidence that the measuring itself
+still works, so a finding never has to be taken on faith. The full method — the estimator, the
+null and positive controls, the noise floor, the daily self-check — is walked through step by step
+in the site's own [Methodology](https://llm-archive.github.io/index.html#how) page.
+
+> [!IMPORTANT]
+> LLM-Archive measures **one thing**: how much a model's decision shifts when the same question is
+> reworded. It is not a capability score, not a benchmark ranking, and not comparable across model
+> lines — see [`guide/for-researchers.html`](https://llm-archive.github.io/guide/for-researchers.html)
+> for exactly what a number does and doesn't prove.
 
 - **Cite a specific measurement**, not the project as a whole: a `run_id` and its `protocol_id`
   (see [`CITATION.cff`](CITATION.cff)). A dated, hash-verified measurement can be checked; "LLM-Archive
@@ -64,7 +86,14 @@ headline = stability[stability["on_curve"]]                # the measurements co
 [data dictionary](https://llm-archive.github.io/guide/data-dictionary.html), and there is a page
 written for [data analysts](https://llm-archive.github.io/guide/for-analysts.html).
 
-### Try it on your own model
+### Check one of our numbers yourself
+
+> [!NOTE]
+> Nothing here has to be taken on trust. The stability score of every run whose replies are in
+> `open-lane/` can be recomputed from those replies with a short script and plain arithmetic — it's
+> Step 3 of [`guide/reproducing.html`](https://llm-archive.github.io/guide/reproducing.html).
+
+## How to compare your own model
 
 A model on your own computer costs nothing and needs no account; only a hosted model needs a key.
 
@@ -89,12 +118,6 @@ the archive. The third asks the questions the archive itself publishes. For a mo
 reach through a chat window, `llm_archive_compare.py --print-prompts` writes the questions out for
 you to paste in.
 
-### Check one of our numbers yourself
-
-The stability score of every run whose replies are in `open-lane/` can be recomputed from those
-replies with a short script and plain arithmetic. It is Step 3 of
-[`guide/reproducing.html`](https://llm-archive.github.io/guide/reproducing.html).
-
 ### Or hand it to an AI assistant
 
 [`guide/ai-assistant.md`](guide/ai-assistant.md) is written so you can give it to an AI assistant
@@ -117,14 +140,6 @@ purpose:
 
 See [`LICENSE.md`](LICENSE.md) for the reasoning behind each choice.
 
-## How this repo is maintained
-
-Nothing here is hand-edited. This repo is regenerated from a private working repository on every
-release and pushed as a fresh commit — it shares no git history with that repo, and never receives
-anything outside `SPEC.md` §10's published-file list (development notes, the private question bank,
-and unpublished protocols all stay out). If something here looks wrong, it's a bug in the generator
-or the underlying data, not a one-off edit worth patching directly.
-
 ## Corrections and errata
 
 If you think a published number, a scenario, or a piece of code here is wrong, please say so. Open
@@ -142,6 +157,8 @@ or write to **mkalognomos@gmail.com**, with the run id (or file) and what you ex
 - **What this project publishes:** model responses to invented scenarios, with no personal data
   about real people. If you nevertheless believe something published here concerns you or your
   work, use the same channels.
+
+Security vulnerability, not a data or methodology question? See [`SECURITY.md`](SECURITY.md) instead.
 
 ## Questions or reproducing a result
 
