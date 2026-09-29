@@ -20,7 +20,7 @@ specification at [`SPEC.md`](https://github.com/LLM-Archive/llm-archive.github.i
 | Someone who wants to know what a specific column or term means | [`data-dictionary.md`](data-dictionary.md) and [`glossary.md`](glossary.md) |
 | Someone with a quick question | [`faq.md`](faq.md) |
 | Someone who wants to know how "declared before it was run" is proved | [`timestamps.md`](timestamps.md) |
-| A cited researcher who found an inaccurate quote or wants to respond | [Open an issue](https://github.com/LLM-Archive/llm-archive.github.io/issues) or write to mkalognomos@gmail.com |
+| A cited researcher who found an inaccurate quote or wants to respond | Write to mkalognomos@gmail.com |
 
 ## The one thing to understand before reading anything else
 
