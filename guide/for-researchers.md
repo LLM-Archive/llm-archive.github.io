@@ -27,6 +27,9 @@ same way," and no such claim is ever published.
 
 ## What it does not claim
 
+**In short:** not capability, not correctness, not proof the wording change felt neutral to the
+model, not comparable across model lines, not a human-likeness score. Detail on each below.
+
 - **Not a measure of capability.** A very capable model can be highly unstable, and vice versa.
 - **Not a measure of correctness**, for protocols with no ground truth (framing, preference-style
   decisions). Stability there is a measure of *consistency*, not of being right.

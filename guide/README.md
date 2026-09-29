@@ -1,22 +1,13 @@
 # LLM-Archive guide
 
-This folder is written for people **using** LLM-Archive — researchers, developers, journalists,
+**In one sentence:** LLM-Archive tracks whether commercial AI models keep giving the same decision
+when the same question is asked in a different wording — measured openly, over time, so a change
+can be caught and dated instead of going unnoticed.
+
+This is written for people **using** LLM-Archive — researchers, developers, journalists,
 students. Everything here is in English, kept in sync with the frozen
 specification at [`SPEC.md`](https://github.com/LLM-Archive/llm-archive.github.io/blob/master/SPEC.md). If the two ever disagree,
 `SPEC.md` is correct and this guide is what needs fixing.
-
-These `.md` files are the source; `python3 -m core.plumbing.render_guide build` turns each into a
-matching `.html` page (`README.md` → `index.html`) with a shared nav bar, sitting next to its
-source the same way `website/index.html` sits next to `website/template.html` — a small, standalone
-docs site alongside the closed 8-page main site (spec.md §11), not inside it. The generated `.html`
-files aren't committed (see `.gitignore`); see `core/plumbing/render_guide.py`'s docstring for why
-that renderer is a hand-rolled markdown converter rather than a dependency.
-
-The public site is live. The public repository is `github.com/LLM-Archive/llm-archive.github.io`,
-serving `llm-archive.github.io`; this guide ships as part of it. Everything below describes how
-the finished project is designed to work. Where something described here isn't built yet, it's
-marked as such — this project's own principle (`SPEC.md` §9, §10) is to disclose gaps rather
-than imply a feature exists before it does, and this guide follows the same rule about itself.
 
 ## Where to start, depending on who you are
 

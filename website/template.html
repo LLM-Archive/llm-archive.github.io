@@ -666,6 +666,17 @@ public counterpart checking them — only the <code>anchoring</code> type (along
 from twin pairing by design, since pairing a headline number with a type that doesn't even enter
 the same aggregate wouldn't be a real comparison.</small></p>
 
+<h3>We check our own instrument daily</h3>
+<p>There are 10 <code>guard</code>-lane protocols, kept private (unlike the 2 <code>open</code> ones
+above). Each day, one of them runs — a 10-day cycle — against a local, frozen reference model: a
+small, open-weights model pinned to a fixed version inside a container, not the real model being
+measured, so it costs nothing.</p>
+<p>Because the reference model is frozen — same weights, same settings, temperature 0, in theory
+always the same answer to the same question — a day's measurement drifting beyond a statistical
+margin can't mean "the model changed": it's frozen, it can't. It means something broke in our own
+code or pipeline instead — a bug, a library update, an environment change. That's when an
+<code>instrument_alarm</code> is raised.</p>
+
 <h3>How we get to the result</h3>
 <p>From the model's raw answers to the number in the results table, in order:</p>
 <div class="scroll"><table>

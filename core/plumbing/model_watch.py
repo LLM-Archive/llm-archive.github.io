@@ -39,11 +39,18 @@ guessing: this module only reports it, `series_closed` is a human decision.
 `record_type: "model_observed"` is not in `core/measure/schema.py`'s frozen `RECORD_TYPES`; same
 precedent as `instrument_alarm` and `subject_fingerprint`.
 
-Sizing, decided 2026-09-24: the bridge runs the four protocols at their own frozen n_per_scenario=2
-(960 calls for old + new, projected ~EUR 6.3), not the n=1 spec.md §4.3 first proposed --
-`core/measure/` cannot run a protocol at another n without it becoming a different protocol.
-`budget.json`'s `bridge_reserve_eur` was raised to match; the plan printed below shows projected
-cost against that reserve.
+Sizing, decided 2026-09-24: the bridge runs the four protocols at their own frozen n_per_scenario
+(960 calls for old + new at v0's n_per_scenario=2, projected ~EUR 6.3), not the n=1 spec.md §4.3
+first proposed -- `core/measure/` cannot run a protocol at another n without it becoming a
+different protocol. `budget.json`'s `bridge_reserve_eur` was raised to match.
+
+Corrected 2026-09-29: `plan_bridge()` used to hardcode `__v0`, so once `v1` was admitted the bridge
+would have kept measuring the superseded series forever -- the one place in the codebase that had
+not caught up with `core/plumbing/versions.py`'s rule ("only the highest admitted version of each
+family is current"), which `core/schedule/run_due.py` already follows for the ordinary sweep. Fixed
+to call `versions.latest_versions()` like everything else does. Consequence: since `v1`'s frozen
+n_per_scenario is 8 (not v0's 2), a bridge run while `v1` is current costs about 4x -- 3840 calls,
+projected ~EUR 25.3, not ~EUR 6.3. `bridge_reserve_eur` was raised to match (see budget.json).
 """
 
 from __future__ import annotations
@@ -57,6 +64,7 @@ from pathlib import Path
 
 from core.budget import budget
 from core.measure.schema import REWORDING_TYPES, VERSIONS
+from core.plumbing import versions
 from core.schedule.run_due import _EST_COST_PER_CALL_EUR
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -124,18 +132,22 @@ def _type_of(protocol_id: str) -> str:
 
 def plan_bridge(protocols_dir: Path, old_id: str, new_id: str) -> dict:
     """The bridge's shape per spec.md §4.3: four protocols, one per rewording type, old AND new.
-    Picks, per type, the alphabetically first admitted `v0` protocol -- the spec says "one per
-    type" and names no family, so a fixed deterministic rule keeps two runs of this function from
-    ever choosing differently. Pure apart from reading protocol files."""
+    Picks, per type, the CURRENT (highest admitted) version of the alphabetically first family --
+    same rule `versions.latest_versions()` already gives `core/schedule/run_due.py` for the
+    ordinary sweep, so a v0 protocol superseded by an admitted v1 is never chosen here either. The
+    spec says "one per type" and names no family, so a fixed deterministic rule keeps two runs of
+    this function from ever choosing differently. Pure apart from reading protocol files."""
+    admitted = [
+        json.loads(path.read_text(encoding="utf-8"))
+        for path in sorted(protocols_dir.glob("*.json"))
+    ]
+    admitted = [p for p in admitted if p.get("status") == "admitted"]
     chosen: dict[str, dict] = {}
-    for path in sorted(protocols_dir.glob("*.json")):
-        p = json.loads(path.read_text(encoding="utf-8"))
-        if p.get("status") != "admitted" or not p["protocol_id"].endswith("__v0"):
-            continue
+    for p in sorted(versions.latest_versions(admitted), key=lambda p: p["protocol_id"]):
         chosen.setdefault(_type_of(p["protocol_id"]), p)
     missing = [t for t in REWORDING_TYPES if t not in chosen]
     if missing:
-        raise RuntimeError(f"no admitted v0 protocol for type(s) {missing}; cannot plan a bridge")
+        raise RuntimeError(f"no admitted protocol for type(s) {missing}; cannot plan a bridge")
     protocols = [chosen[t] for t in REWORDING_TYPES]
     calls_per_model = sum(p["n"] * len(VERSIONS) for p in protocols)
     return {
@@ -479,7 +491,7 @@ def _verify() -> list[str]:
         expect(r["appeared"] == ["claude-sonnet-5-5"], "new id must be detected")
         expect(any("needs_review" in l for l in lines), "a new id must be reported as needs_review, not adopted")
         expect(any("bridge plan" in l for l in lines), "a new id must print the bridge plan")
-        expect(not any("EXCEEDS" in l for l in lines), "the real reserve must cover a bridge at the frozen n (960 calls)")
+        expect(not any("EXCEEDS" in l for l in lines), "the real reserve must cover a bridge at the fixture's CURRENT versions (1680 calls, v1's wording admitted)")
         tight = json.loads(budget.DEFAULT_CONFIG.read_text(encoding="utf-8"))
         tight["bridge_reserve_eur"] = "1.00"
         (tmp_path / "tight.json").write_text(json.dumps(tight))
@@ -509,12 +521,13 @@ def _verify() -> list[str]:
         check(listed=["claude-sonnet-5-5", "claude-sonnet-9"], write=False, **kw)
         expect(reg.read_text() == before, "write=False must not touch the log")
 
-        # 10. plan: one per type, admitted v0 only, deterministic, alphabetically first family.
+        # 10. plan: one per type, CURRENT (highest admitted) version, deterministic, alphabetically first family.
         plan = plan_bridge(pdir, "old", "new")
         expect([_type_of(p) for p in plan["protocol_ids"]] == list(REWORDING_TYPES), "plan must be one protocol per type, in type order")
-        expect(all(p.endswith("__v0") for p in plan["protocol_ids"]), "plan must use v0 protocols only")
-        expect(plan["protocol_ids"][0] == "base_rate_neglect__wording__v0", "plan must pick the alphabetically first family")
-        expect(plan["calls_per_model"] == 4 * 30 * 4 and plan["calls_total"] == 2 * 4 * 30 * 4, "call count must be 4 protocols x n x 4 versions x 2 models")
+        expect(plan["protocol_ids"][0] == "base_rate_neglect__wording__v1", "plan must pick the CURRENT version (v1, since it is admitted) of the alphabetically first family")
+        expect(all(p.endswith("__v0") for p in plan["protocol_ids"][1:]), "types with no admitted v1 must still fall back to v0")
+        expect(plan["calls_per_model"] == (120 + 30 + 30 + 30) * 4 and plan["calls_total"] == 2 * (120 + 30 + 30 + 30) * 4,
+               "call count must use each type's CURRENT version's own n (v1's 120 for wording, v0's 30 elsewhere)")
         # 11. a missing type is an error, not a silent short bridge.
         (pdir / "base_rate_neglect__default__v0.json").unlink()
         (pdir / "risky_choice_framing__default__v0.json").unlink()

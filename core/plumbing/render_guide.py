@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import argparse
 import html as html_lib
+import json
 import re
 import sys
 from pathlib import Path
@@ -225,7 +226,7 @@ PAGE_CSS = """
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 system-ui,-apple-system,"Segoe UI",Inter,sans-serif;-webkit-font-smoothing:antialiased}
 .wrap{max-width:760px;margin:0 auto;padding:0 20px}
-header{border-bottom:1px solid var(--line);padding:16px 0;margin-bottom:8px}
+header{border-bottom:1px solid var(--line);padding:16px 0;margin-bottom:8px;position:sticky;top:0;background:var(--bg);backdrop-filter:blur(8px);z-index:50}
 header .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px}
 .brand{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);text-decoration:none;margin-right:8px}
 .brand .logo{width:36px;height:36px;display:block;flex:none;background:var(--logo,currentColor);-webkit-mask:url(../logo.png?v=2) center/contain no-repeat;mask:url(../logo.png?v=2) center/contain no-repeat}
@@ -254,8 +255,8 @@ html.theme-white{--ink:#15161a;--logo:#55585f;--dim:#5a5c66;--faint:#8c8f99;--li
 html.theme-blue{--logo:var(--ink);--ink:#d9e7f5;--dim:#a9bed2;--faint:#7189a1;--line:#29435d;--bg:#071a2b;--raise:#0d263d;--link:#65c7f7}
 html.theme-dark{--logo:var(--ink);--ink:#e8edf3;--dim:#aeb9c7;--faint:#7f8b99;--line:#34404d;--bg:#14181d;--raise:#1d242c;--link:#79aef2}
 .themes{position:fixed;top:14px;right:18px;z-index:80;display:flex;gap:4px;padding:4px;border:1px solid var(--line);border-radius:9px;background:var(--bg);box-shadow:0 4px 16px rgba(20,20,24,.08)}
-html.theme-dark .themes{box-shadow:0 4px 16px rgba(0,0,0,.3)}
 @media(max-width:760px){.themes{position:static;width:fit-content;margin:8px 10px 0 auto}}
+html.theme-dark .themes{box-shadow:0 4px 16px rgba(0,0,0,.3)}
 .themes button{border:0;border-radius:6px;background:transparent;color:var(--dim);cursor:pointer;font:11px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif;padding:6px 8px}
 .themes button:hover,.themes button.on{background:var(--raise);color:var(--ink);font-weight:650}
 .codewrap{position:relative;margin:0 0 16px}
@@ -271,12 +272,73 @@ th{text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;lette
 td{padding:10px 14px 10px 0;border-bottom:1px solid var(--line);vertical-align:top}
 footer{border-top:1px solid var(--line);padding:18px 0;font-size:12.5px;color:var(--faint)}
 footer a{color:var(--faint)}
+.search{position:relative;margin:20px 0 28px}
+.search label{display:block;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);margin-bottom:7px}
+.search input{width:100%;font:14px system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:var(--raise);border:1px solid var(--line);border-radius:7px;padding:10px 13px}
+.search input::placeholder{color:var(--faint)}
+.search input:focus{outline:2px solid var(--link);outline-offset:1px}
+.search-results{position:absolute;top:calc(100% + 6px);left:0;right:0;max-height:60vh;overflow-y:auto;background:var(--bg);border:1px solid var(--line);border-radius:9px;box-shadow:0 10px 30px rgba(20,20,24,.12);z-index:90}
+html.theme-dark .search-results,html.theme-blue .search-results{box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.search-results a{display:block;padding:9px 12px;text-decoration:none;border-bottom:1px solid var(--line)}
+.search-results a:last-child{border-bottom:0}
+.search-results a.on,.search-results a:hover{background:var(--raise)}
+.sr-t{display:block;font-size:12.5px;font-weight:650;color:var(--ink);margin-bottom:2px}
+.sr-s{display:block;font-size:12px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+p.fine{font-size:12.5px;line-height:1.55;color:var(--faint)}
 """
 
 
 def _page_title(md_text: str, fallback: str) -> str:
     m = re.search(r"^#\s+(.*)$", md_text, re.MULTILINE)
     return m.group(1).strip() if m else fallback
+
+
+_SECTION_RE = re.compile(r'<h([1-4]) id="([^"]+)">(.*?)</h\1>', re.S)
+_TAG_RE = re.compile(r"<[^>]+>")
+
+
+def _plain_text(html_fragment: str) -> str:
+    """Rendered HTML -> plain text for the search index: strip tags, unescape entities, collapse
+    whitespace. Reused, not reimplemented, from already-rendered body_html -- no second pass over
+    the raw markdown."""
+    return re.sub(r"\s+", " ", html_lib.unescape(_TAG_RE.sub(" ", html_fragment))).strip()
+
+
+def _page_sections(body_html: str) -> list[tuple[str, str, str]]:
+    """(heading_text, anchor, section_body_html) for every heading in one rendered page, plus a
+    leading ("", "", ...) entry for any content before the first heading (or the whole page, if it
+    has none)."""
+    matches = list(_SECTION_RE.finditer(body_html))
+    if not matches:
+        return [("", "", body_html)]
+    sections = []
+    if matches[0].start() > 0:
+        sections.append(("", "", body_html[: matches[0].start()]))
+    for idx, m in enumerate(matches):
+        end = matches[idx + 1].start() if idx + 1 < len(matches) else len(body_html)
+        sections.append((_plain_text(m.group(3)), m.group(2), body_html[m.end() : end]))
+    return sections
+
+
+def build_search_index(rendered_pages: list[tuple[str, str, str]]) -> list[dict]:
+    """One entry per section (a heading plus the text under it, or a page's lead-in text) across
+    every guide page. `rendered_pages` is [(out_name, page_title, body_html), ...] -- plain data,
+    no ranking or tokenizing here: SEARCH_SCRIPT does simple substring matching client-side, same
+    spirit as the rest of this module (no dependency, understands only what's actually needed)."""
+    index: list[dict] = []
+    for out_name, page_title, body_html in rendered_pages:
+        for heading, anchor, section_html in _page_sections(body_html):
+            snippet = _plain_text(section_html)
+            if not heading and not snippet:
+                continue
+            index.append({"page": out_name, "title": page_title, "heading": heading, "anchor": anchor, "snippet": snippet[:220]})
+    return index
+
+
+def _embed_json(data) -> str:
+    """json.dumps, made safe to sit inside a <script> element: a literal `</` in a string value
+    (e.g. a snippet quoting a closing tag) would otherwise end the script element early."""
+    return json.dumps(data, ensure_ascii=False).replace("</", "<\\/").replace("<!--", "<\\!--")
 
 
 # Adds a "Copy" button to every fenced code block. Progressive enhancement only: the <pre><code>
@@ -339,7 +401,114 @@ s.addEventListener('animationend',function(){s.classList.remove('spin');});})();
 </script>"""
 
 
-def render_page(current_out_name: str, title: str, body_html: str) -> str:
+# Client-side search over GUIDE_SEARCH_INDEX (embedded per page, see _embed_json/build_search_index).
+# No third-party code, no fetch -- the index is inline, so this works from file:// too, not just
+# http(s). Plain substring matching, ranked by where the match landed (heading/title beats
+# snippet) -- same "understands only what's needed" spirit as the rest of this module; a fuzzier
+# search is not something guide/*.md has ever needed. Progressive enhancement: without JavaScript
+# the search box simply does nothing, same stance as COPY_SCRIPT.
+SEARCH_SCRIPT = """<script>
+(function(){
+  var input=document.getElementById('guide-search-input');
+  var panel=document.getElementById('guide-search-results');
+  if(!input||!panel||typeof GUIDE_SEARCH_INDEX==='undefined')return;
+  var items=[],active=-1;
+
+  function esc(s){return String(s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];});}
+
+  function linkFor(it){return it.page+(it.anchor?'#'+it.anchor:'');}
+
+  function render(){
+    if(!items.length){panel.hidden=true;panel.innerHTML='';return;}
+    panel.innerHTML=items.map(function(it,i){
+      var sub=it.heading&&it.heading!==it.title?esc(it.title)+' &rsaquo; '+esc(it.heading):esc(it.title);
+      return '<a href="'+linkFor(it)+'"'+(i===active?' class="on"':'')+'>'+
+             '<span class="sr-t">'+sub+'</span><span class="sr-s">'+esc(it.snippet.slice(0,120))+'</span></a>';
+    }).join('');
+    panel.hidden=false;
+  }
+
+  function search(q){
+    q=q.trim().toLowerCase();
+    active=-1;
+    if(q.length<2){items=[];render();return;}
+    var scored=[];
+    GUIDE_SEARCH_INDEX.forEach(function(it){
+      var h=(it.heading||'').toLowerCase(),t=(it.title||'').toLowerCase(),s=(it.snippet||'').toLowerCase();
+      var score=-1;
+      if(h.indexOf(q)===0||t.indexOf(q)===0)score=0;
+      else if(h.indexOf(q)>-1)score=1;
+      else if(t.indexOf(q)>-1)score=2;
+      else if(s.indexOf(q)>-1)score=3;
+      if(score>-1)scored.push([score,it]);
+    });
+    scored.sort(function(a,b){return a[0]-b[0];});
+    items=scored.slice(0,8).map(function(p){return p[1];});
+    render();
+  }
+
+  function moveActive(delta){
+    if(!items.length)return;
+    active=(active+delta+items.length)%items.length;
+    render();
+  }
+
+  input.addEventListener('input',function(){search(input.value);});
+  input.addEventListener('keydown',function(e){
+    if(panel.hidden&&e.key!=='Escape')return;
+    if(e.key==='ArrowDown'){e.preventDefault();moveActive(1);}
+    else if(e.key==='ArrowUp'){e.preventDefault();moveActive(-1);}
+    else if(e.key==='Enter'&&active>-1){location.href=linkFor(items[active]);}
+    else if(e.key==='Escape'){panel.hidden=true;input.blur();}
+  });
+  document.addEventListener('click',function(e){
+    if(e.target!==input&&!panel.contains(e.target))panel.hidden=true;
+  });
+  document.addEventListener('keydown',function(e){
+    var el=document.activeElement,tag=el&&el.tagName?el.tagName.toLowerCase():'';
+    if(e.key==='/'&&tag!=='input'&&tag!=='textarea'){e.preventDefault();input.focus();input.select();}
+  });
+})();
+</script>"""
+
+
+# Sits in the body of the guide's home page (README.md -> index.html) rather than in the shared
+# header: a search box makes sense as the first thing a reader landing on the guide reaches for,
+# not as a permanent fixture on every page. See _promote_before_marker_paragraph/SEARCH_HOME_MARKER
+# below for exactly where.
+SEARCH_WIDGET_HTML = """<div class="search">
+<label for="guide-search-input">Search this guide</label>
+<input id="guide-search-input" type="search" placeholder="Search guide: type to search…" aria-label="Search the guide" autocomplete="off">
+<div id="guide-search-results" class="search-results" hidden></div>
+</div>"""
+
+# README.md's own words -- identifies the paragraph the search box goes before, and which then
+# becomes a small, asterisked footnote under it. Plain text, not markup, so it still matches after
+# render_markdown's inline formatting runs (no bold/code/links land on this particular sentence
+# today).
+SEARCH_HOME_MARKER = "this guide is what needs fixing."
+
+FOOTNOTE_CLASS = "fine"
+
+
+def _promote_before_marker_paragraph(body_html: str, marker: str, widget_html: str, footnote_class: str) -> str:
+    """Moves `widget_html` to sit right before the <p> containing `marker`, and marks that
+    paragraph with `footnote_class` (see PAGE_CSS's .fine) plus a literal leading asterisk, so it
+    reads as a small footnote under the search box rather than the page's lead sentence. Leaves
+    body_html unchanged if the marker isn't found, rather than raising -- a rewording of that
+    sentence in README.md should not break the build, only silently drop the search box (caught
+    instead by _verify's own check that it's present)."""
+    at = body_html.find(marker)
+    if at == -1:
+        return body_html
+    start = body_html.rfind("<p>", 0, at)
+    if start == -1:
+        return body_html
+    before, para_open, rest = body_html[:start], body_html[start : start + 3], body_html[start + 3 :]
+    return before + widget_html + para_open.replace("<p>", f'<p class="{footnote_class}">* ') + rest
+
+
+def render_page(current_out_name: str, title: str, body_html: str, search_index: list[dict] | None = None) -> str:
     def _nav_link(out_name: str, label: str) -> str:
         cls = ' class="on"' if out_name == current_out_name else ""
         return f'<a{cls} href="{out_name}">{label}</a>'
@@ -359,7 +528,7 @@ def render_page(current_out_name: str, title: str, body_html: str) -> str:
 </head>
 <body>
 <header><div class="wrap">
-<div class="brand"><a href="index.html" aria-label="LLM-Archive guide home"><span class="logo" aria-hidden="true"></span></a><span class="bt">LLM-Archive<small>Guide</small></span></div>
+<div class="brand"><a href="../index.html" aria-label="LLM-Archive home"><span class="logo" aria-hidden="true"></span></a><span class="bt">LLM-Archive<small>Guide</small></span></div>
 <nav>{nav}</nav>
 </div></header>
 <div class="themes" role="group" aria-label="Theme picker">
@@ -376,6 +545,8 @@ and <a href="https://github.com/LLM-Archive/llm-archive.github.io/blob/master/SP
 </footer>
 {THEME_SCRIPT}
 {COPY_SCRIPT}
+<script>const GUIDE_SEARCH_INDEX = {_embed_json(search_index or [])};</script>
+{SEARCH_SCRIPT}
 </body>
 </html>
 """
@@ -384,11 +555,18 @@ and <a href="https://github.com/LLM-Archive/llm-archive.github.io/blob/master/SP
 def build_guide(guide_dir: Path = DEFAULT_GUIDE_DIR, out_dir: Path | None = None) -> list[Path]:
     out_dir = out_dir or guide_dir
     out_dir.mkdir(parents=True, exist_ok=True)
-    written = []
+    rendered = []
     for md_name, out_name, nav_label in PAGES:
         text = (guide_dir / md_name).read_text(encoding="utf-8")
         title = _page_title(text, nav_label)
-        page_html = render_page(out_name, title, render_markdown(text))
+        body_html = render_markdown(text)
+        if out_name == "index.html":
+            body_html = _promote_before_marker_paragraph(body_html, SEARCH_HOME_MARKER, SEARCH_WIDGET_HTML, FOOTNOTE_CLASS)
+        rendered.append((out_name, title, body_html))
+    search_index = build_search_index(rendered)
+    written = []
+    for out_name, title, body_html in rendered:
+        page_html = render_page(out_name, title, body_html, search_index)
         out_path = out_dir / out_name
         out_path.write_text(page_html, encoding="utf-8")
         written.append(out_path)
@@ -455,6 +633,37 @@ def _verify() -> list[str]:
             errors.append(f"render_page: {name} must not load anything external")
     if "http://" in COPY_SCRIPT or "https://" in COPY_SCRIPT or "src=" in COPY_SCRIPT:
         errors.append("render_page: the copy-button script must not load anything external")
+    if "http://" in SEARCH_SCRIPT or "https://" in SEARCH_SCRIPT or "fetch(" in SEARCH_SCRIPT or "src=" in SEARCH_SCRIPT:
+        errors.append("render_page: the search script must not load anything external (index is embedded inline)")
+    if "GUIDE_SEARCH_INDEX" not in page_html:
+        errors.append("render_page: every page should embed GUIDE_SEARCH_INDEX (search.js needs it, even on pages without the search box itself)")
+
+    promoted = _promote_before_marker_paragraph(f"<p>x {SEARCH_HOME_MARKER}</p>", SEARCH_HOME_MARKER, SEARCH_WIDGET_HTML, FOOTNOTE_CLASS)
+    want = SEARCH_WIDGET_HTML + f'<p class="{FOOTNOTE_CLASS}">* x {SEARCH_HOME_MARKER}</p>'
+    if promoted != want:
+        errors.append(f"_promote_before_marker_paragraph: got {promoted!r}, want {want!r}")
+    if _promote_before_marker_paragraph("<p>unrelated</p>", SEARCH_HOME_MARKER, SEARCH_WIDGET_HTML, FOOTNOTE_CLASS) != "<p>unrelated</p>":
+        errors.append("_promote_before_marker_paragraph: a missing marker must leave body_html unchanged, not raise or corrupt it")
+
+    sections = _page_sections('<p>orphan lead-in</p><h2 id="w">W</h2><p>body text</p>')
+    if sections[0] != ("", "", "<p>orphan lead-in</p>") or sections[1][:2] != ("W", "w"):
+        errors.append(f"_page_sections: content before the first heading should get its own leading entry, got {sections!r}")
+
+    sample = [
+        ("a.html", "Page A", '<h1 id="page-a">Page A</h1><p>intro text</p><h2 id="widgets">Widgets</h2><p>about widgets here</p>'),
+        ("b.html", "Page B", '<h1 id="page-b">Page B</h1><p>nothing to do with the other page</p>'),
+    ]
+    idx = build_search_index(sample)
+    if not any(e["page"] == "a.html" and e["heading"] == "Widgets" and "widgets" in e["snippet"] for e in idx):
+        errors.append(f"build_search_index: missing expected 'Widgets' section, got {idx!r}")
+    if not any(e["page"] == "a.html" and e["heading"] == "Page A" and "intro text" in e["snippet"] for e in idx):
+        errors.append("build_search_index: intro text right after the H1 should belong to the H1's own section")
+    if not any(e["page"] == "b.html" for e in idx):
+        errors.append("build_search_index: a page with only its title heading should still get an entry")
+
+    embedded = _embed_json([{"snippet": "a </script> tag and a <!-- comment -->"}])
+    if "</script" in embedded or "<!--" in embedded:
+        errors.append(f"_embed_json: did not escape a sequence that could break out of <script>, got {embedded!r}")
 
     if not DEFAULT_GUIDE_DIR.exists():
         return errors
@@ -476,8 +685,12 @@ def _verify() -> list[str]:
             errors.append("build_guide: index.html nav should list every page")
         if "**" in re.sub(r"<pre>.*?</pre>", "", index_html, flags=re.S):
             errors.append("build_guide: index.html has unconverted '**' outside a code block")
+        if 'id="guide-search-input"' not in index_html or 'id="guide-search-results"' not in index_html:
+            errors.append("build_guide: index.html (the guide's home page) should carry the search box")
 
         faq_html = (out_dir / "faq.html").read_text(encoding="utf-8")
+        if 'id="guide-search-input"' in faq_html:
+            errors.append("build_guide: the search box belongs on index.html only, not on every page")
         if 'href="glossary.html"' not in faq_html:
             errors.append("build_guide: faq.html should link to glossary.html, not glossary.md")
         if 'href="../README.md"' not in faq_html:

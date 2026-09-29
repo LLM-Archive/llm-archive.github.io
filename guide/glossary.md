@@ -249,6 +249,17 @@ and a rotating daily replay of one of the 10 `guard` protocols against that same
 (expected to stay flat within normal statistical noise). If either moves, publication for that day
 pauses — the measurement is still recorded, flagged `instrument_suspect`, off every curve.
 
+**`runtime_fingerprint`** — the first half of the Instrument, above: 12 fixed prompts sent to the
+frozen reference model every day, greedy decoding, and hashed. Because the model, the container and
+every setting are pinned, the hash is expected to be byte-for-byte identical every single day. Any
+difference at all means something in the project's own code or environment changed — not the
+model, which can't — and raises an `instrument_alarm`.
+
+**`subject_fingerprint`** — a separate, much smaller daily check on the *real* model being measured,
+not the reference model: 24 fixed, simple yes/no questions (e.g. "Is 7 a prime number?"), never
+full scenarios. Its own small, public daily series — cheap enough that it is the one measurement
+never cut by the budget ladder, so it keeps running even at the lowest funding rung.
+
 **`generation_bridge`** — a special, immediate measurement run comparing an outgoing model version
 against its explicitly declared successor, in the same week, on all 4 protocol types (one
 protocol per type, at each protocol's own frozen settings), funded from its own dedicated reserve
