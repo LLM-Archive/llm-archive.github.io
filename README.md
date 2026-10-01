@@ -59,6 +59,42 @@ in the site's own [Methodology](https://llm-archive.github.io/index.html#how) pa
   claim (not a capability score, not a ranking, not comparable across model lines) is in
   [`guide/for-researchers.html`](https://llm-archive.github.io/guide/for-researchers.html).
 
+## Where LLM-Archive differs
+
+`guide/for-researchers.html` already explains how this sits next to MMLU, BIG-bench, HELM and
+LMSYS Arena (different question, not a ranking). A few design choices are uncommon enough,
+against the wider evaluation and prompt-robustness literature, to call out on their own:
+
+- **The null change (A′) is published next to every measurement.** Few evaluation efforts publish
+  a noise floor alongside every number, and without one a real effect and measurement noise look
+  identical. Recent work measuring prompt sensitivity across models ([POSIX](https://arxiv.org/abs/2410.02185))
+  and paraphrase-induced instability ([WASSA 2026](https://aclanthology.org/2026.wassa-1.5/)) shows how common —
+  and how rarely disclosed — this failure mode is elsewhere.
+- **Pre-registration is enforced by code, not stated as intent.** Every protocol is timestamped
+  (OpenTimestamps, anchored to a Bitcoin block) before its first paid run, and the paid sweep
+  refuses to run one that isn't (`not_preregistered`). A recent proposal for sealed,
+  pre-committed model evaluation ([LLM Olympiad](https://arxiv.org/abs/2603.23292)) argues for
+  exactly this; here it is a gate in `core/measure/`, not a policy.
+- **The open/guard twin pairing is a running contamination check, not a post-hoc audit.** Most
+  contamination-detection work ([TRUCE](https://arxiv.org/abs/2403.00393),
+  [PaCoST](https://arxiv.org/abs/2406.18326)) tries to detect contamination after the fact in an
+  existing benchmark. Twin pairing here is fixed before any run: if only the published twin
+  moves, that is contamination; if both move, the model changed.
+- **The instrument is measured as its own subject.** A frozen, pinned local reference model runs
+  the same daily checks as the model under study, and an alarm halts publication — never
+  measurement — the moment the pipeline itself looks broken. A 2026 study of commercial,
+  black-box endpoints used as measurement instruments
+  ([arXiv:2609.04198](https://arxiv.org/pdf/2609.04198)) concludes they are unsuitable for stable,
+  reproducible measurement on their own — the exact failure mode this instrument exists to catch.
+- **Generalization is refused, not hedged.** Every number's scope is stated as "on this panel, on
+  this model, on that day," never as a property of a model in general (`docs/spec.md` §1.1, §6).
+  Audits of how often published capability claims outrun their evidence
+  ([Frontier Lag](https://arxiv.org/abs/2605.04135)) motivate this as a design constraint, not a
+  caveat added afterward.
+- **Each release is a citable, licensed artifact, not a write-up.** Every version is archived with
+  its own Zenodo DOI and a Croissant metadata file, under CC-BY-4.0 (data) and CC-BY-SA-4.0
+  (prose) — built to be cited and re-derived, not just read.
+
 ## How to run it
 
 You need **Python 3.10 or newer** and **git**. There is nothing to install: it is all standard
