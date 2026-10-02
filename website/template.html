@@ -171,6 +171,13 @@ figure svg{min-width:660px}
 .sgb i{display:block;background:rgba(5,0,0,0.65);border-radius:2px 2px 0 0;min-height:2px}
 body.theme-blue .sgb i,body.theme-dark .sgb i{background:rgba(168,219,255,0.65)}
 .sgb span{font-size:9.5px;color:var(--faint);padding-top:3px}
+#sgtip{position:fixed;display:none;z-index:60;pointer-events:none;max-width:220px;
+  background:var(--raise);border:1px solid var(--line);border-radius:8px;padding:7px 10px;
+  font-size:12.5px;line-height:1.4;color:var(--ink);box-shadow:0 4px 14px rgba(0,0,0,.18)}
+#sgtip b{display:block;font-size:10.5px;color:var(--faint);font-weight:700;text-transform:uppercase;
+  letter-spacing:.04em;margin-bottom:2px}
+#sgline{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:59;display:none}
+#sgline line{stroke:var(--faint);stroke-width:1.3;stroke-dasharray:3 2}
 .scale{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--faint);margin-bottom:20px}
 .scale i{width:26px;height:12px;border-radius:3px;display:inline-block}
 
@@ -767,6 +774,7 @@ plain terms, the codes and words that show up in the tables.</p>
 <thead><tr><th>Term</th><th>What it is</th><th>Why it matters</th></tr></thead>
 <tbody>
 <tr><td>Protocol</td><td>One fixed question set, paired with one kind of change (see the next table). Its name looks like <code>base_rate_neglect__wording__v0</code>: the family of scenarios, the kind of change, and the series (<code>v0</code>, <code>v1</code>).</td><td>A protocol is a question, never a result. We run the same protocol again every month, so any change in the numbers comes from the model and not from the questions.</td></tr>
+<tr><td>Scenario</td><td>One question, asked in four versions (A, A′, B, C — see below).</td><td>A protocol's panel is 15 of these. The per-scenario breakdown you see in a measurement's detail view is one gap value per scenario.</td></tr>
 <tr><td>Panel</td><td>The 15 fixed scenarios that make up one protocol.</td><td>The panel is frozen and never resampled, so every result means exactly "on this panel, on this model, on that day", not a claim about all questions.</td></tr>
 <tr><td>Version (A, A′, B, C)</td><td>The four copies of each scenario. <b>A</b> is the base wording. <b>A′</b> changes only spaces and punctuation. <b>B</b> changes the wording, the anchor, the option order or the default. <b>C</b> changes a number so that the right answer flips.</td><td>Only A against B is the measurement. A′ should not change anything (if it does, the answers are just unsteady). C should change (if it doesn't, the model isn't reading the question).</td></tr>
 <tr><td>Lane (open, guard, sealed)</td><td>How much of a protocol is public. <b>Open</b>: every response is published, and the first scenario in full. <b>Guard</b>: only outcome counts, and the wording stays private. <b>Sealed</b>: only the fact that it exists.</td><td>Keeping guard and sealed protocols private protects them from ending up in future models' training data while the model they measure is in use. The open ones are the public sample anyone can check.</td></tr>
@@ -792,7 +800,7 @@ code preserves the record's exact identity.</small></p>
 <tr><td><abbr title="How different the answers are from one another">Entropy</abbr></td><td>Variety of answers</td><td>Very low entropy means the AI answers almost the same way every time, so a high stability can be misleading.</td></tr>
 <tr><td><abbr title="The random difference we expect even when there's no real change">Noise floor</abbr></td><td>Random variation</td><td>A change below this threshold could just be chance, and isn't presented as a real improvement or weakness.</td></tr>
 <tr><td>Confidence interval / CI95%</td><td>Margin of uncertainty</td><td>The range around the stability, e.g. 92%–96%. Shows how precise the estimate is from that particular sample.</td></tr>
-<tr><td>Sample size / <code>n</code></td><td>How many responses each version gets</td><td><code>n</code> is 30 in the <code>v0</code> protocols and 120 in the <code>v1</code> protocols (15 scenarios, asked 2 or 8 times each). It is fixed per protocol and never changes from run to run.</td></tr>
+<tr><td>Sample size / <code>n</code></td><td>How many responses each version gets</td><td><code>n</code> is 120 in the <code>v1</code> protocols (15 scenarios, asked 8 times each). It is fixed per protocol and never changes from run to run.</td></tr>
 <tr><td>on curve / off curve</td><td>Whether a result counts in the main chart</td><td>A result that fails one of our checks is still published in full, but marked with the reason and left off the main chart. It doesn't by itself mean the measurement is wrong.</td></tr>
 <tr><td>Flag</td><td>The name of the check that failed</td><td>For example <code>below_surface_noise</code>: the real change moved the answer no more than the null change (a punctuation-only edit) did, so there is nothing to report. Each flag is explained in the results panel.</td></tr>
 </tbody></table></div>
@@ -811,7 +819,6 @@ code preserves the record's exact identity.</small></p>
 <div class="scroll glossary"><table>
 <thead><tr><th>Term</th><th>What you see</th><th>Why it's there</th></tr></thead>
 <tbody>
-<tr><td>Heatmap</td><td>A table with colored cells.</td><td>Shows at a glance where the model is more stable and where it falls short.</td></tr>
 <tr><td>JSONL / Croissant-RAI</td><td>Data file formats.</td><td>JSONL has one record per line. Croissant-RAI describes the dataset and responsible-use information.</td></tr>
 <tr><td>Baseline / reference model</td><td>A reference point, or the frozen control model.</td><td>Here, the reference model is <code>@@REFERENCE_MODEL_ID@@</code> — it checks whether our own measurement pipeline drifted; it's not a general model ranking.</td></tr>
 <tr><td>Silent update</td><td>A change behind the same API with no new visible name.</td><td>The daily fixed-question checks and the long-running series help reveal whether the product's behavior changed.</td></tr>
@@ -850,10 +857,6 @@ code preserves the record's exact identity.</small></p>
     </div></div>
   </div>
 
-  <h3>The <span id="dnitems"></span> scenarios, individually</h3>
-  <div class="sgw" id="sgw"></div>
-  <p><small id="sgnote"></small></p>
-
   <div id="texts">
     <h3>The four versions</h3>
     <div class="pair" style="grid-template-columns:1fr">
@@ -888,6 +891,13 @@ code preserves the record's exact identity.</small></p>
     <tr><td>Date</td><td class="num" id="ddate"></td></tr>
   </tbody></table>
 
+  <h3>The <span id="dnitems"></span> scenarios, individually <span style="text-transform:none;font-weight:400;letter-spacing:normal;font-size:11px;color:var(--faint)">— latest measurement, shown above</span></h3>
+  <p>Each bar below is one scenario — one question, asked in four versions (A, A′, B, C).</p>
+  <div class="sgw" id="sgw"></div>
+  <p><small id="sgnote"></small></p>
+  <div id="sgtip" role="tooltip"></div>
+  <svg id="sgline"><line x1="0" y1="0" x2="0" y2="0"/></svg>
+
   <div id="dbridge"></div>
 
   <div id="dhist" hidden>
@@ -909,29 +919,29 @@ code preserves the record's exact identity.</small></p>
     </div>
   </div>
 
-  <h3>The checks</h3>
-  <p><small>Hover over a <span class="help-tip" aria-hidden="true">?</span> to see what each check means. <b>[PASSED]</b> = the flag shown next to it is not raised; <b>[FAILED]</b> = it is raised.</small></p>
+  <h3>Results</h3>
+  <p><small>Hover over a <span class="help-tip" aria-hidden="true">?</span> to see what each check means.</small></p>
   <table><tbody>
-    <tr><td><span class="status-pill" id="pcgn"></span> Null change <small>(A&nbsp;↔&nbsp;A′)</small> <code class="flagid">below_surface_noise</code> <span class="help-tip" title="How much the answer moves when the question is changed in a meaningless way (formatting only). Should be close to zero.">?</span></td><td class="num" id="cgn"></td></tr>
-    <tr><td><span class="status-pill" id="pcgp"></span> Positive control <small>(A&nbsp;↔&nbsp;C)</small> <code class="flagid">not_reading</code> <span class="help-tip" title="How much the answer moves when the question is changed on purpose so the right answer flips. Should be large: it shows the model is actually reading the question.">?</span></td><td class="num" id="cgp"></td></tr>
-    <tr><td><span class="status-pill" id="pcen"></span> Entropy A / B <code class="flagid">degenerate_candidate</code> <span class="help-tip" title="How varied the answers were, from 0 (always the same answer) to 1 (evenly spread). Very low means the model may just repeat one answer.">?</span></td><td class="num" id="cen"></td></tr>
-    <tr><td><span class="status-pill" id="pcu"></span> Lost responses A / A′ / B / C <code class="flagid">asymmetric_missingness</code> <span class="help-tip" title="The share of responses in each version that could not be read as a decision (refused, cut off, unparseable). Should be small and similar across versions.">?</span></td><td class="num" id="cu"></td></tr>
-    <tr><td><span class="status-pill" id="pcb"></span> Drop bound A↔B <code class="flagid">drop_confounded</code> <span class="help-tip" title="The most the A↔B gap could be wrong by, because some responses were lost. It has to stay small, or the result can't be trusted.">?</span></td><td class="num" id="cb"></td></tr>
-    <tr><td><span class="status-pill" id="pcbaa"></span> Drop bound A↔A′ <code class="flagid">(same flag)</code> <span class="help-tip" title="The most the A↔A′ gap could be wrong by, because some responses were lost. It has to stay small, or the result can't be trusted.">?</span></td><td class="num" id="cbaa"></td></tr>
-    <tr><td><span class="status-pill" id="pcbac"></span> Drop bound A↔C <code class="flagid">(same flag)</code> <span class="help-tip" title="The most the A↔C gap could be wrong by, because some responses were lost. It has to stay small, or the result can't be trusted.">?</span></td><td class="num" id="cbac"></td></tr>
-    <tr><td><span class="status-pill" id="pcgb"></span> Below drop bound A↔B <code class="flagid">below_drop_bound</code> <span class="help-tip" title="Whether the A↔B gap is larger than the drop bound. If it is not, the gap cannot be told apart from what lost responses alone could explain.">?</span></td><td class="num" id="cgb"></td></tr>
-    <tr><td><span class="status-pill" id="pcsd"></span> Scenario concentration <code class="flagid">scenario_dominated</code> <span class="help-tip" title="How much of the total gap comes from just the two most affected scenarios out of fifteen (ties included). If it is high, the result rests on a couple of scenarios.">?</span></td><td class="num" id="csd"></td></tr>
+    <tr><td>Null change <small>(A&nbsp;↔&nbsp;A′)</small> <span class="status-pill" id="pcgn"></span> <code class="flagid">below_surface_noise</code> <span class="help-tip" title="How much the answer moves when the question is changed in a meaningless way (formatting only). Should be close to zero.">?</span></td><td class="num" id="cgn"></td></tr>
+    <tr><td>Positive control <small>(A&nbsp;↔&nbsp;C)</small> <span class="status-pill" id="pcgp"></span> <code class="flagid">not_reading</code> <span class="help-tip" title="How much the answer moves when the question is changed on purpose so the right answer flips. Should be large: it shows the model is actually reading the question.">?</span></td><td class="num" id="cgp"></td></tr>
+    <tr><td>Entropy A / B <span class="status-pill" id="pcen"></span> <code class="flagid">degenerate_candidate</code> <span class="help-tip" title="How varied the answers were, from 0 (always the same answer) to 1 (evenly spread). Very low means the model may just repeat one answer.">?</span></td><td class="num" id="cen"></td></tr>
+    <tr><td>Lost responses A / A′ / B / C <span class="status-pill" id="pcu"></span> <code class="flagid">asymmetric_missingness</code> <span class="help-tip" title="The share of responses in each version that could not be read as a decision (refused, cut off, unparseable). Should be small and similar across versions.">?</span></td><td class="num" id="cu"></td></tr>
+    <tr><td>Drop bound A↔B <span class="status-pill" id="pcb"></span> <code class="flagid">drop_confounded</code> <span class="help-tip" title="The most the A↔B gap could be wrong by, because some responses were lost. It has to stay small, or the result can't be trusted.">?</span></td><td class="num" id="cb"></td></tr>
+    <tr><td>Drop bound A↔A′ <span class="status-pill" id="pcbaa"></span> <code class="flagid">drop_confounded</code> <span class="help-tip" title="The most the A↔A′ gap could be wrong by, because some responses were lost. It has to stay small, or the result can't be trusted.">?</span></td><td class="num" id="cbaa"></td></tr>
+    <tr><td>Drop bound A↔C <span class="status-pill" id="pcbac"></span> <code class="flagid">drop_confounded</code> <span class="help-tip" title="The most the A↔C gap could be wrong by, because some responses were lost. It has to stay small, or the result can't be trusted.">?</span></td><td class="num" id="cbac"></td></tr>
+    <tr><td>Below drop bound A↔B <span class="status-pill" id="pcgb"></span> <code class="flagid">below_drop_bound</code> <span class="help-tip" title="Whether the A↔B gap is larger than the drop bound. If it is not, the gap cannot be told apart from what lost responses alone could explain.">?</span></td><td class="num" id="cgb"></td></tr>
+    <tr><td>Scenario concentration <span class="status-pill" id="pcsd"></span> <code class="flagid">scenario_dominated</code> <span class="help-tip" title="How much of the total gap comes from just the two most affected scenarios out of fifteen (ties included). If it is high, the result rests on a couple of scenarios.">?</span></td><td class="num" id="csd"></td></tr>
   </tbody></table>
 
   <div id="quar" hidden style="margin-top:28px">
     <div class="callout" style="border-color:var(--bad)">
-    <p><b>Off the main curve.</b> <small>The number above is still what was measured — a flag below means an
+    <p><b>Off the main curve.</b> <small>A flag below means an
     automatic check couldn't rule out an alternative explanation, so this measurement isn't counted
     on the main curve. It doesn't by itself mean the measurement is wrong.</small></p>
     <div id="qbody"></div></div>
   </div>
   <div id="verdict"></div>
-  <p style="margin-top:16px"><small><a class="filedl" id="dlm" href="#">↓ Download this measurement</a> (all numbers shown above, as one JSON file)</small></p>
+  <p style="margin-top:16px"><small><a class="filedl" id="dlm" href="#">↓ Download this measurement</a> (the same numbers, as one JSON file — field names explained in the <a href="guide/data-dictionary.html" target="_blank" rel="noopener">data dictionary</a>)</small></p>
   <p id="dlopen" hidden><small>Full questions and answers for this run: <a class="filedl" id="dlopenlink" href="#" download></a></small></p>
 </aside>
 
@@ -1171,7 +1181,7 @@ function openDetail(i){const d=ALL[i];
  }
  const sg=d.scenario_gaps_pct||[], mx=sg.length?Math.max.apply(null,sg):0;
  document.getElementById('sgw').innerHTML=sg.map((g,j)=>
-   `<div class="sgb" title="scenario ${j+1}: ${g==null?'not computable — no valid responses to compare':g.toFixed(1)+' points'}"><i style="height:${g!=null&&mx>0?(100*g/mx).toFixed(0):0}%"></i><span>${j+1}</span></div>`).join('');
+   `<div class="sgb" data-j="${j+1}" data-g="${g==null?'':g}" aria-label="scenario ${j+1}: ${g==null?'not computable — no valid responses to compare':g.toFixed(1)+'% gap, 0 to 100, 100 meaning no overlap at all'}"><i style="height:${g!=null&&mx>0?(100*g/mx).toFixed(0):0}%"></i><span>${j+1}</span></div>`).join('');
  const valid=sg.map((g,j)=>({g,j})).filter(x=>x.g!=null);
  const total=valid.reduce((a,x)=>a+x.g,0);
  // The two largest gaps, but never an arbitrary pick among equals: scenarios tied with the
@@ -1299,7 +1309,33 @@ function openDetail(i){const d=ALL[i];
  }
  dr.hidden=false;requestAnimationFrame(()=>{dr.classList.add('on');sc.classList.add('on')});
  document.getElementById('close').focus();}
-function shutDetail(){dr.classList.remove('on');sc.classList.remove('on');setTimeout(()=>dr.hidden=true,220);}
+function shutDetail(){dr.classList.remove('on');sc.classList.remove('on');setTimeout(()=>dr.hidden=true,220);hideSgTip();}
+
+// Scenario-bar tooltip: a small callout with a diagonal leader line from the hovered bar,
+// positioned (and flipped) in plain viewport pixels, since #sgtip/#sgline are position:fixed.
+const sgw=document.getElementById('sgw'), sgtip=document.getElementById('sgtip'),
+  sgline=document.getElementById('sgline'), sglineEl=sgline.querySelector('line');
+function hideSgTip(){sgtip.style.display='none';sgline.style.display='none';}
+function showSgTip(bar){
+ const j=bar.dataset.j, g=bar.dataset.g;
+ sgtip.innerHTML='<b>scenario '+j+'</b>'+(g===''?'not computable — no valid responses to compare':parseFloat(g).toFixed(1)+'% gap (0% = identical, 100% = no overlap at all)');
+ sgtip.style.display='block';
+ const br=bar.querySelector('i').getBoundingClientRect(), gap=14;
+ const tw=sgtip.offsetWidth, th=sgtip.offsetHeight, cx=br.left+br.width/2;
+ let left=cx+gap, flip=false;
+ if(left+tw>window.innerWidth-8){left=cx-gap-tw;flip=true;}
+ let top=br.top-gap-th, below=false;
+ if(top<8){top=bar.getBoundingClientRect().bottom+gap;below=true;}
+ sgtip.style.left=left+'px';sgtip.style.top=top+'px';
+ sgline.style.display='block';
+ sglineEl.setAttribute('x1',cx);sglineEl.setAttribute('y1',br.top);
+ sglineEl.setAttribute('x2',flip?left+tw:left);
+ sglineEl.setAttribute('y2',below?top:top+th);
+}
+sgw.addEventListener('mouseover',e=>{const bar=e.target.closest('.sgb');if(bar)showSgTip(bar);});
+sgw.addEventListener('mouseout',e=>{const bar=e.target.closest('.sgb');if(bar&&!bar.contains(e.relatedTarget))hideSgTip();});
+sgw.addEventListener('scroll',hideSgTip);
+window.addEventListener('resize',hideSgTip);
 ['rows','orows'].forEach(id=>{
  const t=document.getElementById(id);
  t.addEventListener('click',e=>{const r=e.target.closest('.row');if(r)openDetail(+r.dataset.i);});
