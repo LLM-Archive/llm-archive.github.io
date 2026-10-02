@@ -376,11 +376,11 @@ COPY_SCRIPT = """<script>
 # Theme picker, the same three themes and the same localStorage key as the main site
 # (website/template.html), so a choice made on either is kept on the other -- the guide is served
 # from the same origin. The early script runs in <head> and sets the class on <html> before the page
-# is painted, so there is no flash of the wrong theme. Default 'blue', like the main site. Without
+# is painted, so there is no flash of the wrong theme. Default 'white' (Light), like the main site. Without
 # JavaScript the page keeps following the system light/dark setting (PAGE_CSS's media query).
 THEME_HEAD_SCRIPT = """<script>
-(function(){var t='blue';try{t=localStorage.getItem('llm-archive-theme')||'blue';}catch(e){}
-if(t!=='white'&&t!=='dark'&&t!=='blue')t='blue';document.documentElement.classList.add('theme-'+t);})();
+(function(){var t='white';try{t=localStorage.getItem('llm-archive-theme')||'white';}catch(e){}
+if(t!=='white'&&t!=='dark'&&t!=='blue')t='white';document.documentElement.classList.add('theme-'+t);})();
 </script>"""
 
 THEME_SCRIPT = """<script>
@@ -391,7 +391,7 @@ THEME_SCRIPT = """<script>
     buttons.forEach(function(b){var on=b.dataset.theme===t;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));});
     try{localStorage.setItem('llm-archive-theme',t);}catch(e){}
   }
-  var cur='blue';['white','dark','blue'].forEach(function(t){if(document.documentElement.classList.contains('theme-'+t))cur=t;});
+  var cur='white';['white','dark','blue'].forEach(function(t){if(document.documentElement.classList.contains('theme-'+t))cur=t;});
   buttons.forEach(function(b){b.addEventListener('click',function(){apply(b.dataset.theme);});});
   apply(cur);
 })();
@@ -532,9 +532,9 @@ def render_page(current_out_name: str, title: str, body_html: str, search_index:
 <nav>{nav}</nav>
 </div></header>
 <div class="themes" role="group" aria-label="Theme picker">
-<button type="button" data-theme="blue">Blue</button>
 <button type="button" data-theme="white">Light</button>
 <button type="button" data-theme="dark">Dark</button>
+<button type="button" data-theme="blue">Blue</button>
 </div>
 <main class="wrap">
 {body_html}

@@ -138,6 +138,7 @@ tbody tr:last-child td{border-bottom:0}
 .callout{background:var(--raise);border:1px solid var(--line);border-left:3px solid var(--ink);
   border-radius:0 8px 8px 0;padding:16px 18px;margin:0 0 20px}
 .callout p:last-child{margin-bottom:0}
+#locked p{font-size:14px}
 
 .pair{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px}
 @media(max-width:620px){.pair{grid-template-columns:1fr}}
@@ -213,8 +214,8 @@ body.theme-dark .t-dn,body.theme-blue .t-dn{color:var(--ink)}
   border-radius:8px;background:var(--bg);color:var(--ink);font-size:12.5px;line-height:1.45;font-weight:400;
   box-shadow:0 4px 16px rgba(20,20,24,.18);pointer-events:none}
 #tip[hidden]{display:none}
-.lock-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;
-  background:rgba(17,24,39,.04);border:1px solid var(--line);font-size:12px;font-weight:700;
+.lock-badge{display:inline-flex;align-items:center;gap:8px;padding:5px 9px;border-radius:999px;
+  background:rgba(17,24,39,.04);border:1px solid var(--line);font-size:11px;font-weight:700;
   color:var(--ink);margin:0 0 10px}
 .audit-panel{margin-top:12px;padding:10px;border:1px solid var(--line);border-radius:10px;
   background:linear-gradient(180deg, rgba(17,24,39,.035), rgba(17,24,39,.015));}
@@ -313,9 +314,9 @@ footer{border-top:1px solid var(--line);margin-top:70px;padding-top:22px;font-si
 </div></header>
 
 <div class="themes" aria-label="Theme picker">
-  <button type="button" data-theme="blue" class="on">Blue</button>
-  <button type="button" data-theme="white">Light</button>
+  <button type="button" data-theme="white" class="on">Light</button>
   <button type="button" data-theme="dark">Dark</button>
+  <button type="button" data-theme="blue">Blue</button>
 </div>
 
 <main class="wrap">
@@ -967,7 +968,7 @@ function applyTheme(theme){
   try{localStorage.setItem('llm-archive-theme',theme);}catch(e){}
 }
 themeButtons.forEach(button=>button.addEventListener('click',()=>applyTheme(button.dataset.theme)));
-try{applyTheme(localStorage.getItem('llm-archive-theme')||'blue');}catch(e){applyTheme('blue');}
+try{applyTheme(localStorage.getItem('llm-archive-theme')||'white');}catch(e){applyTheme('white');}
 
 const ROWS=/*@@ROWS_JSON@@*/[];
 const OROWS=/*@@OROWS_JSON@@*/[];
