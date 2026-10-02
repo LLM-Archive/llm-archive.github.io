@@ -7,8 +7,8 @@
 <link rel="icon" type="image/png" href="../logo.png?v=2">
 <link rel="apple-touch-icon" href="../logo.png?v=2">
 <script>
-(function(){var t='blue';try{t=localStorage.getItem('llm-archive-theme')||'blue';}catch(e){}
-if(t!=='white'&&t!=='dark'&&t!=='blue')t='blue';document.documentElement.classList.add('theme-'+t);})();
+(function(){var t='white';try{t=localStorage.getItem('llm-archive-theme')||'white';}catch(e){}
+if(t!=='white'&&t!=='dark'&&t!=='blue')t='white';document.documentElement.classList.add('theme-'+t);})();
 </script>
 <style>
 :root{--ink:#15161a;--logo:#55585f;--dim:#5a5c66;--faint:#8c8f99;--line:#e4e4e8;--bg:#fff;--raise:#fafafb;--link:#1a4fd6}
@@ -93,9 +93,9 @@ p.fine{font-size:12.5px;line-height:1.55;color:var(--faint)}
 <a href="timestamps.html">Time proofs</a></nav>
 </div></header>
 <div class="themes" role="group" aria-label="Theme picker">
-<button type="button" data-theme="blue">Blue</button>
 <button type="button" data-theme="white">Light</button>
 <button type="button" data-theme="dark">Dark</button>
+<button type="button" data-theme="blue">Blue</button>
 </div>
 <main class="wrap">
 <h1 id="glossary">Glossary</h1>
@@ -181,7 +181,7 @@ and <a href="https://github.com/LLM-Archive/llm-archive.github.io/blob/master/SP
     buttons.forEach(function(b){var on=b.dataset.theme===t;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));});
     try{localStorage.setItem('llm-archive-theme',t);}catch(e){}
   }
-  var cur='blue';['white','dark','blue'].forEach(function(t){if(document.documentElement.classList.contains('theme-'+t))cur=t;});
+  var cur='white';['white','dark','blue'].forEach(function(t){if(document.documentElement.classList.contains('theme-'+t))cur=t;});
   buttons.forEach(function(b){b.addEventListener('click',function(){apply(b.dataset.theme);});});
   apply(cur);
 })();
