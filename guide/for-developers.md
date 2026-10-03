@@ -41,12 +41,12 @@ stability of every `open`-lane run from its raw responses and compares it with `
 **You should see** `OK` on every line. This is the quickest way to convince yourself the published
 data and the published formula agree, before you compare anything of your own with them.
 
-### 4. Ask your model our real questions, and see ours next to yours
+### 4. Ask your model the real questions, and see LLM-Archive's answers next to yours
 
 `guide/llm_archive_compare.py` asks **your** model the 8 questions LLM-Archive publishes in full
 (2 dilemmas × 4 versions), extracts each answer with the archive's own rule, and prints your
-model's answers next to the ones the archive's models gave. This is the one place where you and we
-answer *exactly the same questions*. Pick the line that matches where your model runs:
+model's answers next to the ones the archive's models gave. This is the one place where your model and the
+archive's models answer *exactly the same questions*. Pick the line that matches where your model runs:
 
 ```bash
 # A model on your own machine, through Ollama (ollama.com). Start Ollama first.
@@ -132,7 +132,7 @@ model wrote it, and `measurement.json` holds the record, with the same field nam
 `stability.csv` ([`data-dictionary.md`](data-dictionary.md)), except `api_surface_sha`, which only applies to runs
 against a commercial API.
 
-### 6. Read your result, and compare it with ours
+### 6. Read your result, and compare it with LLM-Archive's
 
 Read it in this order, the same order the archive reads its own numbers:
 
@@ -143,10 +143,10 @@ Read it in this order, the same order the archive reads its own numbers:
 2. **Then read stability against the noise floor.** With this few replies, even a model that never
    changes its answer shows a gap of about the noise floor. A difference smaller than the floor, or
    inside the interval, is not a finding.
-3. **Then compare with ours.** Two comparisons are honest, and they answer different things:
-   - *Same questions, yours and ours:* step 4. Which option each model chose on the 8 published
+3. **Then compare with LLM-Archive's.** Two comparisons are honest, and they answer different things:
+   - *Same questions, yours and the archive's:* step 4. Which option each model chose on the 8 published
      questions.
-   - *Same method, same kind of question:* the table in step 5. It shows our published stability,
+   - *Same method, same kind of question:* the table in step 5. It shows LLM-Archive's published stability,
      interval and noise floor for risky-choice rewording next to yours. The panel is a different one,
      so read the rows side by side, not as a score. Overlapping intervals mean the difference is
      within what sampling noise alone can produce.

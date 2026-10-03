@@ -44,7 +44,7 @@ PY
 on this model, on that day, it kept the same decision X % of the time when the wording changed."*
 Every column is explained in `guide/data-dictionary.md`.
 
-### Step 3 — recompute the numbers we published from the raw responses
+### Step 3 — recompute the published numbers from the raw responses
 
 The `open`-lane protocols publish every raw response (see below), so a published score can be
 re-derived from scratch instead of taken on trust. Stability = 100 − the gap between the A and B
@@ -91,7 +91,7 @@ OpenAI-compatible API, or a chat window, in [`ai-assistant.md`](ai-assistant.md)
 spot-check, not a score: two questions cannot support a stability number.
 
 To run the whole method on your model instead — four versions of ten scenarios, the archive's own
-estimator, a noise floor, an interval, and our published numbers printed beside yours — use
+estimator, a noise floor, an interval, and LLM-Archive's published numbers printed beside yours — use
 `guide/sample/llm_archive_sample.py`, on a small invented practice panel; see
 [`for-developers.md`](for-developers.md), steps 5 and 6. That result is never a published number.
 
@@ -120,11 +120,11 @@ substitute a paraphrase of the scenarios; it is not the same panel.
 
 ---
 
-## In plain words: how to download our results and compare with your own model
+## In plain words: how to download LLM-Archive's results and compare with your own model
 
-**1. Get our published numbers.** On the site, go to **Downloads** and get `stability.csv`. It's a
-spreadsheet of every measurement we've run: which question, which model, how stable the answer was (0 to
-100), and whether it passed our quality checks.
+**1. Get the published numbers.** On the site, go to **Downloads** and get `stability.csv`. It's a
+spreadsheet of every measurement it has run: which question, which model, how stable the answer was (0 to
+100), and whether it passed its quality checks.
 
 **2. Get the real answers — for 2 of the 12 protocols.** Only two protocols publish their
 trial-level data: `risky_choice_framing__wording` and `base_rate_neglect__wording` (marked
@@ -134,16 +134,16 @@ and version it belongs to. **Not the questions themselves** — each line carrie
 not the prompt, so the file lets you verify a question you already hold, not read one you don't.
 The only wording published today is the first scenario's, on the Results page (step 4 below).
 
-**3. What you can do with that today: check our math, for your own sake.** Take the real responses
+**3. What you can do with that today: check the math, for your own sake.** Take the real responses
 from step 2 and recompute the published stability score yourself — the formula is public
 (`SPEC.md` §6, plain arithmetic, no special software needed). This is the difference
 between citing a number because a website says so and knowing it's right because you re-derived it
-yourself. If your number matches ours, you can now cite it with that confidence. If it doesn't,
-you've caught something worth not trusting yet — worth telling us too, since a wrong published
+yourself. If your number matches the published one, you can now cite it with that confidence. If it doesn't,
+you've caught something worth not trusting yet — worth reporting too, since a wrong published
 number helps no one, but either way you now know before you relied on it (open an
-[issue](https://github.com/LLM-Archive/llm-archive.github.io/issues) or write to mkalognomos@gmail.com if you want to send it our way).
+[issue](https://github.com/LLM-Archive/llm-archive.github.io/issues) or write to mkalognomos@gmail.com if you want to send it in).
 
-**4. What you can't do yet: run your own model on our exact questions.** To fairly compare a model
+**4. What you can't do yet: run your own model on the exact same questions.** To fairly compare a model
 of your own, you'd need the wording of all 15 questions in a protocol. Today, only the **first**
 question's wording is public (shown on the Results page when you open that row) — the other 14
 aren't published anywhere yet. This is a known, disclosed gap, not an oversight — see
