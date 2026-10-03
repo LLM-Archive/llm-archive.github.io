@@ -52,7 +52,7 @@ Each question comes in four versions. **Only one of them is the measurement.**
 
 Two things the output will not support:
 
-- **Answering differently from our models is not instability.** Which option a model prefers is its
+- **Answering differently from the archive's models is not instability.** Which option a model prefers is its
   own call. Stability is only about whether *your* model's answer moved between A and B.
 - **Two questions is a spot-check, not a score.** Each real protocol uses a frozen panel of 15
   scenarios asked many times over. A difference here is a reason to look closer, not a result.
@@ -95,7 +95,7 @@ decision X % of the time when the wording changed."* Every column is explained i
 
 ---
 
-## 3. Check our arithmetic yourself
+## 3. Check the arithmetic yourself
 
 The two `open` protocols publish every raw response, so a published score can be re-derived from
 scratch rather than taken on trust. Stability = 100 − the gap between the A and B answer
