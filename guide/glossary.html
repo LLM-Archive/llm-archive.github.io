@@ -18,7 +18,7 @@ if(t!=='white'&&t!=='dark'&&t!=='blue')t='white';document.documentElement.classL
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 system-ui,-apple-system,"Segoe UI",Inter,sans-serif;-webkit-font-smoothing:antialiased}
 .wrap{max-width:760px;margin:0 auto;padding:0 20px}
-header{border-bottom:1px solid var(--line);padding:16px 0;margin-bottom:8px;position:sticky;top:0;background:var(--bg);backdrop-filter:blur(8px);z-index:50}
+header{border-bottom:1px solid var(--line);padding:16px 0;margin-bottom:8px;background:var(--bg)}
 header .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px}
 .brand{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);text-decoration:none;margin-right:8px}
 .brand .logo{width:36px;height:36px;display:block;flex:none;background:var(--logo,currentColor);-webkit-mask:url(../logo.png?v=2) center/contain no-repeat;mask:url(../logo.png?v=2) center/contain no-repeat}
@@ -77,9 +77,21 @@ html.theme-dark .search-results,html.theme-blue .search-results{box-shadow:0 10p
 .sr-t{display:block;font-size:12.5px;font-weight:650;color:var(--ink);margin-bottom:2px}
 .sr-s{display:block;font-size:12px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 p.fine{font-size:12.5px;line-height:1.55;color:var(--faint)}
+.toc{display:none}
+.has-toc h2,.has-toc h3{scroll-margin-top:16px}
+@media(min-width:1280px){
+  .toc{display:block;position:fixed;top:96px;left:max(16px,calc(50% - 380px - 250px));width:210px;max-height:calc(100vh - 120px);overflow-y:auto;font-size:13px;line-height:1.4}
+}
+.toc-h{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);margin:0 0 10px}
+.toc ul{list-style:none;margin:0;padding:0;border-left:1px solid var(--line)}
+.toc li{margin:0}
+.toc a{display:block;padding:5px 10px;margin-left:-1px;border-left:2px solid transparent;color:var(--dim);text-decoration:none}
+.toc li.sub a{padding-left:22px;font-size:12.5px}
+.toc a:hover{color:var(--ink)}
+.toc a.on{color:var(--ink);font-weight:650;border-left-color:var(--ink)}
 </style>
 </head>
-<body>
+<body class="has-toc">
 <header><div class="wrap">
 <div class="brand"><a href="../index.html" aria-label="LLM-Archive home"><span class="logo" aria-hidden="true"></span></a><span class="bt">LLM-Archive<small>Guide</small></span></div>
 <nav><a href="index.html">Guide home</a>
@@ -97,6 +109,7 @@ p.fine{font-size:12.5px;line-height:1.55;color:var(--faint)}
 <button type="button" data-theme="dark">Dark</button>
 <button type="button" data-theme="blue">Blue</button>
 </div>
+<nav class="toc" aria-label="On this page"><p class="toc-h">On this page</p><ul><li><a href="#the-core-idea">The core idea</a></li><li><a href="#the-published-numbers">The published numbers</a></li><li class="sub"><a href="#the-name-in-the-files-and-the-word-used-in-the-text">The name in the files, and the word used in the text</a></li><li><a href="#statuses-flags-and-what-comes-off-the-curve">Statuses, flags, and what comes off the curve</a></li><li><a href="#trust-and-provenance">Trust and provenance</a></li></ul></nav>
 <main class="wrap">
 <h1 id="glossary">Glossary</h1>
 <p>Plain-language definitions of every term and code used in LLM-Archive's data and site. Frozen technical definitions are in <a href="https://github.com/LLM-Archive/llm-archive.github.io/blob/master/SPEC.md"><code>SPEC.md</code></a>; this file exists to explain them to a reader seeing them for the first time. Terms are grouped by topic, not alphabetically, because most of them only make sense next to the ones around them.</p>
@@ -277,6 +290,25 @@ s.addEventListener('animationend',function(){s.classList.remove('spin');});})();
     var el=document.activeElement,tag=el&&el.tagName?el.tagName.toLowerCase():'';
     if(e.key==='/'&&tag!=='input'&&tag!=='textarea'){e.preventDefault();input.focus();input.select();}
   });
+})();
+</script>
+<script>
+(function(){
+  var links=[].slice.call(document.querySelectorAll('.toc a'));if(!links.length)return;
+  var heads=links.map(function(a){return document.getElementById(a.getAttribute('href').slice(1));});
+  var toc=document.querySelector('.toc'),header=document.querySelector('header');
+  var ticking=false;
+  function update(){
+    ticking=false;var cur=0;
+    var top=Math.max(24,header.getBoundingClientRect().bottom+28);
+    toc.style.top=top+'px';toc.style.maxHeight='calc(100vh - '+(top+24)+'px)';
+    heads.forEach(function(h,i){if(h&&h.getBoundingClientRect().top<120)cur=i;});
+    links.forEach(function(a,i){a.classList.toggle('on',i===cur);});
+  }
+  function onChange(){if(!ticking){ticking=true;requestAnimationFrame(update);}}
+  window.addEventListener('scroll',onChange,{passive:true});
+  window.addEventListener('resize',onChange);
+  update();
 })();
 </script>
 </body>
