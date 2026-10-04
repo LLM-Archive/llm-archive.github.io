@@ -54,6 +54,11 @@
   columns is left for later, not guessed here. Own build check:
   `python3 -m core.plumbing.render verify`. Doesn't yet describe `open-lane/` in `croissant.json`
   (needs a Croissant `fileSet`, not `fileObject`), or build the HTML pages — separate pieces.
+- `declassify.py` — publishes all 15 scenarios and full traces of a protocol the owner lists by
+  hand in `declassified.json`, and refuses any entry that is still current, shares a panel with a
+  current protocol or its twin, or has no bridge (spec.md §10). `status` / `check` say what could be
+  declassified today; `bridge` compares two panels on the same model. Empty list: writes nothing.
+  `python3 -m core.plumbing.declassify verify`.
 - `subject_fingerprint.py` — the daily check against the REAL commercial model (spec.md §7): 24
   fixed, short yes/no fact checks (12 yes / 12 no, in same-topic pairs so an "always yes" strategy
   scores only 50%), asked with the exact same frozen `DECISION: X` grammar every protocol prompt

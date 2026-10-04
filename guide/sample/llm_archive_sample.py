@@ -23,7 +23,12 @@ Defaults (every one can be changed with the flag beside it):
 
 This is a PRACTICE panel: ten invented scenarios (guide/sample/sample_protocol.json), not any protocol
 LLM-Archive measures. Its result can never be compared with a published number and is not a
-`comparison_point`. Python 3.10+, standard library only.
+`comparison_point`.
+
+A declassified protocol is different: `--protocol declassified/<protocol_id>.json` runs the real
+panel (all 15 scenarios, 4 x n calls), checks its two hashes first, and compares your result with
+every published measurement of the same protocol by the archive's own rule (stats.compare).
+Python 3.10+, standard library only.
 """
 
 from __future__ import annotations
@@ -41,7 +46,8 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # guide/, for llm_archive_compare
 
-from core.measure import measurement  # noqa: E402
+from core.measure import measurement, stats  # noqa: E402
+from core.measure.chain import compute_panel_sha256, compute_protocol_sha256  # noqa: E402
 from core.measure.chain import sha256_hex  # noqa: E402
 from core.measure.client import Response, classify  # noqa: E402
 from core.measure.invariants import check_protocol  # noqa: E402
@@ -188,9 +194,30 @@ def compare_with_published(m: dict) -> None:
     print("For the same questions asked of your model and of ours, use guide/llm_archive_compare.py.")
 
 
-def report(m: dict, out_dir: Path) -> None:
+def compare_same_protocol(m: dict) -> None:
+    """A declassified protocol: the same panel, so a real comparison, by stats.compare()."""
+    path = ROOT / "stability.csv"
+    rows = []
+    if path.is_file():
+        with open(path, encoding="utf-8") as f:
+            rows = [r for r in csv.DictReader(f) if r["record_type"] == "measurement" and r["protocol_id"] == m["protocol_id"]]
+    if not rows or m["stability_pct"] is None:
+        print("\nNo published measurement of this protocol to compare with (stability.csv missing or empty for it).")
+        return
+    print(f"\nYours against every published measurement of {m['protocol_id']} (same panel, stats.compare):")
+    for row in sorted(rows, key=lambda r: r["run_date"]):
+        theirs = {k: _num(row[k]) for k in ("stability_pct", "ci_low_pct", "ci_high_pct", "drop_bound_pct_ab")}
+        if None in theirs.values():
+            continue
+        verdict = stats.compare(theirs, m)
+        word = {"flat": "no detectable difference", "improved": "yours is more stable", "regressed": "yours is less stable"}[verdict]
+        print(f"  {row['subject_model_id']:<30}{row['run_date']}  {_pct(theirs['stability_pct']):>7}  -> {word}")
+
+
+def report(m: dict, out_dir: Path, practice: bool = True) -> None:
     line = "=" * 72
-    print(f"\n{line}\nPRACTICE PANEL RESULT: {m['subject_model_id']}\n{line}")
+    title = "PRACTICE PANEL RESULT" if practice else f"RESULT ON {m['protocol_id']}"
+    print(f"\n{line}\n{title}: {m['subject_model_id']}\n{line}")
     lost: dict[str, int] = {}
     for counts in m["outcomes"].values():
         for outcome, count in counts.items():
@@ -223,6 +250,10 @@ def report(m: dict, out_dir: Path) -> None:
     print("\nFlags:", ", ".join(m["flags"]) if m["flags"] else "none")
     for flag in m["flags"]:
         print(f"  {flag}: {WHAT_FLAGS_MEAN.get(flag, '')}")
+    if not practice:
+        compare_same_protocol(m)
+        print(f"\nSaved: {out_dir}/ (trials.jsonl = every reply, measurement.json = the record)")
+        return
     compare_with_published(m)
     print(f"\nSaved: {out_dir}/ (trials.jsonl = every reply, measurement.json = the record)")
     print("Read it with care: ten invented scenarios and 20 replies per version make a wide interval,")
@@ -236,15 +267,20 @@ def main() -> int:
     parser.add_argument("--openai", action="store_true", help="use an OpenAI-compatible API instead of Ollama")
     parser.add_argument("--base-url", help="default: Ollama http://localhost:11434, OpenAI https://api.openai.com/v1")
     parser.add_argument("--api-key-env", default="OPENAI_API_KEY", help="env var holding your key")
+    parser.add_argument("--protocol", type=Path, default=PROTOCOL_PATH, help="a declassified/<protocol_id>.json instead of the practice panel")
     parser.add_argument("--fake", action="store_true", help="no model: a synthetic one, only to see the output")
     parser.add_argument("--out", type=Path, default=Path("sample_results"))
     parser.add_argument("--date", default=date.today().isoformat())
     args = parser.parse_args()
 
-    protocol = json.loads(PROTOCOL_PATH.read_text(encoding="utf-8"))
+    protocol = json.loads(args.protocol.read_text(encoding="utf-8"))
     errors = check_protocol(protocol)
     if errors:
-        sys.exit("guide/sample/sample_protocol.json fails gate 1 (was it edited?):\n  " + "\n  ".join(errors))
+        sys.exit(f"{args.protocol} fails gate 1 (was it edited?):\n  " + "\n  ".join(errors))
+    practice = args.protocol.resolve() == PROTOCOL_PATH
+    if not practice and (compute_panel_sha256(protocol["scenarios"]) != protocol["panel_sha256"]
+                         or compute_protocol_sha256(protocol) != protocol["protocol_sha256"]):
+        sys.exit(f"{args.protocol}: its hashes do not match its content, so it is not the protocol the archive measured.")
 
     if args.fake:
         from core.plumbing.fake_client import FakeClient
@@ -257,7 +293,7 @@ def main() -> int:
         client = YourModel(args)
 
     record, out_dir = run(protocol, client, args.date, args.out)
-    report(record, out_dir)
+    report(record, out_dir, practice)
     return 0
 
 
