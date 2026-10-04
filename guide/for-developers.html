@@ -18,7 +18,7 @@ if(t!=='white'&&t!=='dark'&&t!=='blue')t='white';document.documentElement.classL
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 system-ui,-apple-system,"Segoe UI",Inter,sans-serif;-webkit-font-smoothing:antialiased}
 .wrap{max-width:760px;margin:0 auto;padding:0 20px}
-header{border-bottom:1px solid var(--line);padding:16px 0;margin-bottom:8px;position:sticky;top:0;background:var(--bg);backdrop-filter:blur(8px);z-index:50}
+header{border-bottom:1px solid var(--line);padding:16px 0;margin-bottom:8px;background:var(--bg)}
 header .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px}
 .brand{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);text-decoration:none;margin-right:8px}
 .brand .logo{width:36px;height:36px;display:block;flex:none;background:var(--logo,currentColor);-webkit-mask:url(../logo.png?v=2) center/contain no-repeat;mask:url(../logo.png?v=2) center/contain no-repeat}
@@ -77,9 +77,21 @@ html.theme-dark .search-results,html.theme-blue .search-results{box-shadow:0 10p
 .sr-t{display:block;font-size:12.5px;font-weight:650;color:var(--ink);margin-bottom:2px}
 .sr-s{display:block;font-size:12px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 p.fine{font-size:12.5px;line-height:1.55;color:var(--faint)}
+.toc{display:none}
+.has-toc h2,.has-toc h3{scroll-margin-top:16px}
+@media(min-width:1280px){
+  .toc{display:block;position:fixed;top:96px;left:max(16px,calc(50% - 380px - 250px));width:210px;max-height:calc(100vh - 120px);overflow-y:auto;font-size:13px;line-height:1.4}
+}
+.toc-h{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);margin:0 0 10px}
+.toc ul{list-style:none;margin:0;padding:0;border-left:1px solid var(--line)}
+.toc li{margin:0}
+.toc a{display:block;padding:5px 10px;margin-left:-1px;border-left:2px solid transparent;color:var(--dim);text-decoration:none}
+.toc li.sub a{padding-left:22px;font-size:12.5px}
+.toc a:hover{color:var(--ink)}
+.toc a.on{color:var(--ink);font-weight:650;border-left-color:var(--ink)}
 </style>
 </head>
-<body>
+<body class="has-toc">
 <header><div class="wrap">
 <div class="brand"><a href="../index.html" aria-label="LLM-Archive home"><span class="logo" aria-hidden="true"></span></a><span class="bt">LLM-Archive<small>Guide</small></span></div>
 <nav><a href="index.html">Guide home</a>
@@ -97,6 +109,7 @@ p.fine{font-size:12.5px;line-height:1.55;color:var(--faint)}
 <button type="button" data-theme="dark">Dark</button>
 <button type="button" data-theme="blue">Blue</button>
 </div>
+<nav class="toc" aria-label="On this page"><p class="toc-h">On this page</p><ul><li><a href="#quickstart-run-it-on-your-machine">Quickstart: run it on your machine</a></li><li class="sub"><a href="#1-get-the-code">1. Get the code</a></li><li class="sub"><a href="#2-check-your-copy-works">2. Check your copy works</a></li><li class="sub"><a href="#3-check-a-published-number-yourself">3. Check a published number yourself</a></li><li class="sub"><a href="#4-ask-your-model-the-real-questions-and-see-llm-archive-s-answers-next-to-yours">4. Ask your model the real questions, and see LLM-Archive's answers next to yours</a></li><li class="sub"><a href="#5-run-the-whole-method-on-your-model-the-practice-panel">5. Run the whole method on your model (the practice panel)</a></li><li class="sub"><a href="#6-read-your-result-and-compare-it-with-llm-archive-s">6. Read your result, and compare it with LLM-Archive's</a></li><li class="sub"><a href="#7-what-you-can-t-do-yet">7. What you can't do yet</a></li><li><a href="#the-trust-boundary-in-code-terms">The trust boundary, in code terms</a></li><li><a href="#architecture-in-one-pass">Architecture in one pass</a></li><li><a href="#the-client-contract">The Client contract</a></li><li><a href="#build-checks">Build checks</a></li><li><a href="#why-numpy-is-banned-in-core-measure">Why numpy is banned in core/measure/</a></li><li><a href="#extending-the-schema">Extending the schema</a></li><li><a href="#reporting-a-bug">Reporting a bug</a></li></ul></nav>
 <main class="wrap">
 <h1 id="for-developers">For developers</h1>
 <p>This page is for anyone who wants to run LLM-Archive on their own machine — to check that the published numbers really come from the published code, or to try the method on <strong>their own model</strong> — and for anyone auditing or extending the code. Everything here uses only the public repository, <code>github.com/LLM-Archive/llm-archive.github.io</code>; nothing on this page needs access to anything else. For what each published column means, see <a href="data-dictionary.html"><code>data-dictionary.md</code></a>; for the authoritative behavior, the <a href="https://github.com/LLM-Archive/llm-archive.github.io/blob/master/SPEC.md">specification</a> always wins over this page.</p>
@@ -309,6 +322,25 @@ s.addEventListener('animationend',function(){s.classList.remove('spin');});})();
     var el=document.activeElement,tag=el&&el.tagName?el.tagName.toLowerCase():'';
     if(e.key==='/'&&tag!=='input'&&tag!=='textarea'){e.preventDefault();input.focus();input.select();}
   });
+})();
+</script>
+<script>
+(function(){
+  var links=[].slice.call(document.querySelectorAll('.toc a'));if(!links.length)return;
+  var heads=links.map(function(a){return document.getElementById(a.getAttribute('href').slice(1));});
+  var toc=document.querySelector('.toc'),header=document.querySelector('header');
+  var ticking=false;
+  function update(){
+    ticking=false;var cur=0;
+    var top=Math.max(24,header.getBoundingClientRect().bottom+28);
+    toc.style.top=top+'px';toc.style.maxHeight='calc(100vh - '+(top+24)+'px)';
+    heads.forEach(function(h,i){if(h&&h.getBoundingClientRect().top<120)cur=i;});
+    links.forEach(function(a,i){a.classList.toggle('on',i===cur);});
+  }
+  function onChange(){if(!ticking){ticking=true;requestAnimationFrame(update);}}
+  window.addEventListener('scroll',onChange,{passive:true});
+  window.addEventListener('resize',onChange);
+  update();
 })();
 </script>
 </body>
