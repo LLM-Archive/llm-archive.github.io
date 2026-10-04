@@ -1095,6 +1095,16 @@ pushed anywhere near the public or private archive repos. Only two hashes (`pane
 > honouring "full traces on declassification" means closing §1.1's disclosed gap as part of the same
 > act, deliberately, not as a side effect of the flip; **(b)** the four-generation line is a promise
 > kept by the owner on the calendar, so it needs a human step in §9's monthly batch to ever happen.
+>
+> **Since 2026-10-03** `core/plumbing/declassify.py` closes gap (a) without automating the act. The
+> owner lists a protocol by hand in `declassified.json` (date and reason); the deploy then publishes
+> `declassified/<protocol_id>.json` (the protocol file as measured, all 15 scenarios, so both hashes
+> can be recomputed) and `declassified/<protocol_id>.trials.jsonl` (full traces). The build refuses
+> an entry that is `sealed`, still current, shares its panel or its twin's panel with a current
+> protocol (so `v0` cannot be opened while `v1`, with the same scenarios, is measured), or has no
+> bridge: a run on the old panel and one on its successor, same model, within 7 days. The list
+> ships empty. The daily overview asks the owner once every current protocol has run on the active
+> commercial model; the four-generation line stays a promise, as in (b).
 
 ---
 

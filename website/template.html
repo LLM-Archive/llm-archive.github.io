@@ -370,7 +370,7 @@ footer{border-top:1px solid var(--line);margin-top:70px;padding-top:22px;font-si
 
 @@COVERAGE_BAR@@
 
-<h1>It checks whether an AI changes its mind when a question says the same thing in different words and publishes the results</h1>
+<h1>LLM-Archive checks whether an AI changes its mind when a question says the same thing in different words and publishes the results</h1>
 
 <h3>What LLM-Archive is</h3>
 <p class="lede">An open, longitudinal dataset for studying behavioral changes and stability in large
@@ -382,18 +382,16 @@ language models.</p>
   <div class="box"><div class="eyebrow">Version A</div><p>"In a group of 600 people, <b>200 will be saved</b>."</p></div>
   <div class="box"><div class="eyebrow">Version B</div><p>"In a group of 600 people, <b>400 will die</b>."</p></div>
 </div>
-<p>The meaning is identical. If the AI picks differently, it records that the decision was swayed by
-wording. It repeats this many times, checks that the result isn't random or the product of a flawed
-measurement, and compares it against earlier versions.</p>
+<p>This is <b>the exact same thing.</b> A stable model picks the same option both times. Real models often don't.</p>
 
 <div class="callout"><p><b>What you get:</b> a historical record of measurements, the conditions under
 which they ran, the flags, and the available raw data. <b>What you don't get:</b> an "intelligence"
-score or a guarantee that the model will behave the same way in your own product.
+score or a guarantee that the model will behave the same way in your product.
 <a href="#results" onclick="go('results');return false">See the results</a> or
 <a href="#what" onclick="go('what');return false">read the design</a>.</p></div>
 
-<p class="starcta">Want to help Archive grow?<br>5 stars on
-<a href="https://github.com/LLM-Archive/llm-archive.github.io" target="_blank" rel="noopener" title="Opens the repository on GitHub; the Star button is at the top right">GitHub</a> is all it takes.</p>
+<p class="starcta">Do you like LLM-Archive? 5 stars on GitHub is all it takes —
+<a href="https://github.com/LLM-Archive/llm-archive.github.io" target="_blank" rel="noopener" title="Opens the repository on GitHub; the Star button is at the top right">Give 5 stars on GitHub!</a></p>
 
 </section>
 
@@ -488,16 +486,6 @@ judgment enters the measurement. It doesn't care whether the answer is "correct"
 it stays <b>the same</b> when the wording changes. Everything someone needs to re-run the same
 measurement is public.</p>
 
-<p>One example — 2 of the 4 versions (see below why two aren't enough). It asks the model to pick
-an answer:</p>
-
-<div class="pair">
-  <div class="box"><div class="eyebrow">Version A</div><p>"<b>200</b> out of 600 are saved"</p></div>
-  <div class="box"><div class="eyebrow">Version B</div><p>"<b>400</b> out of 600 die"</p></div>
-</div>
-
-<p>This is <b>the exact same thing.</b> A stable model picks the same option both times. Real models often don't.</p>
-
 <h3>Why two versions aren't enough</h3>
 <p>If only two wordings were compared and a difference found, there'd be no way to know whether the
 change in wording was to blame, or whether the model simply isn't reading carefully.</p>
@@ -509,6 +497,62 @@ change in wording was to blame, or whether the model simply isn't reading carefu
 <tr><td><b>B</b></td><td>the equivalent rewording</td><td>what's actually measured</td></tr>
 <tr><td><b>C</b></td><td>a real change in meaning — the answer <b>should</b> change</td><td>that the model is actually reading. If C doesn't move anything, the other three don't mean anything</td></tr>
 </tbody></table></div>
+
+<p>Decision diagram</p>
+<figure>
+<div class="scroll pf-trigger" data-svg="pf-svg-2" tabindex="0" role="button" aria-label="Enlarge this diagram" title="Click to enlarge">
+<svg id="pf-svg-2" viewBox="0 0 1660 320" width="1660" height="320" role="img" aria-label="Every question is asked in four versions. A is the baseline, for example 200 will be saved. A prime is a null change, punctuation only, which measures noise. B is an equivalent rewording, for example 400 will die, and the A to B gap is what's measured. C is a real change where the answer should flip, confirming the model is reading the question. All four versions are run against two kinds of models: commercial models, tracked over time until retired, and an open reference model with frozen weights that serves as the control group. Everything produced is published as open data: stability.csv and outcomes.csv, plus the trial logs in JSONL, data under CC-BY-4.0 and code under AGPL-3.0.">
+<defs>
+<marker id="pf-arrow-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--dim)"/></marker>
+</defs>
+
+<text class="pf-lane" x="470" y="16" text-anchor="middle">FOUR VERSIONS OF ONE QUESTION</text>
+<rect class="pf-box" x="20" y="40" width="210" height="80" rx="8"/>
+<text text-anchor="middle"><tspan class="pf-title" x="125" y="74">A — baseline</tspan><tspan class="pf-sub" x="125" y="94">"200 will be saved"</tspan></text>
+<rect class="pf-box" x="250" y="40" width="210" height="80" rx="8"/>
+<text text-anchor="middle"><tspan class="pf-title" x="355" y="74">A′ — null change</tspan><tspan class="pf-sub" x="355" y="94">punctuation only</tspan></text>
+<rect class="pf-box" x="480" y="40" width="210" height="80" rx="8"/>
+<text text-anchor="middle"><tspan class="pf-title" x="585" y="74">B — rewording</tspan><tspan class="pf-sub" x="585" y="94">"400 will die"</tspan></text>
+<rect class="pf-box" x="710" y="40" width="210" height="80" rx="8"/>
+<text text-anchor="middle"><tspan class="pf-title" x="815" y="74">C — real change</tspan><tspan class="pf-sub" x="815" y="94">numbers flip the answer</tspan></text>
+
+<polyline class="pf-line" points="125,120 125,144 355,144" fill="none"/>
+<text class="pf-label" x="240" y="158" text-anchor="middle">measures noise</text>
+<polyline class="pf-line" points="355,120 355,176" fill="none"/>
+<polyline class="pf-line" points="125,144 125,176 585,176" fill="none"/>
+<text class="pf-label" x="355" y="190" text-anchor="middle">what's measured</text>
+<polyline class="pf-line" points="585,120 585,208" fill="none"/>
+<polyline class="pf-line" points="125,176 125,208 815,208" fill="none"/>
+<text class="pf-label" x="470" y="222" text-anchor="middle">confirms it's reading</text>
+<polyline class="pf-line" points="815,120 815,208" fill="none"/>
+
+<polyline class="pf-line" points="920,80 960,80" marker-end="url(#pf-arrow-2)"/>
+<polyline class="pf-line" points="960,80 960,105 1000,105" marker-end="url(#pf-arrow-2)"/>
+<polyline class="pf-line" points="960,80 960,215 1000,215" marker-end="url(#pf-arrow-2)"/>
+
+<text class="pf-lane" x="1130" y="16" text-anchor="middle">TWO KINDS OF MODELS</text>
+<rect class="pf-box" x="1000" y="60" width="260" height="90" rx="8"/>
+<text text-anchor="middle"><tspan class="pf-title" x="1130" y="99">Commercial models</tspan><tspan class="pf-sub" x="1130" y="119">tracked over time, until retired</tspan></text>
+<rect class="pf-box" x="1000" y="170" width="260" height="90" rx="8"/>
+<text text-anchor="middle"><tspan class="pf-title" x="1130" y="209">Open reference model</tspan><tspan class="pf-sub" x="1130" y="229">frozen weights — the control group</tspan></text>
+
+<polyline class="pf-line" points="1260,105 1290,105 1290,160" fill="none"/>
+<polyline class="pf-line" points="1260,215 1290,215 1290,160" fill="none"/>
+<polyline class="pf-line" points="1290,160 1330,160" fill="none"/>
+<polyline class="pf-line" points="1330,160 1330,105 1360,105" marker-end="url(#pf-arrow-2)"/>
+<polyline class="pf-line" points="1330,160 1330,215 1360,215" marker-end="url(#pf-arrow-2)"/>
+
+<text class="pf-lane" x="1490" y="16" text-anchor="middle">PUBLISHED AS OPEN DATA</text>
+<rect class="pf-box" x="1360" y="60" width="260" height="90" rx="8"/>
+<text text-anchor="middle"><tspan class="pf-title" x="1490" y="99">stability.csv + outcomes.csv</tspan><tspan class="pf-sub" x="1490" y="119">one row per measurement</tspan></text>
+<rect class="pf-box" x="1360" y="170" width="260" height="90" rx="8"/>
+<text text-anchor="middle"><tspan class="pf-title" x="1490" y="209">trial logs (JSONL)</tspan><tspan class="pf-sub" x="1490" y="229">every raw response</tspan></text>
+<text class="pf-sub" x="1490" y="285" text-anchor="middle">data: CC-BY-4.0 · code: AGPL-3.0</text>
+</svg>
+</div>
+<figcaption>The same four versions run against both kinds of models, and everything that comes
+out the other end is published openly.</figcaption>
+</figure>
 
 <h3>How the number is calculated</h3>
 <p>It asks the model the same question many times with one wording and many times with an
@@ -614,63 +658,6 @@ method themselves.</li>
 <code>outcomes.csv</code>) and the JSONL logs are free to download — data under CC-BY-4.0, code
 under AGPL-3.0.</li>
 </ol>
-
-
-<p>All four parts, in one picture:</p>
-<figure>
-<div class="scroll pf-trigger" data-svg="pf-svg-2" tabindex="0" role="button" aria-label="Enlarge this diagram" title="Click to enlarge">
-<svg id="pf-svg-2" viewBox="0 0 1660 320" width="1660" height="320" role="img" aria-label="Every question is asked in four versions. A is the baseline, for example 200 will be saved. A prime is a null change, punctuation only, which measures noise. B is an equivalent rewording, for example 400 will die, and the A to B gap is what's measured. C is a real change where the answer should flip, confirming the model is reading the question. All four versions are run against two kinds of models: commercial models, tracked over time until retired, and an open reference model with frozen weights that serves as the control group. Everything produced is published as open data: stability.csv and outcomes.csv, plus the trial logs in JSONL, data under CC-BY-4.0 and code under AGPL-3.0.">
-<defs>
-<marker id="pf-arrow-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--dim)"/></marker>
-</defs>
-
-<text class="pf-lane" x="470" y="16" text-anchor="middle">FOUR VERSIONS OF ONE QUESTION</text>
-<rect class="pf-box" x="20" y="40" width="210" height="80" rx="8"/>
-<text text-anchor="middle"><tspan class="pf-title" x="125" y="74">A — baseline</tspan><tspan class="pf-sub" x="125" y="94">"200 will be saved"</tspan></text>
-<rect class="pf-box" x="250" y="40" width="210" height="80" rx="8"/>
-<text text-anchor="middle"><tspan class="pf-title" x="355" y="74">A′ — null change</tspan><tspan class="pf-sub" x="355" y="94">punctuation only</tspan></text>
-<rect class="pf-box" x="480" y="40" width="210" height="80" rx="8"/>
-<text text-anchor="middle"><tspan class="pf-title" x="585" y="74">B — rewording</tspan><tspan class="pf-sub" x="585" y="94">"400 will die"</tspan></text>
-<rect class="pf-box" x="710" y="40" width="210" height="80" rx="8"/>
-<text text-anchor="middle"><tspan class="pf-title" x="815" y="74">C — real change</tspan><tspan class="pf-sub" x="815" y="94">numbers flip the answer</tspan></text>
-
-<polyline class="pf-line" points="125,120 125,144 355,144" fill="none"/>
-<text class="pf-label" x="240" y="158" text-anchor="middle">measures noise</text>
-<polyline class="pf-line" points="355,120 355,176" fill="none"/>
-<polyline class="pf-line" points="125,144 125,176 585,176" fill="none"/>
-<text class="pf-label" x="355" y="190" text-anchor="middle">what's measured</text>
-<polyline class="pf-line" points="585,120 585,208" fill="none"/>
-<polyline class="pf-line" points="125,176 125,208 815,208" fill="none"/>
-<text class="pf-label" x="470" y="222" text-anchor="middle">confirms it's reading</text>
-<polyline class="pf-line" points="815,120 815,208" fill="none"/>
-
-<polyline class="pf-line" points="920,80 960,80" marker-end="url(#pf-arrow-2)"/>
-<polyline class="pf-line" points="960,80 960,105 1000,105" marker-end="url(#pf-arrow-2)"/>
-<polyline class="pf-line" points="960,80 960,215 1000,215" marker-end="url(#pf-arrow-2)"/>
-
-<text class="pf-lane" x="1130" y="16" text-anchor="middle">TWO KINDS OF MODELS</text>
-<rect class="pf-box" x="1000" y="60" width="260" height="90" rx="8"/>
-<text text-anchor="middle"><tspan class="pf-title" x="1130" y="99">Commercial models</tspan><tspan class="pf-sub" x="1130" y="119">tracked over time, until retired</tspan></text>
-<rect class="pf-box" x="1000" y="170" width="260" height="90" rx="8"/>
-<text text-anchor="middle"><tspan class="pf-title" x="1130" y="209">Open reference model</tspan><tspan class="pf-sub" x="1130" y="229">frozen weights — the control group</tspan></text>
-
-<polyline class="pf-line" points="1260,105 1290,105 1290,160" fill="none"/>
-<polyline class="pf-line" points="1260,215 1290,215 1290,160" fill="none"/>
-<polyline class="pf-line" points="1290,160 1330,160" fill="none"/>
-<polyline class="pf-line" points="1330,160 1330,105 1360,105" marker-end="url(#pf-arrow-2)"/>
-<polyline class="pf-line" points="1330,160 1330,215 1360,215" marker-end="url(#pf-arrow-2)"/>
-
-<text class="pf-lane" x="1490" y="16" text-anchor="middle">PUBLISHED AS OPEN DATA</text>
-<rect class="pf-box" x="1360" y="60" width="260" height="90" rx="8"/>
-<text text-anchor="middle"><tspan class="pf-title" x="1490" y="99">stability.csv + outcomes.csv</tspan><tspan class="pf-sub" x="1490" y="119">one row per measurement</tspan></text>
-<rect class="pf-box" x="1360" y="170" width="260" height="90" rx="8"/>
-<text text-anchor="middle"><tspan class="pf-title" x="1490" y="209">trial logs (JSONL)</tspan><tspan class="pf-sub" x="1490" y="229">every raw response</tspan></text>
-<text class="pf-sub" x="1490" y="285" text-anchor="middle">data: CC-BY-4.0 · code: AGPL-3.0</text>
-</svg>
-</div>
-<figcaption>The same four versions run against both kinds of models, and everything that comes
-out the other end is published openly.</figcaption>
-</figure>
 
 <h3>Recent activity</h3>
 <div class="term" id="term" aria-label="Recent activity"><div id="term-lines"></div></div>
