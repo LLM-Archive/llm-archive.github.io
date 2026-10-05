@@ -75,17 +75,18 @@ against the wider evaluation and prompt-robustness literature, to call out on th
   refuses to run one that isn't (`not_preregistered`). A recent proposal for sealed,
   pre-committed model evaluation ([LLM Olympiad](https://arxiv.org/abs/2603.23292)) argues for
   exactly this; here it is a gate in `core/measure/`, not a policy.
-- **The open/guard twin pairing is a running contamination check, not a post-hoc audit.** Most
-  contamination-detection work ([TRUCE](https://arxiv.org/abs/2403.00393),
-  [PaCoST](https://arxiv.org/abs/2406.18326)) tries to detect contamination after the fact in an
-  existing benchmark. Twin pairing here is fixed before any run: if only the published twin
-  moves, that is contamination; if both move, the model changed.
+- **The open/guard twin pairing is a running contamination check, not a post-hoc audit.**
+  Contamination work usually either detects it after the fact in an existing benchmark
+  ([PaCoST](https://arxiv.org/abs/2406.18326)) or prevents it by keeping the test set private
+  ([TRUCE](https://arxiv.org/abs/2403.00393)). Neither tells you, run by run, whether a change
+  came from contamination or from the model. Twin pairing here is fixed before any run: if only
+  the published twin moves, that is contamination; if both move, the model changed.
 - **The instrument is measured as its own subject.** A frozen, pinned local reference model runs
   the same daily checks as the model under study, and an alarm halts publication — never
-  measurement — the moment the pipeline itself looks broken. A 2026 study of commercial,
-  black-box endpoints used as measurement instruments
-  ([arXiv:2609.04198](https://arxiv.org/pdf/2609.04198)) concludes they are unsuitable for stable,
-  reproducible measurement on their own — the exact failure mode this instrument exists to catch.
+  measurement — the moment the pipeline itself looks broken. A preregistered 2026 study
+  ([arXiv:2609.04198](https://arxiv.org/abs/2609.04198)) found that black-box models queried
+  repeatedly on shared commercial endpoints, used there as judges, do not give consistent
+  readings — the same kind of instability this instrument exists to tell apart from a real change.
 - **Generalization is refused, not hedged.** Every number's scope is stated as "on this panel, on
   this model, on that day," never as a property of a model in general (`docs/spec.md` §1.1, §6).
   Audits of how often published capability claims outrun their evidence
