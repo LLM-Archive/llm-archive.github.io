@@ -21,6 +21,12 @@
   (same lazy-import pattern as `reference_client.py`). No automated `verify()` for the same reason
   `reference_client.py` has none — the one thing worth checking can't be checked without spending a
   real, billed call.
+- `resume_run.py` — finishes a real run that was cut off, without paying again for the calls already
+  made. `pilot.py` (frozen) leaves the finished calls of a cut-off run in a hidden `.<run_id>.partial-…`
+  folder; this hands `pilot.run()` a client that answers those calls from that folder and sends only
+  the rest to the API. Same day, same model, same prompts or it refuses. Adds a `resume.json` to the
+  run folder. `python3 -m core.plumbing.resume_run <protocol> --client anthropic` to use it;
+  `--verify` is the free self-test (part of `make CHECK_ALL`).
 - `reference_client.py` — the real adapter for the frozen open-weights reference model
   (`core/instrument/`, spec.md §7): `Qwen/Qwen2.5-1.5B-Instruct-GGUF`, pinned by revision and
   file sha256, run through `llama-cpp-python`. Greedy (temperature 0), fixed thread count, fixed

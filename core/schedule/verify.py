@@ -129,6 +129,17 @@ def _write_ledger(path: Path, run_date: str, amount_eur: str) -> None:
     }]), encoding="utf-8")
 
 
+def _real_ceiling() -> Fraction:
+    """The monthly ceiling budget.json has right now. The checks below that need "85% of the
+    ceiling" or "close to the ceiling" derive their amounts from it, so raising or lowering the
+    ceiling by hand (it was raised from 10 to 15 and to 18 in October 2026) cannot break them."""
+    return budget.load_config()["monthly_ceiling_eur"]
+
+
+def _eur(x: Fraction) -> str:
+    return f"{float(x):.4f}"
+
+
 def check_run_full_sweep_ladder(data) -> list[str]:
     """run_full_sweep must actually enforce a rung's max_sweep_protocols/sweep_lane, not just read
     them off budget.check()'s decision -- a real gap found and fixed 2026-09-21: `allowed` is only
@@ -189,7 +200,7 @@ def check_run_full_sweep_ladder(data) -> list[str]:
             errors.append(f"reduced_sweep: {len(capped)} capped of {len(results) - len(ran)} not-run, want all of them")
 
         # guard_only_sweep (80-95%): max_sweep_protocols=4, sweep_lane="guard". Two separate,
-        # single-lane sweeps against the real, narrow €10 ceiling (see docstring for why not one
+        # single-lane sweeps against the real, narrow ceiling (see docstring for why not one
         # mixed sweep): the open-lane one alone (protocols_run stays 0, no projection confound)
         # must be lane-skipped; the two guard-lane ones alone must both run (well under the count
         # cap, and 2 * _EST_COST_PER_PROTOCOL_EUR is small enough to stay inside the 80-95% band).
@@ -200,7 +211,7 @@ def check_run_full_sweep_ladder(data) -> list[str]:
         protocols_dir_open.mkdir()
         shutil.copy(_REAL_PROTOCOLS_DIR / f"{open_lane}.json", protocols_dir_open / f"{open_lane}.json")
         ledger_open = tmp / "ledger_lane_open.json"
-        _write_ledger(ledger_open, run_date, "8.50")  # 85% of the real €10 general ceiling
+        _write_ledger(ledger_open, run_date, _eur(_real_ceiling() * Fraction(85, 100)))  # 85% of the real general ceiling
 
         with mock.patch("core.plumbing.anthropic_client.AnthropicClient", _StubClient), contextlib.redirect_stdout(io.StringIO()):
             results_open = run_due.run_full_sweep(
@@ -262,11 +273,11 @@ def check_ladder_projection(data) -> list[str]:
     no_projection = budget.check(ledger, "full_sweep", "2026-01", config=config)
     if no_projection["level"] != "full":
         errors.append(f"sanity: empty ledger should read 'full', got {no_projection['level']!r}")
-    with_projection = budget.check(ledger, "full_sweep", "2026-01", config=config, additional_spent_eur=Fraction("8.50"))
+    with_projection = budget.check(ledger, "full_sweep", "2026-01", config=config, additional_spent_eur=_real_ceiling() * Fraction(85, 100))
     if with_projection["level"] != "guard_only_sweep":
         errors.append(
-            f"a €8.50 in-flight projection on an otherwise-empty ledger should read 'guard_only_sweep' "
-            f"(85% of €10), got {with_projection['level']!r} ({with_projection['spent_pct']}%)"
+            f"an in-flight projection of 85% of the ceiling on an otherwise-empty ledger should read "
+            f"'guard_only_sweep', got {with_projection['level']!r} ({with_projection['spent_pct']}%)"
         )
     if with_projection["allowed"] is not True:
         errors.append(f"guard_only_sweep still allows spending (max_sweep_protocols=4 > 0), got allowed={with_projection['allowed']!r}")
@@ -466,9 +477,10 @@ def check_prereg_guard(data) -> list[str]:
 
 def check_would_fit(data) -> list[str]:
     """A protocol that would push the month past its ceiling must not start, even though the rung
-    (which only reads what is already spent) still allows it: at EUR 8.00 of 10.00 the ladder says
-    `guard_only_sweep`, and a v1 protocol (~3.2) is a guard-lane one -- allowed by the rung, but it
-    would end near 11. It is skipped, and nothing is spent."""
+    (which only reads what is already spent) still allows it: with EUR 2.00 left of the ceiling
+    (80% spent at a ceiling of 10, still `guard_only_sweep` below 40) the ladder allows a guard-lane
+    protocol, and a v1 protocol (~3.2) would end well over the ceiling. It is skipped, and nothing
+    is spent."""
     del data
     errors = []
     with tempfile.TemporaryDirectory() as tmp:
@@ -479,7 +491,7 @@ def check_would_fit(data) -> list[str]:
                    if json.loads(f.read_text())["lane"] == "guard" and json.loads(f.read_text())["n"] == 120)
         (pdir / f"{big['protocol_id']}.json").write_text(json.dumps(big))
         ledger = tmp / "ledger.json"
-        _write_ledger(ledger, "2026-06-01", "8.00")
+        _write_ledger(ledger, "2026-06-01", _eur(_real_ceiling() - 2))
         with mock.patch("core.plumbing.anthropic_client.AnthropicClient", _MeteredStub), contextlib.redirect_stdout(io.StringIO()):
             results = run_due.run_full_sweep(
                 client_kind="anthropic", run_date="2026-06-15", protocols_dir=pdir, out_root=tmp / "exp",
